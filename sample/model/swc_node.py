@@ -23,7 +23,10 @@ class SwcNode(object):
                  x=0.0,
                  y=0.0,
                  z=0.0,
-                 radius=0.0):
+                 radius=0.0,
+                 xy_parent_trajectory=0.0,
+                 z_parent_trajectory=0.0,
+                 parent_trajectory=0.0):
         self.id = id
         self.type = type
         self.parent = parent
@@ -32,3 +35,6 @@ class SwcNode(object):
         self.y = y
         self.z = z
         self.radius = radius
+        self.xy_parent_trajectory=xy_parent_trajectory
+        self.z_parent_trajectory=z_parent_trajectory
+        self.parent_trajectory=parent_trajectory
