@@ -1,6 +1,6 @@
-RIGHT = "right"
-LEFT = "left"
-DEFULT = "DEFULT"
+RIGHT = 'right'
+LEFT = 'left'
+DEFULT = 'DEFULT'
 
 class BinaryNode(object):
     """
@@ -21,7 +21,7 @@ class BinaryNode(object):
                  parent=None,
                  left_son=None,
                  right_son=None,
-                 side=DEFULT,
+
                  max_dep=0,
                  hight=0,
                  treesize=1,
@@ -30,7 +30,25 @@ class BinaryNode(object):
         self.parent=parent
         self.left_son=left_son
         self.right_son=right_son
-        self.side=side
         self.max_dep=max_dep
         self.hight=hight
         self.treesize=treesize
+
+    def get_side(self):
+        if self.is_root():
+            return DEFULT
+        if self.parent.left_son == self:
+            return LEFT
+        if self.parent.right_son == self:
+            return RIGHT
+        raise Exception("[Error:  ] node {} is not its parent's son".format(self.data.id))
+
+    def is_root(self):
+        if self.parent == None:
+            return True
+        return False
+
+    def is_leaf(self):
+        if self.left_son == None and self.right_son == None:
+            return True
+        return False
