@@ -364,7 +364,7 @@ def convert_path_to_binarytree(swc_file_paths):
         bintree_root_list.append(convert_to_binarytree(swc_file_paths))
     elif os.path.isdir(swc_file_paths):
         for file in os.listdir(swc_file_paths):
-            bintree_root_list.append(convert_path_to_binarytree(swc_file_paths=os.path.join(swc_file_paths, file)))
+            bintree_root_list += convert_path_to_binarytree(swc_file_paths=os.path.join(swc_file_paths, file))
     return bintree_root_list
 
 if __name__ == "__main__":

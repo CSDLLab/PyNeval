@@ -34,6 +34,11 @@ class BinaryNode(object):
         self.hight=hight
         self.treesize=treesize
 
+    def has_children(self):
+        if self.left_son is not None or self.right_son is not None:
+            return True
+        return False
+
     def get_side(self):
         if self.is_root():
             return DEFULT
