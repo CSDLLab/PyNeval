@@ -54,6 +54,7 @@ def pymet():
 
     gold_swc_treeroot = gold_swc_treeroots[0]
     for test_swc_treeroot in test_swc_treeroots:
+        print(test_swc_treeroots)
         diadem_reconstruction(test_swc_treeroot, gold_swc_treeroot)
 
 if __name__ == "__main__":
