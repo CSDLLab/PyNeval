@@ -3,7 +3,7 @@
 
 from sample.model.swc_node import SwcNode
 from sample.model.binary_node import BinaryNode, DEFULT, LEFT, RIGHT
-# from sample.util.read_swc import swcfile_to_swcnodelist,swctree_to_binarytree
+# from sample.IO_util.read_swc import swcfile_to_swcnodelist,swctree_to_binarytree
 import queue
 import math
 import time
@@ -38,8 +38,8 @@ def test_print_bin_tree(root_node):
         # print(cur.data.id)
         if ((cur.left_son != None and cur.right_son != None) or \
                (cur.left_son == None and cur.right_son == None)):
-            print("node_id = {}, Left = {}, Right = {}".format(cur.data.id,cur.left_son, cur.right_son))
-            print("出大问题！")
+            # print("node_id = {}, Left = {}, Right = {}".format(cur.data.id,cur.left_son, cur.right_son))
+            # print("出大问题！")
             num += 1
         if cur.left_son != None:
             # print(cur.left_son.data.id)
