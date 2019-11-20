@@ -4,8 +4,9 @@
 from sample.model.swc_node import SwcNode
 from sample.model.binary_node import BinaryNode, DEFULT, LEFT, RIGHT
 from sample.model.euclidean_point import EuclideanPoint
-from sample.util.read_swc_test_function import test_print_bin_tree
+from sample.IO_util.read_swc_test_function import test_print_bin_tree
 
+import os
 import queue
 import math
 import time
@@ -307,8 +308,6 @@ def remove_continuations(swc_root, bin_root, calc_path_dist,z_in_path_dist):
     while not stack.empty():
         node = stack.get()
         data = node.data
-        if data.id == 190.0:
-            print("???")
         if not node.is_leaf():
             stack.put(node.left_son)
             if calc_path_dist:
@@ -355,5 +354,20 @@ def convert_to_binarytree(swc_file_path):
     test_print_bin_tree(bintree_root)
     return bintree_root
 
+# if path is a fold
+def convert_path_to_binarytree(swc_file_paths):
+    bintree_root_list = []
+    if os.path.isfile(swc_file_paths):
+        if not (swc_file_paths[-4:] == ".swc" or swc_file_paths[-4:] == ".SWC"):
+            print(swc_file_paths + "is not a tif file")
+            return None
+        bintree_root_list.append(convert_to_binarytree(swc_file_paths))
+    elif os.path.isdir(swc_file_paths):
+        for file in os.listdir(swc_file_paths):
+            bintree_root_list.append(convert_path_to_binarytree(swc_file_paths=os.path.join(swc_file_paths, file)))
+    return bintree_root_list
+
 if __name__ == "__main__":
-    convert_to_binarytree("..\..\\test\data_example\ExampleTest.swc")
+    import sys
+    print(sys.path)
+    convert_path_to_binarytree("..\..\\test")
