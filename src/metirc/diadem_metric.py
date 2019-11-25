@@ -1,7 +1,7 @@
 import queue
 import time
 import math
-from sample.model.binary_node import BinaryNode,RIGHT
+from src.model.binary_node import BinaryNode,RIGHT
 
 DEBUG = False
 WEIGHT_MODE = 0
@@ -99,11 +99,16 @@ def generate_node_weights(bin_root, spur_set):
                     weight_dict[node] = 2.0 / (1.0/degree_dict[node.getLeft()] + 1.0/degree_dict.get[node.getRight()])
                 elif WEIGHT_MODE == WEIGHT_PATH_LENGTH:
                     weight_dict[node] = node.data.path_length
-                print("nodeId = {}, degree = {}".format(node.data.id, degree))
+                print("nodeId = {}, degree = {}".format(node.data._id, degree))
+                if node.parent is not None:
+                    print("pa = {}",node.parent.data._id)
+                print("-----------")
 
 def diadem_reconstruction(bin_gold_root, bin_test_root):
-    spur_set = remove_spurs(bin_gold_root,1.0)
-    generate_node_weights(bin_gold_root, spur_set)
+    #spur_set = remove_spurs(bin_gold_root,1.0)
+    # for item in spur_set:
+    #     print(item.data._id)
+    generate_node_weights(bin_gold_root, set())
 
     return 0
 

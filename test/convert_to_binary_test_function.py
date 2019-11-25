@@ -1,9 +1,6 @@
 # bennieHan 2019-11-12 16:01
 # all right reserved
 
-from sample.model.swc_node import SwcNode
-from sample.model.binary_node import BinaryNode, DEFULT, LEFT, RIGHT
-# from sample.IO_util.read_swc import swcfile_to_swcnodelist,swctree_to_binarytree
 import queue
 import math
 import time
@@ -35,7 +32,7 @@ def test_print_bin_tree(root_node):
     while not q.empty():
         # num += 1
         cur = q.get()
-        # print(cur.data.id)
+        print(cur.data._id)
         if ((cur.left_son != None and cur.right_son != None) or \
                (cur.left_son == None and cur.right_son == None)):
             # print("node_id = {}, Left = {}, Right = {}".format(cur.data.id,cur.left_son, cur.right_son))
