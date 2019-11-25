@@ -1,7 +1,7 @@
 import argparse
 import sys,os
-from sample.IO_util.read_swc import convert_path_to_binarytree
-from sample.metirc.diadem_metric import diadem_reconstruction
+from src.model.binary_node import convert_path_to_binarytree
+from src.metirc.diadem_metric import diadem_reconstruction
 
 def read_parameters():
     parser = argparse.ArgumentParser(
@@ -32,7 +32,7 @@ def read_parameters():
 def pymet():
     abs_dir = os.path.abspath("")
     sys.path.append(abs_dir)
-    sys.path.append(os.path.join(abs_dir,"sample"))
+    sys.path.append(os.path.join(abs_dir,"src"))
     sys.path.append(os.path.join(abs_dir,"test"))
 
     # args = read_parameters()

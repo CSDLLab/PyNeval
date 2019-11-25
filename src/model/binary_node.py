@@ -1,77 +1,78 @@
-# bennieHan 2019-11-12 16:01
-# all right reserved
-
-from sample.model.swc_node import SwcNode
-from sample.model.binary_node import BinaryNode, DEFULT, LEFT, RIGHT
-from sample.model.euclidean_point import EuclideanPoint
-from sample.IO_util.read_swc_test_function import test_print_bin_tree
+from anytree import NodeMixin
+from src.model.swc_node import SwcTree
+from src.model.euclidean_point import EuclideanPoint
+from test.convert_to_binary_test_function import test_print_bin_tree
 
 import os
-import queue
 import math
-import time
-import queue
 import queue
 import copy
 
 _3D = "3d"
 _2D = "2d"
-_2D = "2d"
 TRAJECTORY_NONE = -1.0
 FLOAT_INF = 999999999.9
-DEBUG = True
+DEBUG = False
+RIGHT = 'right'
+LEFT = 'left'
+DEFULT = 'DEFULT'
 
-# read a swcfile and convert it into a swc node tree
-# input: file path
-# output: a list of swc tree roots
-def swcfile_to_swcnodelist(file_name):
-    swc_tree_list = []
-    id_swcnode_map = {}
-    node_ids = set()
 
-    with open(file_name) as f:
-        for line in f.readlines():
-            if line.startswith('#'):
-                continue
+class BinaryNode(NodeMixin):
+    """
+        this is a class that temporarily store binarytree transformed from swcTree
+        Attributes:
+        id: id of the node,
+        type: leaf = 1,continuation = 2, bifurcation = 3,
+        parent: pa node id,
+        son=[]: son list,
+        x: x coordinate,
+        y: y coordinate,
+        z: z coordinate,
+        radius: radius of the node
+    """
 
-            id, type, x, y, z, r, pid = map(float, line.split())
-            current_node = SwcNode(id,1,pid,[],x,y,z,r)
+    def __init__(self,
+                 data=object,
+                 parent=None,
+                 left_son=None,
+                 right_son=None,
 
-            if id in node_ids:
-                error = "[Error:read_swc:15] Node id " + str(id) + " has exist!"
-                raise Exception(error)
-            node_ids.add(id)
-            id_swcnode_map[id] = current_node
+                 max_dep=0,
+                 hight=0,
+                 treesize=1,
+                 leaves=1):
+        self.data=data
+        self.parent=parent
+        self.left_son=left_son
+        self.right_son=right_son
+        self.max_dep=max_dep
+        self.hight=hight
+        self.treesize=treesize
 
-            if pid == -1:
-                swc_tree_list.append(current_node)
-            elif pid not in node_ids:
-                error = "[Error:read_swc:23] Node id " + str(id) + " 's parent doesn't exist!"
-                raise Exception(error)
-            else:
-                parent_node = id_swcnode_map[pid]
-                parent_node.son.append(current_node)
-    return swc_tree_list
+    def has_children(self):
+        if self.left_son is not None or self.right_son is not None:
+            return True
+        return False
 
-def get_distance(node1=None, node2=None,mode=_3D):
-    comp1 = None
-    comp2 = None
-    if type(node1) == type(BinaryNode()):
-        comp1 = node1.data
-    else:
-        comp1 = node1
+    def get_side(self):
+        if self.is_root():
+            return DEFULT
+        if self.parent.left_son == self:
+            return LEFT
+        if self.parent.right_son == self:
+            return RIGHT
+        raise Exception("[Error:  ] node {} is not its parent's son".format(self.data.id))
 
-    if type(node2) == type(BinaryNode()):
-        comp2 = node2.data
-    else:
-        comp2 = node2
+    def is_root(self):
+        if self.parent == None:
+            return True
+        return False
 
-    dx = comp1.x - comp2.x
-    dy = comp1.y - comp2.y
-    dz = comp1.z - comp2.z
-    if mode == _2D:
-        dz = 0.0
-    return math.sqrt(dx*dx+dy*dy+dz*dz)
+    def is_leaf(self):
+        if self.left_son == None and self.right_son == None:
+            return True
+        return False
 
 # recurrently convert a swcnode tree into a binary tree
 # input: root of a swcnode tree
@@ -81,7 +82,10 @@ def swctree_to_binarytree(node):
 
     # the nodes in this list is the root of a binary tree
     binnary_son_list = []
-    for son_node in node.son:
+    son = list(node.children)
+
+    for son_node in son:
+        print(type(son_node))
         binnary_node = swctree_to_binarytree(son_node)
         binnary_son_list.append(binnary_node)
 
@@ -93,10 +97,10 @@ def swctree_to_binarytree(node):
             bin_node1 = binnary_son_list[i]
             for j in range(i+1, len(binnary_son_list)):
                 bin_node2 = binnary_son_list[j]
-                if get_distance(bin_node1, bin_node2) < distance:
+                if bin_node1.data.distance(bin_node2.data) < distance:
                     best1 = bin_node1
                     best2 = bin_node2
-                    distance = get_distance(bin_node1, bin_node2)
+                    distance = bin_node1.data.distance(bin_node2.data)
 
         new_swcnode = copy.deepcopy(node)
         new_binnode = BinaryNode(data=new_swcnode,left_son=best1,right_son=best2)
@@ -130,22 +134,22 @@ def re_arrange(bin_node, hight=1, parent=None, side=DEFULT):
 def calculate_trajectories_xy(origin, first, second, threshold):
     point = EuclideanPoint()
 
-    to_first = get_distance(origin, first)
-    to_second = get_distance(origin, second)
+    to_first = origin.distance(first)
+    to_second = origin.distance(second)
 
     proportionAlongLine = (threshold - to_first)/(to_second - to_first)
 
-    point.x = (first.x + proportionAlongLine*(second.x - first.x))
-    point.y = (first.y + proportionAlongLine*(second.y - first.y))
+    point._pos[0] = (first._pos[0] + proportionAlongLine*(second._pos[0] - first._pos[0]))
+    point._pos[1] = (first._pos[1] + proportionAlongLine*(second._pos[1] - first._pos[1]))
     return point
 
 def calculate_trajectories_z(origin, first, second, threshold):
-    to_first = math.fabs(origin.z - first.z)
-    to_second = math.fabs(origin.z - second.z)
+    to_first = math.fabs(origin._pos[2] - first._pos[2])
+    to_second = math.fabs(origin._pos[2] - second._pos[2])
 
     proportionAlongLine = (threshold - to_first)/(to_second - to_first)
 
-    return first.z + proportionAlongLine*(second.z - first.z)
+    return first._pos[2] + proportionAlongLine*(second._pos[2] - first._pos[2])
 
 def find_parent_trajectory(node, thereholds):
     done_x = False
@@ -163,29 +167,29 @@ def find_parent_trajectory(node, thereholds):
         prevData = c_data
         c_data = c.data
         if not done_x:
-            xy_dis = get_distance(data, c_data)
-            if xy_dis > thereholds.x:
-                tmp_point = calculate_trajectories_xy(data, prevData, c_data, thereholds.x)
-                point.x = tmp_point.x
-                point.y = tmp_point.y
+            xy_dis = data.distance(c_data)
+            if xy_dis > thereholds._pos[0]:
+                tmp_point = calculate_trajectories_xy(data, prevData, c_data, thereholds._pos[0])
+                point._pos[0] = tmp_point._pos[0]
+                point._pos[1] = tmp_point._pos[1]
                 done_x = True
             elif c.is_root:
-                point.x = c_data.x
-                point.y = c_data.y
+                point._pos[0] = c_data._pos[0]
+                point._pos[1] = c_data._pos[1]
                 done_x = True
 
         if not done_z:
-            z_dis = math.fabs(data.z - c_data.z)
-            if z_dis > thereholds.z:
-                point.z = calculate_trajectories_z(data, prevData, c_data, thereholds.z)
+            z_dis = math.fabs(data._pos[2] - c_data._pos[2])
+            if z_dis > thereholds._pos[2]:
+                point._pos[2] = calculate_trajectories_z(data, prevData, c_data, thereholds._pos[2])
                 done_z = True
             elif c.is_root:
-                point.z = c_data.z
+                point._pos[2] = c_data._pos[2]
                 done_z = True
-    # if DEBUG:
-    #     print(node.data.id)
-    #     print("trx = {}, try = {}, trz = {}".format(point.x, point.y, point.z))
-    #     print("----------------------------------------------------------------")
+    if DEBUG:
+        print(node.data._id)
+        print("trx = {}, try = {}, trz = {}".format(point._pos[0], point._pos[1], point._pos[2]))
+        print("----------------------------------------------------------------")
     return point
 
 def find_child_trajectory(data, child, thresholds):
@@ -200,42 +204,42 @@ def find_child_trajectory(data, child, thresholds):
         c_data = child.data
 
         if not done_x:
-            xy_dis = get_distance(data,c_data)
+            xy_dis = data.distance(c_data)
 
-            if xy_dis > thresholds.x:
-                tmp_point = calculate_trajectories_xy(data, prev_data, c_data, thresholds.x)
-                point.x = tmp_point.x
-                point.y = tmp_point.y
+            if xy_dis > thresholds._pos[0]:
+                tmp_point = calculate_trajectories_xy(data, prev_data, c_data, thresholds._pos[0])
+                point._pos[0] = tmp_point._pos[0]
+                point._pos[1] = tmp_point._pos[1]
                 done_x = True
             elif child.is_leaf():
-                point.x = c_data.x
-                point.y = c_data.y
+                point._pos[0] = c_data._pos[0]
+                point._pos[1] = c_data._pos[1]
                 done_x = True
             elif child.right_son != None:
-                point.x = TRAJECTORY_NONE
-                point.y = TRAJECTORY_NONE
+                point._pos[0] = TRAJECTORY_NONE
+                point._pos[1] = TRAJECTORY_NONE
                 done_x = True
 
         if not done_z:
-            z_dis = math.fabs(data.z - c_data.z)
-            if z_dis > thresholds.z:
-                point.z = calculate_trajectories_z(data, prev_data, c_data, thresholds.z)
+            z_dis = math.fabs(data._pos[2] - c_data._pos[2])
+            if z_dis > thresholds._pos[2]:
+                point._pos[2] = calculate_trajectories_z(data, prev_data, c_data, thresholds._pos[2])
                 done_z = True
             elif child.is_leaf():
-                point.z = c_data.z
+                point._pos[2] = c_data._pos[2]
                 done_z = True
             elif child.right_son != None:
-                point.z = TRAJECTORY_NONE
+                point._pos[2] = TRAJECTORY_NONE
                 done_z = True
 
         prev_data = c_data
         if not child.is_leaf():
             child = child.left_son
 
-    # if DEBUG:
-    #     print(data.id)
-    #     print("trx = {}, try = {}, trz = {}".format(point.x, point.y, point.z))
-    #     print("----------------------------------------------------------------")
+    if DEBUG:
+        print(data.id)
+        print("trx = {}, try = {}, trz = {}".format(point._pos[0], point._pos[1], point._pos[2]))
+        print("----------------------------------------------------------------")
     return point
 
 def add_child_bifurcations(stack, node):
@@ -261,8 +265,8 @@ def calculate_trajectories(bin_root, thresholds, z_in_path_dist = True, current_
 
     while not stack.empty():
         node = stack.get()
-        # if DEBUG:
-        #     print("[debug:  ] calculate trajectories for node {}".format(node.data.id))
+        if DEBUG:
+            print("[debug:  ] calculate trajectories for node {}".format(node.data.id))
         data = node.data
 
         if not node.is_root():
@@ -279,19 +283,19 @@ def calculate_path_data(bin_node, z_in_path_dist):
 
     if data.path_length == 0.0:
         if z_in_path_dist:
-            data.path_length = get_distance(data,pa_data)
-            data.xy_path_length = get_distance(data,pa_data,mode=_2D)
+            data.path_length = data.distance(pa_data)
+            data.xy_path_length = data.distance(pa_data,mode=_2D)
         else:
-            data.path_length = get_distance(data,pa_data,mode=_2D)
-            data.xy_path_length = get_distance(data,pa_data,mode=_2D)
-        data.z_path_length = math.fabs(pa_data.z - data.z)
-        data.surface_area = data.path_length*math.pi*data.radius*2
-        data.volume = data.path_length*math.pi*data.radius*data.radius
-
-    # print("node_id = {}, path = {}, xy_path = {}, z_path = {}".format(data.id,
-    #                                                                   data.path_length,
-    #                                                                   data.xy_path_length,
-    #                                                                   data.z_path_length))
+            data.path_length = data.distance(pa_data,mode=_2D)
+            data.xy_path_length = data.distance(pa_data,mode=_2D)
+        data.z_path_length = math.fabs(pa_data._pos[2] - data._pos[2])
+        data.surface_area = data.path_length*math.pi*data.radius()*2
+        data.volume = data.path_length*math.pi*data.radius()*data.radius()
+    if DEBUG:
+        print("node_id = {}, path = {}, xy_path = {}, z_path = {}".format(data._id,
+                                                                          data.path_length,
+                                                                          data.xy_path_length,
+                                                                          data.z_path_length))
 
 def remove_continuations(swc_root, bin_root, calc_path_dist,z_in_path_dist):
     stack = queue.LifoQueue()
@@ -334,20 +338,22 @@ def remove_continuations(swc_root, bin_root, calc_path_dist,z_in_path_dist):
     return res_root
 
 def convert_to_binarytree(swc_file_path):
-    swctree_rootlist = swcfile_to_swcnodelist(swc_file_path)
-    if len(swctree_rootlist) == 0:
+    swc_tree = SwcTree()
+    swc_tree.load(swc_file_path)
+
+    if swc_tree.node_count() == 0:
         raise Exception("[Error:  read file Error]" + "read " + swc_file_path + " fail. Maybe file has been broken")
         return None
-    elif len(swctree_rootlist) > 1:
+    elif swc_tree.node_count() > 1:
         print("[Warning:  ] More than one swc tree detected. Only the first one will be used")
 
-    bintree_root = swctree_to_binarytree(swctree_rootlist[0])
+    bintree_root = swctree_to_binarytree(swc_tree.root())
     re_arrange(bintree_root)
     calculate_trajectories(bin_root=bintree_root,
-                           thresholds=EuclideanPoint(1.2,0,0),
+                           thresholds=EuclideanPoint([1.2,0,0]),
                            z_in_path_dist=True)
 
-    bintree_root = remove_continuations(swc_root=swctree_rootlist[0],
+    bintree_root = remove_continuations(swc_root=swc_tree.root(),
                                         bin_root=bintree_root,
                                         calc_path_dist=True,
                                         z_in_path_dist=True)
@@ -366,8 +372,3 @@ def convert_path_to_binarytree(swc_file_paths):
         for file in os.listdir(swc_file_paths):
             bintree_root_list += convert_path_to_binarytree(swc_file_paths=os.path.join(swc_file_paths, file))
     return bintree_root_list
-
-if __name__ == "__main__":
-    import sys
-    print(sys.path)
-    convert_path_to_binarytree("..\..\\test")
