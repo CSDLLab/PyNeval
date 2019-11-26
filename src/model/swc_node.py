@@ -1,7 +1,10 @@
 # bennieHan 2019-11-12 16:01
 # all right reserved
 import math
+import queue
 from anytree import NodeMixin, iterators, RenderTree
+from src.model.euclidean_point import EuclideanPoint
+
 _3D = "3d"
 _2D = "2d"
 
@@ -153,8 +156,9 @@ class SwcNode(NodeMixin):
           tn : the target node for distance measurement
         """
         if tn is None:
-            return None
-
+            return 0.0
+        if type(tn) == type([]):
+            tn = SwcNode(nid=1,center=tn)
         if tn and self.is_regular() and tn.is_regular():
             dx = self._pos[0] - tn._pos[0]
             dy = self._pos[1] - tn._pos[1]
@@ -325,48 +329,46 @@ class SwcTree:
     def radius(self, nid):
         return self.node(nid).radius()
 
+    def get_total_lengh(self, DEBUG=False):
+        stack = queue.LifoQueue()
+        total_length = 0.0
+        stack.put(self.root())
+        while not stack.empty():
+            node = stack.get()
+            if DEBUG:
+                print("nodeID = {}, parent = {}, distance = {}".format(node._id, node.parent, node.parent_distance()))
+            if node.is_regular():
+                total_length += node.parent_distance()
+
+            son = list(node.children)
+            for item in son:
+                stack.put(item)
+        return total_length
+
+    def align_roots(self, gold_tree, DEBUG = False):
+        offset = EuclideanPoint()
+        stack = queue.LifoQueue()
+        test_root = list(self.root().children)[0]
+        gold_root = list(gold_tree.root().children)[0]
+
+        offset._pos[0] = gold_root._pos[0] - test_root._pos[0]
+        offset._pos[1] = gold_root._pos[1] - test_root._pos[1]
+        offset._pos[2] = gold_root._pos[2] - test_root._pos[2]
+        if DEBUG:
+            print("off_set:x = {}, y = {}, z = {}".format(offset._pos[0], offset._pos[1], offset._pos[2]))
+
+        stack.put(test_root)
+        while not stack.empty():
+            node = stack.get()
+            node._pos[0] += offset._pos[0]
+            node._pos[1] += offset._pos[1]
+            node._pos[2] += offset._pos[2]
+
+            for son in node.children:
+                stack.put(son)
 
 if __name__ == '__main__':
     print('testing ...')
 
-    tn1 = SwcNode(nid=1, radius=1, center=[0, 0, 0])
-    tn2 = SwcNode(nid=1, radius=1, center=[0, 0, 2], parent=tn1)
-    print(compute_two_node_area(tn1, tn2, 0.5))
-    print(compute_surface_area(tn1, 2.0))
-
-    tn = Make_Virtual()
-    print(tn.get_id())
-    print(tn.get_parent_id())
-    print("children:{}".format(tn.children))
-    print(list(tn.children))
-
-    tn1 = SwcNode(nid=1, parent=tn)
-    print(tn1.get_parent_id())
-    print(tn.children)
-
     swc = SwcTree()
     swc.load('D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc')
-    swc._print()
-    swc.save('D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc')
-    print(swc.node_count(False))
-
-    print(swc.root())
-    tn = swc.node_from_id(2)
-    print(tn)
-    print(swc.has_regular_node())
-    #     print(swc.max_id())
-    print(swc.node_count())
-    print(tn.parent_distance())
-    swc.scale(2, 2, 2)
-    print(tn.parent_distance())
-    # #     swc.save('/Users/zhaot/Work/neutube/neurolabi/data/test.swc')
-    print(swc.length())
-
-    #     print(swc.compute_surface_area(tn, 2))
-
-    swc.clear()
-    swc._print()
-
-    tn = SwcNode(nid=1, radius=1, parent=swc.root())
-    swc._print()
-#     print(swc.compute_surface_area(tn, 2))

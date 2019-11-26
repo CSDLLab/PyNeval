@@ -12,6 +12,7 @@ WEIGHT_PATH_LENGTH = 4
 WEIGHT_UNIFORM = 5
 
 matches = {}
+remove_spur = 0
 
 def remove_spurs(bin_root, threshold):
     spur_set = set()
@@ -105,10 +106,11 @@ def generate_node_weights(bin_root, spur_set):
                 print("-----------")
 
 def diadem_reconstruction(bin_gold_root, bin_test_root):
-    #spur_set = remove_spurs(bin_gold_root,1.0)
-    # for item in spur_set:
-    #     print(item.data._id)
-    generate_node_weights(bin_gold_root, set())
+    spur_set = set()
+    if remove_spur > 0:
+        spur_set = remove_spurs(bin_gold_root,1.0)
+
+    generate_node_weights(bin_gold_root, spur_set)
 
     return 0
 
