@@ -20,6 +20,8 @@ def check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict):
                 test_son_node = id_center_dict[tuple(get_kdtree_data(sn))]
                 for tsn in test_son_node:
                     if tuple([tpn, tsn]) in edge_set:
+                        edge_set.remove(tuple([tpn, tsn]))
+                        edge_set.remove(tuple([tsn, tpn]))
                         return True
     return False
 
@@ -29,6 +31,7 @@ def length_metric_2(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
     id_center_dict = {}
     center_list = []
     edge_set = set()
+    global dis_threshold
 
     for node in test_swc_list:
         if tuple(node._pos) not in id_center_dict.keys():
@@ -60,30 +63,40 @@ def length_metric_2(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
         if DEBUG:
             print("knn of gold = {}".format(gold_node_knn))
         for son in gold_node.children:
-            son_node_knn = test_kdtree.search_knn(gold_node._pos, K_NN)
+            son_node_knn = test_kdtree.search_knn(son._pos, K_NN)
             match = check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict)
             if match:
                 match_lenth += son.parent_distance()
 
-    total_length = gold_swc_tree.get_total_lengh()
+    total_length = gold_swc_tree.length()
 
     print("match length = {}, total_length = {}".format(match_lenth, total_length))
     return match_lenth/total_length
 
 
 def length_metric_1(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
-    gold_total_length = gold_swc_tree.get_total_lengh()
-    test_total_length = test_swc_tree.get_total_lengh()
+    gold_total_length = gold_swc_tree.length()
+    test_total_length = test_swc_tree.length()
 
     if DEBUG:
         print("gold_total_length = {}, test_total_length = {}"
               .format(gold_total_length, test_total_length))
     return 1 - test_total_length/gold_total_length
 
+def get_default_threshold(gold_swc_tree):
+    global dis_threshold
+    total_length = gold_swc_tree.length()
+    total_node = gold_swc_tree.node_count()
+    if total_node <= 1:
+        dis_threshold = 0.1
+    else:
+        dis_threshold = (total_length/total_node)/10
 
 if __name__ == "__main__":
     goldtree = SwcTree()
     goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc")
+    get_default_threshold(goldtree)
+
     testTree = SwcTree()
     testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\ExampleTest.swc")
     testTree.align_roots(goldtree)
