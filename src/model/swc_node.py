@@ -207,6 +207,8 @@ class SwcTree:
 
     def __init__(self):
         self._root = Make_Virtual()
+        self._size = None
+        self._total_length = None
 
     def _print(self):
         print(RenderTree(self._root).by_attr("_id"))
@@ -291,7 +293,10 @@ class SwcTree:
     #         nodes = self._tree.nodes()
     #         return max(nodes)
 
-    def node_count(self, regular=True):
+    def node_count(self, regular=True, force_update=False):
+        if force_update == False and self._size is not None:
+            return self._size
+
         count = 0
         niter = iterators.PreOrderIter(self._root)
         for tn in niter:
@@ -318,7 +323,10 @@ class SwcTree:
         for tn in niter:
             tn.scale(sx, sy, sz, adjusting_radius)
 
-    def length(self):
+    def length(self, force_update=False):
+        if self._total_length is not None and force_update == False:
+            return self._total_length
+
         niter = iterators.PreOrderIter(self._root)
         result = 0
         for tn in niter:
@@ -328,22 +336,6 @@ class SwcTree:
 
     def radius(self, nid):
         return self.node(nid).radius()
-
-    def get_total_lengh(self, DEBUG=False):
-        stack = queue.LifoQueue()
-        total_length = 0.0
-        stack.put(self.root())
-        while not stack.empty():
-            node = stack.get()
-            if DEBUG:
-                print("nodeID = {}, parent = {}, distance = {}".format(node._id, node.parent, node.parent_distance()))
-            if node.is_regular():
-                total_length += node.parent_distance()
-
-            son = list(node.children)
-            for item in son:
-                stack.put(item)
-        return total_length
 
     def align_roots(self, gold_tree, DEBUG = False):
         offset = EuclideanPoint()
