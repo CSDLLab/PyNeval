@@ -337,16 +337,7 @@ def remove_continuations(swc_root, bin_root, calc_path_dist,z_in_path_dist):
                     calculate_path_data(node.right_son, z_in_path_dist)
     return res_root
 
-def convert_to_binarytree(swc_file_path):
-    swc_tree = SwcTree()
-    swc_tree.load(swc_file_path)
-
-    if swc_tree.node_count() == 0:
-        raise Exception("[Error:  read file Error]" + "read " + swc_file_path + " fail. Maybe file has been broken")
-        return None
-    elif swc_tree.node_count() > 1:
-        print("[Warning:  ] More than one swc tree detected. Only the first one will be used")
-
+def convert_to_binarytree(swc_tree):
     bintree_root = swctree_to_binarytree(swc_tree.root())
     re_arrange(bintree_root)
     calculate_trajectories(bin_root=bintree_root,
@@ -359,16 +350,3 @@ def convert_to_binarytree(swc_file_path):
                                         z_in_path_dist=True)
     test_print_bin_tree(bintree_root)
     return bintree_root
-
-# if path is a fold
-def convert_path_to_binarytree(swc_file_paths):
-    bintree_root_list = []
-    if os.path.isfile(swc_file_paths):
-        if not (swc_file_paths[-4:] == ".swc" or swc_file_paths[-4:] == ".SWC"):
-            print(swc_file_paths + "is not a tif file")
-            return None
-        bintree_root_list.append(convert_to_binarytree(swc_file_paths))
-    elif os.path.isdir(swc_file_paths):
-        for file in os.listdir(swc_file_paths):
-            bintree_root_list += convert_path_to_binarytree(swc_file_paths=os.path.join(swc_file_paths, file))
-    return bintree_root_list

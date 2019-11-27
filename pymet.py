@@ -1,7 +1,10 @@
 import argparse
 import sys,os
-from src.model.binary_node import convert_path_to_binarytree
+from src.model.binary_node import convert_to_binarytree
+from src.io.read_swc import read_swc_trees
+from src.io.read_json import read_json
 from src.metirc.diadem_metric import diadem_reconstruction
+from src.metirc.length_metric import length_metric
 
 def read_parameters():
     parser = argparse.ArgumentParser(
@@ -22,40 +25,65 @@ def read_parameters():
         required=True
     )
     parser.add_argument(
+        "--metric",
+        "-M",
+        help="choose a metric method",
+        required=True
+    )
+    parser.add_argument(
         "--output",
         "-O",
         help="the route of the output file.\nif not specified, output to screen",
         required=False
     )
+    parser.add_argument(
+        "--config",
+        "-C",
+        help="special config for different metric method",
+        required=True
+    )
     return parser.parse_args()
 
-def pymet():
+def pymet(DEBUG=False):
     abs_dir = os.path.abspath("")
     sys.path.append(abs_dir)
     sys.path.append(os.path.join(abs_dir,"src"))
     sys.path.append(os.path.join(abs_dir,"test"))
 
-    # args = read_parameters()
+    args = read_parameters()
 
-    # test_swc_file = args.test
-    # gold_swc_file = args.gold
-    test_swc_file = "test/data_example/test"
-    gold_swc_file = "test/data_example/gold"
-    # output_dest = args.output
+    test_swc_files = args.test
+    gold_swc_file = args.gold
+    print(gold_swc_file)
+    # test_swc_file = "test/data_example/test"
+    # gold_swc_file = "test/data_example/gold"
+    metric  = args.metric
+    output_dest = args.output
+    config = args.config
 
-    test_swc_treeroots = convert_path_to_binarytree(test_swc_file)
-    gold_swc_treeroots = convert_path_to_binarytree(gold_swc_file)
 
-    print("There are {} test image(s) and {} gold image(s)".format(len(test_swc_treeroots), len(gold_swc_treeroots)))
-    if len(gold_swc_treeroots) == 0:
+    if DEBUG:
+        print(config)
+
+    test_swc_trees = []
+    for test_swc_file in test_swc_files:
+        test_swc_trees += read_swc_trees(test_swc_file)
+    gold_swc_trees = read_swc_trees(gold_swc_file)
+    config = read_json(config)
+
+    print("There are {} test image(s) and {} gold image(s)".format(len(test_swc_trees), len(gold_swc_trees)))
+    if len(gold_swc_trees) == 0:
         raise Exception("[Error:  ] No gold image detected")
-    if len(gold_swc_treeroots) > 1:
+    if len(gold_swc_trees) > 1:
         print("[Warning:  ] More than one gold image detected, only the first one will be used")
 
-    gold_swc_treeroot = gold_swc_treeroots[0]
-    for test_swc_treeroot in test_swc_treeroots:
-        print(test_swc_treeroots)
-        diadem_reconstruction(test_swc_treeroot, gold_swc_treeroot)
+    gold_swc_treeroot = gold_swc_trees[0]
+    for test_swc_treeroot in test_swc_trees:
+        if metric  == "diadem_metric" or metric  == "DM":
+            diadem_reconstruction(test_swc_treeroot, gold_swc_treeroot)
+        if metric  == "length_metric" or metric  == "LM":
+            result = length_metric(test_swc_treeroot, gold_swc_treeroot, config)
+            print(result)
 
 if __name__ == "__main__":
     pymet()
