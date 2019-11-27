@@ -1,9 +1,10 @@
 from anytree import PreOrderIter
 from src.model.swc_node import SwcTree,SwcNode
+from src.io.read_json import read_json
 import kdtree
 import queue
 import time
-
+import json
 K_NN = 3
 dis_threshold = 0.1
 
@@ -92,6 +93,26 @@ def get_default_threshold(gold_swc_tree):
     else:
         dis_threshold = (total_length/total_node)/10
 
+def length_metric(gold_swc_tree, test_swc_tree, config):
+    global dis_threshold
+    if "thereshold" not in config.keys() or config["thereshold"] == "default":
+        get_default_threshold(gold_swc_tree)
+    else:
+        try:
+            dis_threshold = float(config["thereshold"])
+            print(dis_threshold)
+        except:
+            raise Exception("[Error: ] Read config info threshold {}. suppose to be a float or \"default\"")
+
+    if config["method"] == 1:
+        return length_metric_1(gold_swc_tree, test_swc_tree)
+    elif config["method"] == 2:
+        return length_metric_2(gold_swc_tree, test_swc_tree)
+    else:
+        raise Exception("[Error: ] Read config info method {}. length metric only have 1 and 2 two methods")
+
+
+
 if __name__ == "__main__":
     goldtree = SwcTree()
     goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc")
@@ -101,5 +122,5 @@ if __name__ == "__main__":
     testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\ExampleTest.swc")
     testTree.align_roots(goldtree)
     start = time.time()
-    print(length_metric_2(test_swc_tree=testTree, gold_swc_tree=goldtree,DEBUG=False))
+    print(length_metric(test_swc_tree=testTree, gold_swc_tree=goldtree,config=read_json("D:\gitProject\mine\PyMets\\test\length_metric.json")))
     print(time.time() - start)
