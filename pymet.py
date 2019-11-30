@@ -54,7 +54,6 @@ def pymet(DEBUG=False):
 
     test_swc_files = args.test
     gold_swc_file = args.gold
-    print(gold_swc_file)
     # test_swc_file = "test/data_example/test"
     # gold_swc_file = "test/data_example/gold"
     metric  = args.metric
@@ -82,8 +81,10 @@ def pymet(DEBUG=False):
         if metric  == "diadem_metric" or metric  == "DM":
             diadem_reconstruction(test_swc_treeroot, gold_swc_treeroot)
         if metric  == "length_metric" or metric  == "LM":
-            result = length_metric(test_swc_treeroot, gold_swc_treeroot, config)
+            result = length_metric(gold_swc_treeroot, test_swc_treeroot, config)
             print(result)
 
 if __name__ == "__main__":
     pymet()
+
+# python ./pymet
