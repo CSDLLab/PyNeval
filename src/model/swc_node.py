@@ -7,6 +7,7 @@ from anytree import PreOrderIter
 import kdtree
 import math
 import queue
+import numpy as np
 
 dis_threshold = 0.1
 _3D = "3d"
@@ -341,21 +342,36 @@ class SwcTree:
     def radius(self, nid):
         return self.node(nid).radius()
 
-    def align_roots(self, gold_tree, DEBUG = False):
+    def align_roots(self, gold_tree, mode="average", DEBUG=False):
         offset = EuclideanPoint()
         stack = queue.LifoQueue()
-        test_root = list(self.root().children)[0]
-        gold_root = list(gold_tree.root().children)[0]
+        gold_anchor = np.zeros(3)
+        test_anchor = np.zeros(3)
+        if mode == "average":
+            gold_tree_list = [node for node in PreOrderIter(gold_tree.root())]
+            test_tree_list = [node for node in PreOrderIter(self.root())]
+            for node in gold_tree_list:
+                gold_anchor += np.array(node._pos)
+            for node in test_tree_list:
+                test_anchor += np.array(node._pos)
+            gold_anchor /= len(gold_tree_list) - 1
+            test_anchor /= len(test_tree_list) - 1
+        elif mode == "root":
+            test_anchor = list(self.root().children)[0]
+            gold_anchor = list(gold_tree.root().children)[0]
 
-        offset._pos[0] = gold_root._pos[0] - test_root._pos[0]
-        offset._pos[1] = gold_root._pos[1] - test_root._pos[1]
-        offset._pos[2] = gold_root._pos[2] - test_root._pos[2]
+        offset._pos[0] = gold_anchor[0] - test_anchor[0]
+        offset._pos[1] = gold_anchor[1] - test_anchor[1]
+        offset._pos[2] = gold_anchor[2] - test_anchor[2]
         if DEBUG:
             print("off_set:x = {}, y = {}, z = {}".format(offset._pos[0], offset._pos[1], offset._pos[2]))
 
-        stack.put(test_root)
+        stack.put(self.root().children[0])
         while not stack.empty():
             node = stack.get()
+            if node.is_virtual():
+                continue
+
             node._pos[0] += offset._pos[0]
             node._pos[1] += offset._pos[1]
             node._pos[2] += offset._pos[2]
@@ -395,12 +411,16 @@ def check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict):
 def get_match_edges(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
     match_edge = {}
     test_swc_list = [node for node in PreOrderIter(test_swc_tree.root())]
+    if DEBUG:
+        for item in test_swc_list:
+            print("---{} {}".format(item.get_id(), item._pos))
     id_center_dict = {}
     center_list = []
     edge_set = set()
     global dis_threshold
-
     for node in test_swc_list:
+        if node.is_virtual():
+            continue
         if tuple(node._pos) not in id_center_dict.keys():
             id_center_dict[tuple(node._pos)] = []
         id_center_dict[tuple(node._pos)].append(node)
@@ -410,7 +430,6 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
             edge_set.add(tuple([son, node]))
 
     test_kdtree = kdtree.create(center_list)
-    match_lenth = 0.0
 
     stack = queue.LifoQueue()
     stack.put(gold_swc_tree.root())
@@ -431,6 +450,8 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
             print("knn of gold = {}".format(gold_node_knn))
         for son in gold_node.children:
             son_node_knn = test_kdtree.search_knn(son._pos, knn)
+            if DEBUG:
+                print("son of gold = {}".format(son_node_knn))
             match = check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict)
             if match is not None:
                 match_edge[tuple([gold_node, son])] = match
