@@ -7,6 +7,12 @@ def length_metric_2(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
                                  test_swc_tree=test_swc_tree,
                                  knn=knn,
                                  DEBUG=DEBUG)
+    for ele in match_edge.keys():
+        tes = match_edge[ele]
+        if DEBUG:
+            print("gold:{},{}".format(ele[0].get_id(), ele[1].get_id()))
+            print("test:{},{}".format(tes[0].get_id(), tes[1].get_id()))
+
     match_lenth = 0.0
     for gold_edge in match_edge.keys():
         son_node = gold_edge[1]
@@ -59,12 +65,12 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
 
 if __name__ == "__main__":
     goldtree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\gold.swc")
     get_default_threshold(goldtree)
 
     testTree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\ExampleTest.swc")
-    testTree.align_roots(goldtree)
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\test.swc")
+    testTree.align_roots(goldtree,mode="average",DEBUG=True)
     start = time.time()
     print(length_metric(test_swc_tree=testTree, gold_swc_tree=goldtree,config=read_json("D:\gitProject\mine\PyMets\\test\length_metric.json")))
     print(time.time() - start)
