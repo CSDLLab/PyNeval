@@ -1,0 +1,2 @@
+libspatialindex>=1.85
+rtree>=0.91
