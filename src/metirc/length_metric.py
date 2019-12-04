@@ -1,27 +1,21 @@
-from src.model.swc_node import SwcTree,get_match_edges,get_default_threshold
+from anytree import NodeMixin, iterators, RenderTree, PreOrderIter
+from src.model.euclidean_point import EuclideanPoint,Line
+from src.model.swc_node import SwcTree,get_match_edges_e,get_default_threshold,dis_threshold
 from src.io.read_json import read_json
 import time
 
+
 def length_metric_2(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
-    match_edge = get_match_edges(gold_swc_tree=gold_swc_tree,
-                                 test_swc_tree=test_swc_tree,
-                                 knn=knn,
-                                 DEBUG=DEBUG)
-    for ele in match_edge.keys():
-        tes = match_edge[ele]
-        if DEBUG:
-            print("gold:{},{}".format(ele[0].get_id(), ele[1].get_id()))
-            print("test:{},{}".format(tes[0].get_id(), tes[1].get_id()))
+    match_edges = get_match_edges_e(gold_swc_tree, test_swc_tree)
+    match_length = 0.0
+    for line_tuple in match_edges:
+        match_length += line_tuple[0].parent_distance()
 
-    match_lenth = 0.0
-    for gold_edge in match_edge.keys():
-        son_node = gold_edge[1]
-        match_lenth += son_node.parent_distance()
-
-    total_length = gold_swc_tree.length()
-
-    print("match length = {}, total_length = {}".format(match_lenth, total_length))
-    return match_lenth/total_length
+    gold_total_length = gold_swc_tree.length()
+    if DEBUG:
+        print("match_length = {}, gold_total_length = {}"
+              .format(match_length, gold_total_length))
+    return match_length/gold_total_length
 
 
 def length_metric_1(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
@@ -65,12 +59,12 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
 
 if __name__ == "__main__":
     goldtree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\gold.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc")
     get_default_threshold(goldtree)
 
     testTree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\test.swc")
-    testTree.align_roots(goldtree,mode="average",DEBUG=True)
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\ExampleTest.swc")
+    # testTree.align_roots(goldtree,mode="average",DEBUG=True)
     start = time.time()
     print(length_metric(test_swc_tree=testTree, gold_swc_tree=goldtree,config=read_json("D:\gitProject\mine\PyMets\\test\length_metric.json")))
     print(time.time() - start)

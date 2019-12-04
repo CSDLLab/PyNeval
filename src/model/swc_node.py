@@ -2,8 +2,9 @@
 # all right reserved
 
 from anytree import NodeMixin, iterators, RenderTree
-from src.model.euclidean_point import EuclideanPoint
+from src.model.euclidean_point import EuclideanPoint,Line
 from anytree import PreOrderIter
+from rtree import index
 import kdtree
 import math
 import queue
@@ -360,9 +361,7 @@ class SwcTree:
             test_anchor = list(self.root().children)[0]
             gold_anchor = list(gold_tree.root().children)[0]
 
-        offset._pos[0] = gold_anchor[0] - test_anchor[0]
-        offset._pos[1] = gold_anchor[1] - test_anchor[1]
-        offset._pos[2] = gold_anchor[2] - test_anchor[2]
+        offset._pos = (gold_anchor - test_anchor).tolist()
         if DEBUG:
             print("off_set:x = {}, y = {}, z = {}".format(offset._pos[0], offset._pos[1], offset._pos[2]))
 
@@ -408,7 +407,71 @@ def check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict):
     return None
 
 
-def get_match_edges(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
+def get_bounds(point_a, point_b):
+    point_a = np.array(point_a._pos)
+    point_b = np.array(point_b._pos)
+    res = np.where(point_a>point_b,point_b,point_a).tolist() + np.where(point_a>point_b,point_a,point_b).tolist()
+    return tuple(res)
+
+
+def get_idedge_dict(swc_tree=None):
+    id_edge_dict = {}
+    swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
+    for node in swc_tree_list:
+        if node.is_virtual() or node.parent.is_virtual():
+            continue
+        id_edge_dict[node.get_id()] = tuple([node, node.parent])
+    return id_edge_dict
+
+
+def get_edge_rtree(swc_tree=None):
+    swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
+    p = index.Property()
+    p.dimension = 3
+    idx3d = index.Index(properties=p)
+    for node in swc_tree_list:
+        if node.is_virtual() or node.parent.is_virtual():
+            continue
+        if node.get_id() == 7:
+            print("---")
+        idx3d.insert(node.get_id(), get_bounds(node, node.parent))
+    return idx3d
+
+
+def get_nearest_edge(idx3d, point,id_edge_dict):
+    nearest_line_id = list(idx3d.nearest(get_bounds(point,point)))[0]
+    line_tuple = id_edge_dict[nearest_line_id]
+    line = Line(coords=[line_tuple[0]._pos, line_tuple[1]._pos], is_segment=True)
+    print("point = {}, line_a = {}, line_b = {}".format(point._pos, line.coords[0], line.coords[1]))
+    dis = point.distance(line)
+    return line_tuple, dis
+
+
+def get_match_edges_e(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
+    match_edge = set()
+    idx3d = get_edge_rtree(test_swc_tree)
+    id_edge_dict = get_idedge_dict(test_swc_tree)
+    gold_node_list = [node for node in PreOrderIter(gold_swc_tree.root())]
+    global dis_threshold
+
+    for node in gold_node_list:
+        if node.is_virtual() or node.parent.is_virtual():
+            continue
+
+        e_node = EuclideanPoint(node._pos)
+        e_parent = EuclideanPoint(node.parent._pos)
+        if node.get_id() == 7:
+            print("---")
+        line_tuple_a, dis_a = get_nearest_edge(idx3d, e_node, id_edge_dict)
+        line_tuple_b, dis_b = get_nearest_edge(idx3d, e_parent, id_edge_dict)
+
+        print(node.get_id(), node.parent.get_id(), dis_a, dis_b)
+        if dis_a <= dis_threshold and dis_b <= dis_threshold:
+            match_edge.add(tuple([node,node.parent]))
+    return match_edge
+
+
+def get_match_edges_p(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
     match_edge = {}
     test_swc_list = [node for node in PreOrderIter(test_swc_tree.root())]
     if DEBUG:
@@ -460,6 +523,6 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
 
 if __name__ == '__main__':
     print('testing ...')
-
-    swc = SwcTree()
-    swc.load('D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc')
+    pa = EuclideanPoint([2,4,6])
+    pb = EuclideanPoint([5,3,1])
+    print(get_bounds(pa,pb))

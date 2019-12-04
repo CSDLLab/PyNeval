@@ -3,7 +3,7 @@ import math
 
 class EuclideanPoint(object):
     def __init__(self,
-                 center=None):
+                 center=[0,0,0]):
         self._pos=center
 
     def get_foot_point(self, line):
