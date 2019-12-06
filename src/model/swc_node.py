@@ -100,6 +100,7 @@ class SwcNode(NodeMixin):
                  radius=1,
                  center=[0, 0, 0],
                  parent=None,
+                 depth=0,
 
                  surface_area=0.0,
                  volume=0.0,
@@ -118,6 +119,7 @@ class SwcNode(NodeMixin):
         self._radius = radius
         self.surface_area = surface_area
         self.volume = volume
+        self._depth = depth
 
         self.parent_trajectory=parent_trajectory
         self.left_trajectory=left_trajectory
@@ -143,6 +145,9 @@ class SwcNode(NodeMixin):
         """Returns True iff the node is virtual.
         """
         return self._id < 0
+
+    def depth(self):
+        return self._depth
 
     def is_regular(self):
         """Returns True iff the node is NOT virtual.
@@ -216,6 +221,10 @@ class SwcTree:
         self._size = None
         self._total_length = None
 
+        self.depth_array = None
+        self.LOG_NODE_NUM=None
+        self.lca_parent=None
+
     def _print(self):
         print(RenderTree(self._root).by_attr("_id"))
 
@@ -278,10 +287,12 @@ class SwcTree:
                 parentId = value[1]
                 if parentId == -1:
                     tn.parent = self._root
+                    tn._depth = 0
                 else:
                     parentNode = nodeDict.get(parentId)
                     if parentNode:
                         tn.parent = parentNode[0]
+                        tn._depth = tn.parent._depth+1
 
     def save(self, path):
         with open(path, 'w') as fp:
@@ -293,11 +304,6 @@ class SwcTree:
 
     def has_regular_node(self):
         return len(self.regular_root()) > 0
-
-    #     def max_id(self):
-    #         for node in
-    #         nodes = self._tree.nodes()
-    #         return max(nodes)
 
     def node_count(self, regular=True, force_update=False):
         if force_update == False and self._size is not None:
@@ -342,6 +348,47 @@ class SwcTree:
 
     def radius(self, nid):
         return self.node(nid).radius()
+
+    def get_depth_array(self):
+        self.depth_array = [0] * (self.node_count()+10)
+        for node in PreOrderIter(self.root()):
+            self.depth_array[node.get_id()] = node.depth()
+
+    def get_lca_preprocess(self):
+        self.get_depth_array()
+        self.LOG_NODE_NUM = math.ceil(math.log(self.node_count(), 2))
+        self.lca_parent = np.zeros(shape=(self.node_count()+10, self.LOG_NODE_NUM),dtype=int)
+        tree_node_list = [node for node in PreOrderIter(self.root())]
+
+        for node in tree_node_list:
+            if node.is_virtual():
+                continue
+            self.lca_parent[node.get_id()][0] = node.parent.get_id()
+        for k in range(self.LOG_NODE_NUM - 1):
+            for v in range(1,self.node_count()):
+                if self.lca_parent[v][k] < 0:
+                    self.lca_parent[v][k + 1] = -1
+                else:
+                    self.lca_parent[v][k + 1] = self.lca_parent[int(self.lca_parent[v][k])][k]
+        return True
+
+    def get_lca(self, u, v):
+        lca_parent = self.lca_parent
+        LOG_NODE_NUM = self.LOG_NODE_NUM
+        depth_array = self.depth_array
+
+        if depth_array[u] > depth_array[v]:
+            u,v = v,u
+        for k in range(LOG_NODE_NUM):
+            if depth_array[v] - depth_array[u] >> k & 1:
+                v = lca_parent[v][k]
+        if u == v:
+            return u
+        for k in range(LOG_NODE_NUM -1,-1,-1):
+            if lca_parent[u][k] != lca_parent[v][k]:
+                u = lca_parent[u][k]
+                v = lca_parent[v][k]
+        return lca_parent[u][0]
 
     def align_roots(self, gold_tree, mode="average", DEBUG=False):
         offset = EuclideanPoint()
@@ -389,24 +436,6 @@ def get_default_threshold(gold_swc_tree):
         dis_threshold = (total_length/total_node)/10
 
 
-def get_kdtree_data(kd_node):
-    return kd_node[0].data
-
-
-def check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict):
-    for pa in gold_node_knn:
-        test_pa_node = id_center_dict[tuple(get_kdtree_data(pa))]
-        for tpn in test_pa_node:
-            for sn in son_node_knn:
-                test_son_node = id_center_dict[tuple(get_kdtree_data(sn))]
-                for tsn in test_son_node:
-                    if tuple([tpn, tsn]) in edge_set:
-                        edge_set.remove(tuple([tpn, tsn]))
-                        edge_set.remove(tuple([tsn, tpn]))
-                        return tuple([tpn, tsn])
-    return None
-
-
 def get_bounds(point_a, point_b):
     point_a = np.array(point_a._pos)
     point_b = np.array(point_b._pos)
@@ -442,7 +471,7 @@ def get_nearest_edge(idx3d, point,id_edge_dict):
     nearest_line_id = list(idx3d.nearest(get_bounds(point,point)))[0]
     line_tuple = id_edge_dict[nearest_line_id]
     line = Line(coords=[line_tuple[0]._pos, line_tuple[1]._pos], is_segment=True)
-    print("point = {}, line_a = {}, line_b = {}".format(point._pos, line.coords[0], line.coords[1]))
+    # print("point = {}, line_a = {}, line_b = {}".format(point._pos, line.coords[0], line.coords[1]))
     dis = point.distance(line)
     return line_tuple, dis
 
@@ -460,15 +489,32 @@ def get_match_edges_e(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
 
         e_node = EuclideanPoint(node._pos)
         e_parent = EuclideanPoint(node.parent._pos)
-        if node.get_id() == 7:
-            print("---")
+
         line_tuple_a, dis_a = get_nearest_edge(idx3d, e_node, id_edge_dict)
         line_tuple_b, dis_b = get_nearest_edge(idx3d, e_parent, id_edge_dict)
 
-        print(node.get_id(), node.parent.get_id(), dis_a, dis_b)
+        # get_max_dis(test_swc_tree, line_tuple_a, line_tuple_b, Line([e_node._pos, e_parent._pos]))
         if dis_a <= dis_threshold and dis_b <= dis_threshold:
             match_edge.add(tuple([node,node.parent]))
     return match_edge
+
+
+def get_kdtree_data(kd_node):
+    return kd_node[0].data
+
+
+def check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict):
+    for pa in gold_node_knn:
+        test_pa_node = id_center_dict[tuple(get_kdtree_data(pa))]
+        for tpn in test_pa_node:
+            for sn in son_node_knn:
+                test_son_node = id_center_dict[tuple(get_kdtree_data(sn))]
+                for tsn in test_son_node:
+                    if tuple([tpn, tsn]) in edge_set:
+                        edge_set.remove(tuple([tpn, tsn]))
+                        edge_set.remove(tuple([tsn, tpn]))
+                        return tuple([tpn, tsn])
+    return None
 
 
 def get_match_edges_p(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
@@ -521,8 +567,31 @@ def get_match_edges_p(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False
 
     return match_edge
 
+
+def get_route_node(current_node, lca_id):
+    res_list = []
+    while not current_node.is_virtual() and not current_node.get_id() == lca_id:
+        res_list.append(current_node)
+    if current_node.is_virtual():
+        raise Exception("[Error: ] something wrong in LCA process")
+    res_list.append(current_node)
+    return res_list
+
+
+def get_max_dis(gold_swc_tree, gold_line_a, gold_line_b, test_line):
+    gold_swc_tree.get_lca_preprocess()
+    lca_id = gold_swc_tree.get_lca(gold_line_a[0].get_id(), gold_line_b[0].get_id())
+    route_list = []
+    route_list += get_route_node(gold_line_a[0], lca_id)
+    route_list += get_route_node(gold_line_b[0], lca_id)
+    # root节点可能有问题
+    for node in route_list:
+        print(node.get_id())
+
+
 if __name__ == '__main__':
     print('testing ...')
-    pa = EuclideanPoint([2,4,6])
-    pb = EuclideanPoint([5,3,1])
-    print(get_bounds(pa,pb))
+    tree = SwcTree()
+    tree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\gold.swc")
+    tree.get_lca_preprocess()
+    print(tree.get_lca(2,6))
