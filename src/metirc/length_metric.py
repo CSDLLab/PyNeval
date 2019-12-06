@@ -5,7 +5,7 @@ from src.io.read_json import read_json
 import time
 
 
-def length_metric_2(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
+def length_metric_2(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
     match_edges = get_match_edges_e(gold_swc_tree, test_swc_tree)
     match_length = 0.0
     for line_tuple in match_edges:
@@ -50,7 +50,6 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
     elif config["method"] == 2:
         return length_metric_2(gold_swc_tree=gold_swc_tree,
                                test_swc_tree=test_swc_tree,
-                               knn=knn,
                                DEBUG=False)
     else:
         raise Exception("[Error: ] Read config info method {}. length metric only have 1 and 2 two methods")
@@ -59,12 +58,13 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
 
 if __name__ == "__main__":
     goldtree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\gold.swc")
     get_default_threshold(goldtree)
 
     testTree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\ExampleTest.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\test.swc")
     # testTree.align_roots(goldtree,mode="average",DEBUG=True)
     start = time.time()
-    print(length_metric(test_swc_tree=testTree, gold_swc_tree=goldtree,config=read_json("D:\gitProject\mine\PyMets\\test\length_metric.json")))
+    # print(length_metric(test_swc_tree=testTree, gold_swc_tree=goldtree,config=read_json("D:\gitProject\mine\PyMets\\test\length_metric.json")))
+    print(length_metric(test_swc_tree=goldtree, gold_swc_tree=testTree,config=read_json("D:\gitProject\mine\PyMets\\test\length_metric.json")))
     print(time.time() - start)

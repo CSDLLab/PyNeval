@@ -15,3 +15,6 @@ def read_swc_trees(swc_file_paths):
         for file in os.listdir(swc_file_paths):
             swc_tree_list += read_swc_trees(swc_file_paths=os.path.join(swc_file_paths, file))
     return swc_tree_list
+
+if __name__ == "__main__":
+    pass
