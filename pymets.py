@@ -44,7 +44,7 @@ def read_parameters():
     )
     return parser.parse_args()
 
-def pymet(DEBUG=False):
+def pymets(DEBUG=False):
     abs_dir = os.path.abspath("")
     sys.path.append(abs_dir)
     sys.path.append(os.path.join(abs_dir,"src"))
@@ -85,6 +85,6 @@ def pymet(DEBUG=False):
             print(result)
 
 if __name__ == "__main__":
-    pymet()
+    pymets()
 
-# python ./pymet
+# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\34_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric length_metric --config D:\gitProject\mine\PyMets\test\length_metric.json
