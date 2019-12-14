@@ -1,7 +1,10 @@
 import queue
 import kdtree
 from anytree import PreOrderIter
+from src.model.swc_node import SwcTree
+from src.metirc.utils.config_utils import get_default_threshold,dis_threshold
 
+# for length metric (unused)
 def get_kdtree_data(kd_node):
     return kd_node[0].data
 
@@ -20,28 +23,45 @@ def check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict):
     return None
 
 
-def get_match_edges_p(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
-    match_edge = {}
-    test_swc_list = [node for node in PreOrderIter(test_swc_tree.root())]
-    if DEBUG:
-        for item in test_swc_list:
-            print("---{} {}".format(item.get_id(), item._pos))
+def convert_bin_to_kdtree(tree_node_list):
     id_center_dict = {}
     center_list = []
     edge_set = set()
-    global dis_threshold
-    for node in test_swc_list:
+
+    for node in tree_node_list:
         if node.is_virtual():
             continue
         if tuple(node._pos) not in id_center_dict.keys():
             id_center_dict[tuple(node._pos)] = []
         id_center_dict[tuple(node._pos)].append(node)
-        center_list.append(node._pos)
-        for son in node.children:
-            edge_set.add(tuple([node, son]))
-            edge_set.add(tuple([son, node]))
 
-    test_kdtree = kdtree.create(center_list)
+        edge_set.add(tuple([node, node.parent]))
+        edge_set.add(tuple([node.parent, node]))
+
+        center_list.append(node._pos)
+    my_kdtree = kdtree.create(center_list)
+    return my_kdtree, id_center_dict, edge_set
+
+
+def search_knn(kdtree, id_center_dict, gold_node, knn_num):
+    knn_pos = kdtree.search_knn(gold_node._pos, knn_num)
+    knn_node = []
+    for poses in knn_pos:
+        node_list = id_center_dict[tuple(poses)]
+        for node in node_list:
+            knn_node.append(node)
+    return knn_node[:knn_num]
+
+
+def get_match_edges_p(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
+    match_edge = {}
+    test_swc_list = [node for node in PreOrderIter(test_swc_tree.root())]
+
+    if DEBUG:
+        for item in test_swc_list:
+            print("---{} {}".format(item.get_id(), item._pos))
+
+    test_kdtree, id_center_dict, edge_set = convert_bin_to_kdtree(test_swc_list)
 
     stack = queue.LifoQueue()
     stack.put(gold_swc_tree.root())
@@ -67,5 +87,18 @@ def get_match_edges_p(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False
             match = check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict)
             if match is not None:
                 match_edge[tuple([gold_node, son])] = match
-
+    if DEBUG:
+        print(len(match_edge))
     return match_edge
+
+# for diadem metric
+# def find
+if __name__ == "__main__":
+    goldtree = SwcTree()
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\ExampleGoldStandard.swc")
+    get_default_threshold(goldtree)
+
+    testTree = SwcTree()
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
+
+    get_match_edges_p(goldtree, testTree, 3, True)

@@ -55,6 +55,11 @@ class BinaryNode(NodeMixin):
             return True
         return False
 
+    def is_left(self):
+        if self.get_side() == LEFT:
+            return True
+        return False
+
     def get_side(self):
         if self.is_root():
             return DEFULT
@@ -74,6 +79,28 @@ class BinaryNode(NodeMixin):
             return True
         return False
 
+    def to_str(self):
+        print("id = {}, pos = {}".format(self.data.get_id(), self.data._pos))
+        if self.left_son is not None:
+            print("left son".format(self.left_son.data.get_id()))
+        if self.left_son is not None:
+            print("right son".format(self.right_son.data.get_id()))
+        print("---------------------------")
+
+
+    def get_node_list(self):
+        node_list = list()
+        stack = queue.LifoQueue()
+        stack.put(self)
+
+        while not stack.empty():
+            node = stack.get()
+            node_list.append(node)
+            if node.has_children():
+                stack.put(node.left_son)
+                stack.put(node.right_son)
+        return node_list
+
 # recurrently convert a swcnode tree into a binary tree
 # input: root of a swcnode tree
 # return: root of a binary tree
@@ -85,7 +112,7 @@ def swctree_to_binarytree(node):
     son = list(node.children)
 
     for son_node in son:
-        print(type(son_node))
+        # print(type(son_node))
         binnary_node = swctree_to_binarytree(son_node)
         binnary_son_list.append(binnary_node)
 
@@ -348,5 +375,5 @@ def convert_to_binarytree(swc_tree):
                                         bin_root=bintree_root,
                                         calc_path_dist=True,
                                         z_in_path_dist=True)
-    test_print_bin_tree(bintree_root)
+    # test_print_bin_tree(bintree_root)
     return bintree_root

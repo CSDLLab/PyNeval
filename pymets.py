@@ -3,7 +3,7 @@ import sys,os
 from src.model.binary_node import convert_to_binarytree
 from src.io.read_swc import read_swc_trees
 from src.io.read_json import read_json
-from src.metirc.diadem_metric import diadem_reconstruction
+from src.metirc.diadem_metric import diadem_metric
 from src.metirc.length_metric import length_metric
 
 def read_parameters():
@@ -54,12 +54,10 @@ def pymets(DEBUG=False):
 
     test_swc_files = args.test
     gold_swc_file = args.gold
-    # test_swc_file = "test/data_example/test"
-    # gold_swc_file = "test/data_example/gold"
+
     metric  = args.metric
     output_dest = args.output
     config = args.config
-
 
     if DEBUG:
         print(config)
@@ -79,12 +77,11 @@ def pymets(DEBUG=False):
     gold_swc_treeroot = gold_swc_trees[0]
     for test_swc_treeroot in test_swc_trees:
         if metric  == "diadem_metric" or metric  == "DM":
-            diadem_reconstruction(test_swc_treeroot, gold_swc_treeroot)
+            diadem_metric(test_swc_treeroot, gold_swc_treeroot)
         if metric  == "length_metric" or metric  == "LM":
             result = length_metric(gold_swc_treeroot, test_swc_treeroot, config)
             print(result)
 
 if __name__ == "__main__":
     pymets()
-
 # python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\34_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric length_metric --config D:\gitProject\mine\PyMets\test\length_metric.json
