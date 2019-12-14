@@ -2,6 +2,7 @@ from src.model.euclidean_point import EuclideanPoint,Line
 from src.metirc.utils.config_utils import dis_threshold
 
 import numpy as np
+import math
 from anytree import PreOrderIter
 from rtree import index
 
@@ -60,14 +61,40 @@ def get_match_edges_e(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
         line_tuple_a, dis_a = get_nearest_edge(idx3d, e_node, id_edge_dict)
         line_tuple_b, dis_b = get_nearest_edge(idx3d, e_parent, id_edge_dict)
 
+        if dis_a <= dis_threshold and dis_b <= dis_threshold:
+            match_edge.add(tuple([node,node.parent]))
+    return match_edge
+
+
+#根据边找匹配
+def get_unmatch_edges_e(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
+    match_fail = set()
+    idx3d = get_edge_rtree(test_swc_tree)
+    id_edge_dict = get_idedge_dict(test_swc_tree)
+    gold_node_list = [node for node in PreOrderIter(gold_swc_tree.root())]
+
+    for node in gold_node_list:
+        if node.is_virtual() or node.parent.is_virtual():
+            continue
+
+        e_node = EuclideanPoint(node._pos)
+        e_parent = EuclideanPoint(node.parent._pos)
+
+        line_tuple_a, dis_a = get_nearest_edge(idx3d, e_node, id_edge_dict)
+        line_tuple_b, dis_b = get_nearest_edge(idx3d, e_parent, id_edge_dict)
+
         test_length = get_lca_length(test_swc_tree, \
                                      line_tuple_a, \
                                      line_tuple_b, \
                                      Line([e_node._pos, e_parent._pos]))
-        print("test length = {} gold_length = {}".format(test_length,node.parent_distance()))
-        if dis_a <= dis_threshold and dis_b <= dis_threshold:
-            match_edge.add(tuple([node,node.parent]))
-    return match_edge
+        gold_length = node.parent_distance()
+        if DEBUG:
+            print("test length = {} gold_length = {}".format(test_length,gold_length))
+        if math.fabs(test_length - gold_length) > gold_length/10:
+            match_fail.add(tuple([node,node.parent,gold_length,test_length]))
+
+    return match_fail
+
 
 def get_route_node(current_node, lca_id):
     res_list = []

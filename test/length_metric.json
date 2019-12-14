@@ -1,4 +1,5 @@
 {
-  "method": 3,
-  "thereshold": "default"
+  "method": 2,
+  "thereshold": "default",
+  "detail": ""
 }
