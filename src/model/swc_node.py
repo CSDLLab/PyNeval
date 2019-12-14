@@ -2,15 +2,12 @@
 # all right reserved
 
 from anytree import NodeMixin, iterators, RenderTree
-from src.model.euclidean_point import EuclideanPoint,Line
+from src.model.euclidean_point import EuclideanPoint
 from anytree import PreOrderIter
-from rtree import index
-import kdtree
 import math
 import queue
 import numpy as np
 
-dis_threshold = 0.1
 _3D = "3d"
 _2D = "2d"
 
@@ -354,6 +351,7 @@ class SwcTree:
         for node in PreOrderIter(self.root()):
             self.depth_array[node.get_id()] = node.depth()
 
+    # 初始化swc_tree中LCA的相关数据结构
     def get_lca_preprocess(self):
         self.get_depth_array()
         self.LOG_NODE_NUM = math.ceil(math.log(self.node_count(), 2))
@@ -372,6 +370,7 @@ class SwcTree:
                     self.lca_parent[v][k + 1] = self.lca_parent[int(self.lca_parent[v][k])][k]
         return True
 
+    # 输入两个节点编号，开始计算LCA
     def get_lca(self, u, v):
         lca_parent = self.lca_parent
         LOG_NODE_NUM = self.LOG_NODE_NUM
@@ -424,169 +423,6 @@ class SwcTree:
 
             for son in node.children:
                 stack.put(son)
-
-
-def get_default_threshold(gold_swc_tree):
-    global dis_threshold
-    total_length = gold_swc_tree.length()
-    total_node = gold_swc_tree.node_count()
-    if total_node <= 1:
-        dis_threshold = 0.1
-    else:
-        dis_threshold = (total_length/total_node)/10
-
-
-def get_bounds(point_a, point_b):
-    point_a = np.array(point_a._pos)
-    point_b = np.array(point_b._pos)
-    res = np.where(point_a>point_b,point_b,point_a).tolist() + np.where(point_a>point_b,point_a,point_b).tolist()
-    return tuple(res)
-
-
-def get_idedge_dict(swc_tree=None):
-    id_edge_dict = {}
-    swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
-    for node in swc_tree_list:
-        if node.is_virtual() or node.parent.is_virtual():
-            continue
-        id_edge_dict[node.get_id()] = tuple([node, node.parent])
-    return id_edge_dict
-
-
-def get_edge_rtree(swc_tree=None):
-    swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
-    p = index.Property()
-    p.dimension = 3
-    idx3d = index.Index(properties=p)
-    for node in swc_tree_list:
-        if node.is_virtual() or node.parent.is_virtual():
-            continue
-        if node.get_id() == 7:
-            print("---")
-        idx3d.insert(node.get_id(), get_bounds(node, node.parent))
-    return idx3d
-
-
-def get_nearest_edge(idx3d, point,id_edge_dict):
-    nearest_line_id = list(idx3d.nearest(get_bounds(point,point)))[0]
-    line_tuple = id_edge_dict[nearest_line_id]
-    line = Line(coords=[line_tuple[0]._pos, line_tuple[1]._pos], is_segment=True)
-    # print("point = {}, line_a = {}, line_b = {}".format(point._pos, line.coords[0], line.coords[1]))
-    dis = point.distance(line)
-    return line_tuple, dis
-
-
-def get_match_edges_e(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
-    match_edge = set()
-    idx3d = get_edge_rtree(test_swc_tree)
-    id_edge_dict = get_idedge_dict(test_swc_tree)
-    gold_node_list = [node for node in PreOrderIter(gold_swc_tree.root())]
-    global dis_threshold
-
-    for node in gold_node_list:
-        if node.is_virtual() or node.parent.is_virtual():
-            continue
-
-        e_node = EuclideanPoint(node._pos)
-        e_parent = EuclideanPoint(node.parent._pos)
-
-        line_tuple_a, dis_a = get_nearest_edge(idx3d, e_node, id_edge_dict)
-        line_tuple_b, dis_b = get_nearest_edge(idx3d, e_parent, id_edge_dict)
-
-        # get_max_dis(test_swc_tree, line_tuple_a, line_tuple_b, Line([e_node._pos, e_parent._pos]))
-        if dis_a <= dis_threshold and dis_b <= dis_threshold:
-            match_edge.add(tuple([node,node.parent]))
-    return match_edge
-
-
-def get_kdtree_data(kd_node):
-    return kd_node[0].data
-
-
-def check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict):
-    for pa in gold_node_knn:
-        test_pa_node = id_center_dict[tuple(get_kdtree_data(pa))]
-        for tpn in test_pa_node:
-            for sn in son_node_knn:
-                test_son_node = id_center_dict[tuple(get_kdtree_data(sn))]
-                for tsn in test_son_node:
-                    if tuple([tpn, tsn]) in edge_set:
-                        edge_set.remove(tuple([tpn, tsn]))
-                        edge_set.remove(tuple([tsn, tpn]))
-                        return tuple([tpn, tsn])
-    return None
-
-
-def get_match_edges_p(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
-    match_edge = {}
-    test_swc_list = [node for node in PreOrderIter(test_swc_tree.root())]
-    if DEBUG:
-        for item in test_swc_list:
-            print("---{} {}".format(item.get_id(), item._pos))
-    id_center_dict = {}
-    center_list = []
-    edge_set = set()
-    global dis_threshold
-    for node in test_swc_list:
-        if node.is_virtual():
-            continue
-        if tuple(node._pos) not in id_center_dict.keys():
-            id_center_dict[tuple(node._pos)] = []
-        id_center_dict[tuple(node._pos)].append(node)
-        center_list.append(node._pos)
-        for son in node.children:
-            edge_set.add(tuple([node, son]))
-            edge_set.add(tuple([son, node]))
-
-    test_kdtree = kdtree.create(center_list)
-
-    stack = queue.LifoQueue()
-    stack.put(gold_swc_tree.root())
-    while not stack.empty():
-        gold_node = stack.get()
-        for son in gold_node.children:
-            stack.put(son)
-
-        if gold_node.is_virtual():
-            continue
-
-        gold_node_knn = test_kdtree.search_knn(gold_node._pos, knn)
-
-        for node in gold_node_knn:
-            if gold_node.distance(get_kdtree_data(node)) > dis_threshold:
-                gold_node_knn.remove(node)
-        if DEBUG:
-            print("knn of gold = {}".format(gold_node_knn))
-        for son in gold_node.children:
-            son_node_knn = test_kdtree.search_knn(son._pos, knn)
-            if DEBUG:
-                print("son of gold = {}".format(son_node_knn))
-            match = check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict)
-            if match is not None:
-                match_edge[tuple([gold_node, son])] = match
-
-    return match_edge
-
-
-def get_route_node(current_node, lca_id):
-    res_list = []
-    while not current_node.is_virtual() and not current_node.get_id() == lca_id:
-        res_list.append(current_node)
-    if current_node.is_virtual():
-        raise Exception("[Error: ] something wrong in LCA process")
-    res_list.append(current_node)
-    return res_list
-
-
-def get_max_dis(gold_swc_tree, gold_line_a, gold_line_b, test_line):
-    gold_swc_tree.get_lca_preprocess()
-    lca_id = gold_swc_tree.get_lca(gold_line_a[0].get_id(), gold_line_b[0].get_id())
-    route_list = []
-    route_list += get_route_node(gold_line_a[0], lca_id)
-    route_list += get_route_node(gold_line_b[0], lca_id)
-    # root节点可能有问题
-    for node in route_list:
-        print(node.get_id())
 
 
 if __name__ == '__main__':

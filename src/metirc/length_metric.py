@@ -1,8 +1,24 @@
 from anytree import NodeMixin, iterators, RenderTree, PreOrderIter
 from src.model.euclidean_point import EuclideanPoint,Line
-from src.model.swc_node import SwcTree,get_match_edges_e,get_default_threshold,dis_threshold
+from src.model.swc_node import SwcTree
+from src.metirc.utils.edge_match_utils import get_match_edges_e
+from src.metirc.utils.config_utils import get_default_threshold,dis_threshold
 from src.io.read_json import read_json
 import time
+
+
+def length_metric_3(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
+    test_swc_tree.get_lca_preprocess()
+    match_edges = get_match_edges_e(gold_swc_tree, test_swc_tree)
+    match_length = 0.0
+    for line_tuple in match_edges:
+        match_length += line_tuple[0].parent_distance()
+
+    gold_total_length = gold_swc_tree.length()
+    if DEBUG:
+        print("match_length = {}, gold_total_length = {}"
+              .format(match_length, gold_total_length))
+    return match_length/gold_total_length
 
 
 def length_metric_2(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
@@ -30,7 +46,6 @@ def length_metric_1(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
 
 def length_metric(gold_swc_tree, test_swc_tree, config):
     global dis_threshold
-    knn = 3
 
     if "knn" in config.keys():
         knn = config["knn"]
@@ -50,7 +65,11 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
     elif config["method"] == 2:
         return length_metric_2(gold_swc_tree=gold_swc_tree,
                                test_swc_tree=test_swc_tree,
-                               DEBUG=False)
+                               DEBUG=True)
+    elif config["method"] == 3:
+        return length_metric_3(gold_swc_tree=gold_swc_tree,
+                               test_swc_tree=test_swc_tree,
+                               DEBUG=True)
     else:
         raise Exception("[Error: ] Read config info method {}. length metric only have 1 and 2 two methods")
 
@@ -58,13 +77,15 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
 
 if __name__ == "__main__":
     goldtree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\gold.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\ExampleGoldStandard.swc")
     get_default_threshold(goldtree)
 
     testTree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\test.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
     # testTree.align_roots(goldtree,mode="average",DEBUG=True)
     start = time.time()
     # print(length_metric(test_swc_tree=testTree, gold_swc_tree=goldtree,config=read_json("D:\gitProject\mine\PyMets\\test\length_metric.json")))
     print(length_metric(test_swc_tree=goldtree, gold_swc_tree=testTree,config=read_json("D:\gitProject\mine\PyMets\\test\length_metric.json")))
+    #print(length_metric(test_swc_tree=testTree, gold_swc_tree=goldtree,config=read_json("D:\gitProject\mine\PyMets\\test\length_metric.json")))
+
     print(time.time() - start)

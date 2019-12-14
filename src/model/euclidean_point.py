@@ -61,7 +61,7 @@ class EuclideanPoint(object):
             else:
                 return self.distance_to_line(object)
         else:
-            raise Exception("[Error: ] unexpected object type" + type(object))
+            raise Exception("[Error: ] unexpected object type {}".format(type(object)))
 
 
 class Line:
@@ -70,6 +70,11 @@ class Line:
                  is_segment=True):
         self.coords = coords
         self.is_segment=is_segment
+
+    def get_points(self):
+        point_a = EuclideanPoint(self.coords[0])
+        point_b = EuclideanPoint(self.coords[1])
+        return point_a, point_b
 
     def distance(self, object):
         if type(object) == type(EuclideanPoint()):
