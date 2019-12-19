@@ -6,6 +6,9 @@ class EuclideanPoint(object):
                  center=[0,0,0]):
         self._pos=center
 
+    def to_str(self):
+        print("EuclideanPoint: {}".format(self._pos))
+
     def get_foot_point(self, line):
         if len(line.coords) != 2:
             raise Exception("[Error: ]in function get_foot_point. read line error")
@@ -17,6 +20,18 @@ class EuclideanPoint(object):
         k = -((a - p).dot(b - a)) / (((b - a) ** 2).sum())
         foot = k * (b - a) + a
         return EuclideanPoint(foot.tolist())
+
+    def get_foot_point_fast(self, line):
+        if len(line.coords) != 2:
+            raise Exception("[Error: ]in function get_foot_point. read line error")
+
+        a_p = [line.coords[0][0] - self._pos[0], line.coords[0][1] - self._pos[1], line.coords[0][2] - self._pos[2]]
+        b_a = [line.coords[1][0] - line.coords[0][0], line.coords[1][1] - line.coords[0][1], line.coords[1][2] - line.coords[0][2]]
+        k_up = a_p[0]*b_a[0] + a_p[1]*b_a[1] + a_p[2]*b_a[2]
+        k_down = b_a[0]**2+b_a[1]**2+b_a[2]**2
+        k = -k_up/k_down
+        foot = [k*b_a[0]+line.coords[0][0], k*b_a[1]+line.coords[0][1], k*b_a[2]+line.coords[0][2]]
+        return EuclideanPoint(foot)
 
     def on_line(self, line):
         p = np.array(self._pos)
@@ -34,10 +49,11 @@ class EuclideanPoint(object):
             point = EuclideanPoint(point)
         if type(point) != type(EuclideanPoint()):
             raise Exception("[Error:  ] expect point. got {}".format(point))
-        point_self = np.array(self._pos)
-        point_other = np.array(point._pos)
-        sub = point_self - point_other
-        return math.sqrt((sub ** 2).sum())
+
+        sub = [self._pos[0] - point._pos[0],
+               self._pos[1] - point._pos[1],
+               self._pos[2] - point._pos[2]]
+        return math.sqrt(sub[0]*sub[0] + sub[1]*sub[1] + sub[2]*sub[2])
 
     def distance_to_line(self, line):
         foot = self.get_foot_point(line)
@@ -45,6 +61,7 @@ class EuclideanPoint(object):
 
     def distance_to_segment(self, line):
         foot = self.get_foot_point(line)
+        # foot = EuclideanPoint([0, 0, 0])
         if foot.on_line(line):
             return self.distance_to_point(foot)
         else:
@@ -67,9 +84,19 @@ class EuclideanPoint(object):
 class Line:
     def __init__(self,
                  coords=None,
+                 swc_node_1=None,
+                 swc_node_2=None,
                  is_segment=True):
-        self.coords = coords
-        self.is_segment=is_segment
+        if coords is not None:
+            self.coords = coords
+        else:
+            self.coords = [[],[]]
+            self.coords[0] = swc_node_1._pos
+            self.coords[1] = swc_node_2._pos
+        self.is_segment = is_segment
+
+    def to_str(self):
+        print("Line: {}, {}".format(self.coords[0],self.coords[1]))
 
     def get_points(self):
         point_a = EuclideanPoint(self.coords[0])

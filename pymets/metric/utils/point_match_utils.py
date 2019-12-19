@@ -1,8 +1,8 @@
 import queue
 import kdtree
 from anytree import PreOrderIter
-from src.model.swc_node import SwcTree
-from src.metirc.utils.config_utils import get_default_threshold,dis_threshold
+from pymets.model.swc_node import SwcTree
+from pymets.metric.utils.config_utils import get_default_threshold,dis_threshold
 
 # for length metric (unused)
 def get_kdtree_data(kd_node):

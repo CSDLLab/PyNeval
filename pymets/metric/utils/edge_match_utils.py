@@ -1,10 +1,12 @@
-from src.model.euclidean_point import EuclideanPoint,Line
-from src.metirc.utils.config_utils import dis_threshold
-
+from pymets.model.euclidean_point import EuclideanPoint,Line
+from pymets.metric.utils.config_utils import DINF
+import time
+import random
 import numpy as np
 import math
 from anytree import PreOrderIter
 from rtree import index
+
 
 # 获取线段的bounding box
 def get_bounds(point_a, point_b):
@@ -12,6 +14,7 @@ def get_bounds(point_a, point_b):
     point_b = np.array(point_b._pos)
     res = np.where(point_a>point_b,point_b,point_a).tolist() + np.where(point_a>point_b,point_a,point_b).tolist()
     return tuple(res)
+
 
 # 获取编号到线段的映射
 def get_idedge_dict(swc_tree=None):
@@ -35,8 +38,9 @@ def get_edge_rtree(swc_tree=None):
         idx3d.insert(node.get_id(), get_bounds(node, node.parent))
     return idx3d
 
+
 #基于rtree寻找距离最近的边
-def get_nearest_edge(idx3d, point,id_edge_dict):
+def unused_get_nearest_edge(idx3d, point,id_edge_dict):
     nearest_line_id = list(idx3d.nearest(get_bounds(point,point)))[0]
     line_tuple = id_edge_dict[nearest_line_id]
     line = Line(coords=[line_tuple[0]._pos, line_tuple[1]._pos], is_segment=True)
@@ -44,25 +48,55 @@ def get_nearest_edge(idx3d, point,id_edge_dict):
     dis = point.distance(line)
     return line_tuple, dis
 
-#根据边找匹配
-def get_match_edges_e(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
-    match_edge = set()
-    idx3d = get_edge_rtree(test_swc_tree)
-    id_edge_dict = get_idedge_dict(test_swc_tree)
-    gold_node_list = [node for node in PreOrderIter(gold_swc_tree.root())]
 
+def get_nearest_edge(gold_node, test_edge_list, DEBUG=False):
+    dis = DINF
+    for test_edge in test_edge_list:
+        test_line = Line(swc_node_1=test_edge[0],swc_node_2=test_edge[1])
+        eu_node = EuclideanPoint(gold_node._pos)
+        tmp_dis = eu_node.distance(test_line)
+        if DEBUG:
+            eu_node.to_str()
+            test_line.to_str()
+            print("tmp_dis = {}".format(tmp_dis))
+
+        if tmp_dis < dis:
+            dis = tmp_dis
+    return dis
+
+
+def get_test_edge_list(node_list):
+    edge_list = []
+    for node in node_list:
+        if node.is_virtual():
+            continue
+        edge_list.append(tuple([node, node.parent]))
+    return edge_list
+
+
+#根据边找匹配
+def get_match_edges_e(gold_swc_tree=None, test_swc_tree=None, dis_threshold=0.1, DEBUG=False):
+    match_edge = set()
+    # id_edge_dict = get_idedge_dict(test_swc_tree)
+    gold_node_list = [node for node in PreOrderIter(gold_swc_tree.root())]
+    test_node_list = [node for node in PreOrderIter(test_swc_tree.root())]
+    test_edge_list= get_test_edge_list(test_node_list)
+
+    print("len_gold_list = {}".format(len(gold_node_list)))
     for node in gold_node_list:
         if node.is_virtual() or node.parent.is_virtual():
             continue
-
+        print("node = {}, node.parent = {}".format(node, node.parent))
         e_node = EuclideanPoint(node._pos)
         e_parent = EuclideanPoint(node.parent._pos)
-
-        line_tuple_a, dis_a = get_nearest_edge(idx3d, e_node, id_edge_dict)
-        line_tuple_b, dis_b = get_nearest_edge(idx3d, e_parent, id_edge_dict)
-
+        start = time.time()
+        dis_a = get_nearest_edge(e_node, test_edge_list, DEBUG=False)
+        dis_b = get_nearest_edge(e_parent, test_edge_list, DEBUG=False)
+        print(dis_a, dis_b, dis_threshold)
         if dis_a <= dis_threshold and dis_b <= dis_threshold:
-            match_edge.add(tuple([node,node.parent]))
+            match_edge.add(tuple([node, node.parent]))
+            print("yes")
+
     return match_edge
 
 
@@ -101,8 +135,9 @@ def get_route_node(current_node, lca_id):
     while not current_node.is_virtual() and not current_node.get_id() == lca_id:
         res_list.append(current_node)
         current_node = current_node.parent
-    if current_node.is_virtual():
-        raise Exception("[Error: ] something wrong in LCA process")
+    # if current_node.is_virtual():
+    #
+    #     raise Exception("[Error: ] something wrong in LCA process")
     res_list.append(current_node)
     return res_list
 

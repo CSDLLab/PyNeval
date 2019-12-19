@@ -2,7 +2,7 @@
 # all right reserved
 
 from anytree import NodeMixin, iterators, RenderTree
-from src.model.euclidean_point import EuclideanPoint
+from pymets.model.euclidean_point import EuclideanPoint
 from anytree import PreOrderIter
 import math
 import queue
