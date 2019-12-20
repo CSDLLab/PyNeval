@@ -1,10 +1,10 @@
 import argparse
 import sys,os
-from src.model.binary_node import convert_to_binarytree
-from src.io.read_swc import read_swc_trees
-from src.io.read_json import read_json
-from src.metirc.diadem_metric import diadem_metric
-from src.metirc.length_metric import length_metric
+from pymets.model.binary_node import convert_to_binarytree
+from pymets.io.read_swc import read_swc_trees
+from pymets.io.read_json import read_json
+from pymets.metric.diadem_metric import diadem_metric
+from pymets.metric.length_metric import length_metric
 
 def read_parameters():
     parser = argparse.ArgumentParser(

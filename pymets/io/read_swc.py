@@ -1,5 +1,5 @@
 import os
-from src.model.swc_node import SwcNode,SwcTree
+from pymets.model.swc_node import SwcNode,SwcTree
 
 # if path is a fold
 def read_swc_trees(swc_file_paths):

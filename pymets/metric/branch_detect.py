@@ -1,5 +1,5 @@
-from src.model.swc_node import SwcTree,get_match_edges,get_default_threshold
-from src.io.read_json import read_json
+from pymets.model.swc_node import SwcTree,get_match_edges,get_default_threshold
+from pymets.io.read_json import read_json
 import time
 
 

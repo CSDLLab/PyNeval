@@ -1,10 +1,10 @@
 import queue
 import time
 import math
-from src.io.read_json import read_json
-from src.metirc.utils.config_utils import get_default_threshold
-from src.model.binary_node import convert_to_binarytree,RIGHT
-from src.model.swc_node import SwcTree,SwcNode
+from pymets.io.read_json import read_json
+from pymets.metric.utils.config_utils import get_default_threshold
+from pymets.model.binary_node import convert_to_binarytree,RIGHT
+from pymets.model.swc_node import SwcTree,SwcNode
 
 # 阈值
 g_terminal_threshold = 0
@@ -235,6 +235,7 @@ def is_continuation(gold_node, bin_test_list, add_to_list=True, DEBUG = False):
 
 
 def weight_excess(bin_test_root, goldtree):
+    pass
 
 def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
     global g_weight_dict

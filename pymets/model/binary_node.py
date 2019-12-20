@@ -1,9 +1,6 @@
 from anytree import NodeMixin
-from src.model.swc_node import SwcTree
-from src.model.euclidean_point import EuclideanPoint
-from test.convert_to_binary_test_function import test_print_bin_tree
+from pymets.model.euclidean_point import EuclideanPoint
 
-import os
 import math
 import queue
 import copy
