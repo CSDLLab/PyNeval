@@ -8,9 +8,11 @@ def rand(k):
 class TestPointMethods(unittest.TestCase):
 
     def test_point_to_line(self):
-        p = EuclideanPoint([1,2,3])
-        l = Line(coords=[[2,3,4],[5,6,7]])
+        p = EuclideanPoint([49.4362, 111.12, 322.687])
+        l = Line(coords=[[47.9082, 110.024, 323.994],[56.0636, 112.369, 318.703]])
+        l2 = Line(coords=[[49.4362, 111.12, 322.687],[56.0636, 112.369, 318.703]])
         print(p.distance(l))
+        print(p.distance(l2))
 
     def test_foot_point1(self):
         for i in range(5000):
