@@ -1,6 +1,5 @@
 import argparse
 import sys,os
-from pymets.model.binary_node import convert_to_binarytree
 from pymets.io.read_swc import read_swc_trees
 from pymets.io.read_json import read_json
 from pymets.metric.diadem_metric import diadem_metric
@@ -40,27 +39,35 @@ def read_parameters():
         "--config",
         "-C",
         help="special config for different metric method",
-        required=True
+        required=False
     )
     return parser.parse_args()
 
-def pymets(DEBUG=False):
+def pymets(DEBUG=True):
     abs_dir = os.path.abspath("")
+
     sys.path.append(abs_dir)
     sys.path.append(os.path.join(abs_dir,"src"))
     sys.path.append(os.path.join(abs_dir,"test"))
 
     args = read_parameters()
 
-    test_swc_files = args.test
-    gold_swc_file = args.gold
+    test_swc_files = [os.path.join(abs_dir, path) for path in args.test]
+    gold_swc_file = os.path.join(abs_dir, args.gold)
 
+    print(test_swc_files)
+    print(gold_swc_file)
     metric  = args.metric
     output_dest = args.output
     config = args.config
+    if config is None:
+        if metric == "diadem_metric" or metric == "DM":
+            config = os.path.join(abs_dir, "config\\diadem_metric.json")
+        if metric == "length_metric" or metric == "LM":
+            config = os.path.join(abs_dir, "config\\length_metric.json")
 
     if DEBUG:
-        print(config)
+        print("Config = {}".format(config))
 
     test_swc_trees = []
     for test_swc_file in test_swc_files:
@@ -84,4 +91,5 @@ def pymets(DEBUG=False):
 
 if __name__ == "__main__":
     pymets()
-# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\34_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric length_metric --config D:\gitProject\mine\PyMets\test\length_metric.json
+# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric length_metric --config D:\gitProject\mine\PyMets\test\length_metric.json
+# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric length_metric

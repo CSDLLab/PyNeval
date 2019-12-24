@@ -138,6 +138,24 @@ class SwcNode(NodeMixin):
         self.volume += swc_node.volume
         self.surface_area += swc_node.surface_area
 
+    def get_x(self):
+        return self._pos[0]
+
+    def get_y(self):
+        return self._pos[1]
+
+    def get_z(self):
+        return self._pos[2]
+
+    def set_x(self, x):
+        self._pos[0] = x
+
+    def set_y(self, y):
+        self._pos[1] = y
+
+    def set_z(self, z):
+        self._pos[2] = z
+
     def is_virtual(self):
         """Returns True iff the node is virtual.
         """
@@ -199,7 +217,7 @@ class SwcNode(NodeMixin):
             self._radius *= math.sqrt(sx * sy)
 
     def to_swc_str(self):
-        return '%d %d %g %g %g %g' % (self._id, self._type, self._pos[0], self._pos[1], self._pos[2], self._radius)
+        return '%d %d %g %g %g %g %d\n' % (self._id, self._type, self._pos[0], self._pos[1], self._pos[2], self._radius, self.parent.get_id())
 
     def get_parent_id(self):
         return -2 if self.is_root else self.parent.get_id()

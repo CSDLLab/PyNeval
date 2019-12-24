@@ -6,6 +6,24 @@ class EuclideanPoint(object):
                  center=[0,0,0]):
         self._pos=center
 
+    def get_x(self):
+        return self._pos[0]
+
+    def get_y(self):
+        return self._pos[1]
+
+    def get_z(self):
+        return self._pos[2]
+
+    def set_x(self, x):
+        self._pos[0] = x
+
+    def set_y(self, y):
+        self._pos[1] = y
+
+    def set_z(self, z):
+        self._pos[2] = z
+
     def to_str(self):
         print("EuclideanPoint: {}".format(self._pos))
 

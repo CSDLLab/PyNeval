@@ -3,8 +3,9 @@ import time
 import math
 from pymets.io.read_json import read_json
 from pymets.metric.utils.config_utils import get_default_threshold
-from pymets.model.binary_node import convert_to_binarytree,RIGHT
+from pymets.model.binary_node import RIGHT
 from pymets.model.swc_node import SwcTree,SwcNode
+from pymets.metric.utils.diadam_match_utils import get_match_path_length_difference, get_nearby_node_list
 
 # 阈值
 g_terminal_threshold = 0
@@ -28,14 +29,13 @@ g_score_sum = 0
 g_quantity_score_sum = 0
 g_quantity_score = 0
 g_direct_match_score = 0
-
 g_final_score = -1
 
 g_miss = set()
 g_spur_set = set()
 g_matches = {}
 g_weight_dict = {}
-
+g_excess_nodes = {}
 
 
 def remove_spurs(bin_root, threshold):
@@ -73,7 +73,7 @@ def remove_spurs(bin_root, threshold):
     return spur_set
 
 
-def generate_node_weights(bin_root, spur_set):
+def generate_node_weights(bin_root, spur_set, DEBUG=False):
     init_stack = queue.LifoQueue()
     main_stack = queue.LifoQueue()
     degree_dict = {}
@@ -134,32 +134,12 @@ def generate_node_weights(bin_root, spur_set):
                     print("-----------")
 
 
-def is_in_threshold(gold_node, test_node):
-    pass
-
-
-def get_nearby_node_list(gold_node=None, bin_test_set=None, check_previous_use=False):
-    nearby_node_list = []
-
-    for test_node in bin_test_set:
-        if (not check_previous_use or test_node not in g_matches) and is_in_threshold(gold_node, test_node):
-            nearby_node_list.append(test_node)
-
-    return nearby_node_list
-
-def get_end_node_XY_dis_diff(gold_swc_node,
-                             trajectory,
-                             test_swc_node):
-    gold_dist = gold_swc_node.distance(trajectory,mode=_2D)
-    test_dist = test_swc_node.distance(trajectory,mode=_2D)
-    return gold_dist - test_dist
-
-def get_end_node_Z_dis_diff(gold_swc_node,
-                            trajectory,
-                            test_swc_node):
-    gold_dist = math.fabs(gold_swc_node.z - trajectory.z)
-    test_dist = math.fabs(test_swc_node.z - trajectory.z)
-    return gold_dist - test_dist
+def is_diadem_match(gold_node, nearby_node, bin_gold_list, bin_test_list):
+    length_diff = get_match_path_length_difference(gold_node, nearby_node, bin_gold_list, bin_test_list)
+    if length_diff < 1:
+        return True
+    else:
+        return False
 
 
 def get_closest_match(gold_node,
@@ -169,7 +149,7 @@ def get_closest_match(gold_node,
     best_match = None
 
     # Step1: 寻找阈值内的节点
-    nearby_list = get_nearby_list(gold_node, bin_test_list)
+    nearby_list = get_nearby_node_list(gold_node, bin_test_list)
     if DEBUG:
         print("nearby list of {}:".format(gold_node.to_str))
         for node in nearby_list:
@@ -234,8 +214,62 @@ def is_continuation(gold_node, bin_test_list, add_to_list=True, DEBUG = False):
     return False
 
 
-def weight_excess(bin_test_root, goldtree):
-    pass
+def weight_excess(bin_test_root, gold_tree):
+    global g_excess_nodes
+
+    sum_weight = 0.0
+    gold_bin_list = goldtree.get_node_list()
+
+    setup_stack = queue.LifoQueue()
+    use_stack = queue.LifoQueue()
+
+    setup_stack.put(bin_test_root)
+    while not setup_stack.empty():
+        node = setup_stack.get()
+        if node.has_children():
+            setup_stack.put(node.left_son)
+            setup_stack.put(node.right_son)
+            use_stack.put(node.left_son)
+            use_stack.put(node.right_son)
+
+    direct_term_excess = {}
+
+    while not use_stack.empty():
+        node = use_stack.get()
+        data = node.data
+
+        if node.has_children():
+            num_excess_node = direct_term_excess[node.left_son]
+            num_excess_node += direct_term_excess[node.right_son]
+            excess_weight = get_excess_weight(num_excess_node, node, direct_term_excess)
+
+            if not node in g_matches.keys() and \
+                    len(get_nearby_node_list(node, gold_bin_list)) == 0 and \
+                    not is_continuation(node, gold_bin_list, add_to_list=False):
+                g_excess_nodes[node] = excess_weight
+                if not node in g_spur_set:
+                    sum_weight += excess_weight
+            else:
+                num_excess_node = 0
+                excess_weight = 0
+        else:
+            num_excess_node = 0
+            excess_weight = 0
+
+            if not node in g_spur_set and node not in g_matches.keys() and node.parent not in g_matches.keys():
+                nearby_nodes = get_nearby_node_list(node, gold_bin_list)
+                if len(nearby_nodes) == 0:
+                    remove_nearest_node(node, nearby_nodes, gold_bin_list)
+                else:
+                    num_excess_node = 1
+                    excess_weight = 1
+                    g_excess_nodes[node] = 1
+                    sum_weight += excess_weight
+
+        direct_term_excess[node] = num_excess_node
+    return sum_weight
+
+
 
 def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
     global g_weight_dict
@@ -334,7 +368,7 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
     bin_test_root = convert_to_binarytree(swc_test_tree)
     print(bin_gold_root.data.id())
     if g_remove_spur > 0:
-        g_spur_set = remove_spurs(bin_gold_root,1.0)
+        g_spur_set = remove_spurs(bin_gold_root, 1.0)
 
     generate_node_weights(bin_gold_root, g_spur_set)
     score_trees(bin_gold_root, bin_test_root, DEBUG=False)
