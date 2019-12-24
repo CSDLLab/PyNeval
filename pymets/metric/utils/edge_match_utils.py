@@ -10,10 +10,11 @@ from rtree import index
 MIN_SIZE = 0.8
 
 # 获取线段的bounding box
-def get_bounds(point_a, point_b):
+def get_bounds(point_a, point_b, extra = 0):
     point_a = np.array(point_a._pos)
     point_b = np.array(point_b._pos)
-    res = np.where(point_a>point_b,point_b,point_a).tolist() + np.where(point_a>point_b,point_a,point_b).tolist()
+    res = (np.where(point_a>point_b,point_b,point_a) - extra).tolist() + (np.where(point_a>point_b,point_a,point_b) + extra).tolist()
+
     return tuple(res)
 
 
@@ -27,6 +28,7 @@ def get_idedge_dict(swc_tree=None):
         id_edge_dict[node.get_id()] = tuple([node, node.parent])
     return id_edge_dict
 
+
 # 构建rtree
 def get_edge_rtree(swc_tree=None):
     swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
@@ -36,9 +38,8 @@ def get_edge_rtree(swc_tree=None):
     for node in swc_tree_list:
         if node.is_virtual() or node.parent.is_virtual():
             continue
-        if node.get_id() == 79:
-            print("in 79")
-        idx3d.insert(node.get_id(), get_bounds(node, node.parent))
+
+        idx3d.insert(node.get_id(), get_bounds(node, node.parent, extra = node.radius()))
     return idx3d
 
 
@@ -50,7 +51,6 @@ def get_nearest_edge_fast(idx3d, point, id_edge_dict, DEBUG=False):
     d = DINF
     s = None
     for h in hits:
-        print(h)
         line_tuple = id_edge_dict[h]
         if DEBUG:
             print("\npoint = {}, line_a = {}, line_b = {}".format(
@@ -80,7 +80,15 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None, dis_threshold
         line_tuple_a, dis_a = get_nearest_edge_fast(idx3d, e_node, id_edge_dict)
         line_tuple_b, dis_b = get_nearest_edge_fast(idx3d, e_parent, id_edge_dict)
 
-        if dis_a <= dis_threshold and dis_b <= dis_threshold:
+        if DEBUG and line_tuple_a is not None and line_tuple_b is not None:
+            print("\nnode = {} {}\nnode.parent = {} {}\nnode_line = {},{}\nnode_p_line = {},{}\n".format(
+                node.get_id(), node._pos,
+                node.parent.get_id(), node.parent._pos,
+                line_tuple_a[0]._pos, line_tuple_a[1]._pos,
+                line_tuple_b[0]._pos, line_tuple_b[1]._pos,
+            ))
+
+        if dis_a <= node.radius() and dis_b <= node.parent.radius():
             match_edge.add(tuple([node,node.parent]))
             if DEBUG:
                 with open('fast.txt', 'a') as f:
@@ -90,6 +98,11 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None, dis_threshold
                         line_tuple_a[0]._pos, line_tuple_a[1]._pos,
                         line_tuple_b[0]._pos, line_tuple_b[1]._pos,
                     ))
+        else:
+            with open('unmatch.swc', 'a') as f:
+                f.write(
+                    node.to_swc_str()
+                )
     return match_edge
 
 
@@ -118,11 +131,12 @@ def get_unmatch_edges_e(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
         if DEBUG:
             print("test length = {} gold_length = {}".format(test_length,gold_length))
         if math.fabs(test_length - gold_length) > gold_length/10:
-            match_fail.add(tuple([node,node.parent,gold_length,test_length]))
+            match_fail.add(tuple([node, node.parent, gold_length, test_length]))
 
     return match_fail
 
 
+# 获取当前节点swc_node到LCA路上遇到的所有节点
 def get_route_node(current_node, lca_id):
     res_list = []
     while not current_node.is_virtual() and not current_node.get_id() == lca_id:
@@ -135,6 +149,7 @@ def get_route_node(current_node, lca_id):
     return res_list
 
 
+# 获取gold_line_a与gold_line_b到LCA边上与testline最远的距离，尚未完成
 def get_lca_max_dis(gold_swc_tree, gold_line_a, gold_line_b, test_line):
     gold_swc_tree.get_lca_preprocess()
     lca_id = gold_swc_tree.get_lca(gold_line_a[0].get_id(), gold_line_b[0].get_id())
@@ -146,6 +161,7 @@ def get_lca_max_dis(gold_swc_tree, gold_line_a, gold_line_b, test_line):
         print(node.get_id())
 
 
+# 获取整个LCA相关边的长度
 def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_line):
     point_a, point_b = test_line.get_points()
     gold_line_a = Line(coords=[gold_line_tuple_a[0]._pos, gold_line_tuple_a[1]._pos])

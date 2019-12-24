@@ -1,7 +1,7 @@
 from anytree import NodeMixin, iterators, RenderTree, PreOrderIter
 from pymets.model.euclidean_point import EuclideanPoint,Line
 from pymets.model.swc_node import SwcTree
-from pymets.metric.utils.edge_match_utils import get_match_edges_e,get_unmatch_edges_e,get_match_edges_e_fast
+from pymets.metric.utils.edge_match_utils import get_unmatch_edges_e,get_match_edges_e_fast
 from pymets.metric.utils.config_utils import get_default_threshold
 from pymets.io.read_json import read_json
 from pymets.io.save_swc import save_as_swc,print_swc
@@ -16,8 +16,8 @@ def length_metric_3(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
     return match_fail
 
 
-def length_metric_2_1(gold_swc_tree=None, test_swc_tree=None, dis_threshold=0.1, DEBUG=False):
-    match_edges = get_match_edges_e_fast(gold_swc_tree, test_swc_tree,dis_threshold, DEBUG=True)
+def length_metric_2(gold_swc_tree=None, test_swc_tree=None, dis_threshold=0.1, DEBUG=True):
+    match_edges = get_match_edges_e_fast(gold_swc_tree, test_swc_tree,dis_threshold, DEBUG=DEBUG)
 
     match_length = 0.0
     for line_tuple in match_edges:
@@ -59,14 +59,14 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
         return length_metric_1(gold_swc_tree=gold_swc_tree,
                                test_swc_tree=test_swc_tree)
     elif config["method"] == 2:
-        print(length_metric_2_1(gold_swc_tree=gold_swc_tree,
+        print("result = {}".format(length_metric_2(gold_swc_tree=gold_swc_tree,
                                 test_swc_tree=test_swc_tree,
                                 dis_threshold=dis_threshold,
-                                DEBUG=True))
+                                DEBUG=True)))
     elif config["method"] == 3:
         match_fail_tuple_set = length_metric_3(gold_swc_tree=gold_swc_tree,
                                                 test_swc_tree=test_swc_tree,
-                                                DEBUG=True)
+                                                DEBUG=False)
         if config["detail"] != "":
             save_as_swc(match_fail_tuple_set, config["detail"])
         else:
@@ -78,13 +78,15 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
 
 if __name__ == "__main__":
     goldtree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\34_23_10_gold.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\sample_rate.swc")
 
     testTree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\34_23_10_test.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\sample_rate.swc")
     start = time.time()
-    print(length_metric(gold_swc_tree=goldtree,
-                        test_swc_tree=testTree,
-                        config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json")))
-
-    print(time.time() - start)
+    # length_metric(gold_swc_tree=goldtree,
+    #               test_swc_tree=testTree,
+    #               config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
+    length_metric(gold_swc_tree=testTree,
+                  test_swc_tree=goldtree,
+                  config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
+    print("time cost = {}".format(time.time() - start))
