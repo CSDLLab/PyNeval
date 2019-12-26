@@ -1,5 +1,5 @@
 import argparse
-import sys,os
+import sys,os,platform
 from pymets.io.read_swc import read_swc_trees
 from pymets.io.read_json import read_json
 from pymets.metric.diadem_metric import diadem_metric
@@ -47,8 +47,8 @@ def pymets(DEBUG=True):
     abs_dir = os.path.abspath("")
 
     sys.path.append(abs_dir)
-    sys.path.append(os.path.join(abs_dir,"src"))
-    sys.path.append(os.path.join(abs_dir,"test"))
+    sys.path.append(os.path.join(abs_dir, "src"))
+    sys.path.append(os.path.join(abs_dir, "test"))
 
     args = read_parameters()
 
@@ -61,10 +61,16 @@ def pymets(DEBUG=True):
         output_dest = os.path.join(abs_dir, output_dest)
     config = args.config
     if config is None:
-        if metric == "diadem_metric" or metric == "DM":
-            config = os.path.join(abs_dir, "config\\diadem_metric.json")
-        if metric == "length_metric" or metric == "LM":
-            config = os.path.join(abs_dir, "config\\length_metric.json")
+        if platform.system() == "Windows":
+            if metric == "diadem_metric" or metric == "DM":
+                config = os.path.join(abs_dir, "config\\diadem_metric.json")
+            if metric == "length_metric" or metric == "LM":
+                config = os.path.join(abs_dir, "config\\length_metric.json")
+        elif platform.system() == "Linux":
+            if metric == "diadem_metric" or metric == "DM":
+                config = os.path.join(abs_dir, "config/diadem_metric.json")
+            if metric == "length_metric" or metric == "LM":
+                config = os.path.join(abs_dir, "config/length_metric.json")
 
     if DEBUG:
         print("Config = {}".format(config))
