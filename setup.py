@@ -11,5 +11,6 @@ setup(name='pymets',
       install_requires=[
             'anytree>=2.7.2',
             'numpy>=1.17.3',
+            'rtree>=0.9'
       ]
 )

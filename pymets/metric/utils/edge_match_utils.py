@@ -1,7 +1,7 @@
 from pymets.model.euclidean_point import EuclideanPoint,Line
 from pymets.metric.utils.config_utils import DINF
+import os
 import time
-import random
 import numpy as np
 import math
 from anytree import PreOrderIter
@@ -64,11 +64,16 @@ def get_nearest_edge_fast(idx3d, point, id_edge_dict, DEBUG=False):
 
 
 #根据边找匹配
-def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None, dis_threshold=0.1,DEBUG=False):
+def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
+                           dis_threshold=0.1, detail_path=None, DEBUG=False):
     match_edge = set()
     idx3d = get_edge_rtree(test_swc_tree)
     id_edge_dict = get_idedge_dict(test_swc_tree)
     gold_node_list = [node for node in PreOrderIter(gold_swc_tree.root())]
+
+    if detail_path is not None:
+        with open(detail_path, 'a') as f:
+            f.write("[Detail: ]List of unmatched edges")
 
     for node in gold_node_list:
         if node.is_virtual() or node.parent.is_virtual():
@@ -89,20 +94,20 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None, dis_threshold
             ))
 
         if dis_a <= node.radius() and dis_b <= node.parent.radius():
-            match_edge.add(tuple([node,node.parent]))
-            if DEBUG:
-                with open('fast.txt', 'a') as f:
-                    f.write("\nnode = {} {}\nnode.parent = {} {}\nnode_line = {},{}\nnode_p_line = {},{}\n".format(
-                        node.get_id(), node._pos,
-                        node.parent.get_id(),node.parent._pos,
-                        line_tuple_a[0]._pos, line_tuple_a[1]._pos,
-                        line_tuple_b[0]._pos, line_tuple_b[1]._pos,
-                    ))
+            match_edge.add(tuple([node, node.parent]))
         else:
-            with open('unmatch.swc', 'a') as f:
-                f.write(
-                    node.to_swc_str()
-                )
+            if detail_path is not None:
+                localtime = time.asctime(time.localtime(time.time()))
+                with open(detail_path, 'a') as f:
+                    f.write("\n------------------------------------\n")
+                    f.write(localtime)
+                    f.write("\nedge:\npoint_a = {} {}\npoint_b = {} {}\n".format(
+                        node.get_id(), node._pos,
+                        node.parent.get_id(),node.parent._pos
+                    ))
+    if detail_path is not None:
+        with open(detail_path, 'a') as f:
+            f.write("-----END-----")
     return match_edge
 
 

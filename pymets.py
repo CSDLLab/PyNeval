@@ -55,10 +55,10 @@ def pymets(DEBUG=True):
     test_swc_files = [os.path.join(abs_dir, path) for path in args.test]
     gold_swc_file = os.path.join(abs_dir, args.gold)
 
-    print(test_swc_files)
-    print(gold_swc_file)
-    metric  = args.metric
+    metric = args.metric
     output_dest = args.output
+    if output_dest is not None:
+        output_dest = os.path.join(abs_dir, output_dest)
     config = args.config
     if config is None:
         if metric == "diadem_metric" or metric == "DM":
@@ -83,10 +83,11 @@ def pymets(DEBUG=True):
 
     gold_swc_treeroot = gold_swc_trees[0]
     for test_swc_treeroot in test_swc_trees:
-        if metric  == "diadem_metric" or metric  == "DM":
+        if metric == "diadem_metric" or metric == "DM":
             diadem_metric(test_swc_treeroot, gold_swc_treeroot)
-        if metric  == "length_metric" or metric  == "LM":
-            result = length_metric(gold_swc_treeroot, test_swc_treeroot, config)
+        if metric == "length_metric" or metric == "LM":
+            result = length_metric(gold_swc_treeroot, test_swc_treeroot,
+                                   abs_dir, config)
             print(result)
 
 if __name__ == "__main__":
