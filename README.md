@@ -15,11 +15,16 @@ http://diademchallenge.org/metric.html
 ## 3. How to use
 1. clone this project into your computer<br>
 `git clone https://github.com/bennieHan/PyMets.git`
-2. make sure your enviroment met "requirement"<br>
+2. move into the root of this project, it's the place where pymets.py exist.<br>
 
-3. move into the root of this project, it's the place where pymets.py exist.<br>
+3. make sure your enviroment met "requirement"<br>
+3.1 make a virtual enviroment and activate it, for example:<br>
+`conda create -n pymets_env`<br>
+`source activate pymets_env`<br>
+3.2 run setup.py<br>
+`python setup.py install`
 
-4. prepare the json config file, the explanation and sample json of different metrics are in `/doc/config`<br>
+4. prepare the json config file, the explanation and sample json of different metrics are in `/doc/config`. You can ignore it and program will use default config files<br>
 
 5. run command line:
   ```
@@ -27,6 +32,5 @@ http://diademchallenge.org/metric.html
   --test D:\gitProject\mine\PyMets\test\data_example\test\34_18_10_test.swc
   --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc
   --metric length_metric
-  --config D:\gitProject\mine\PyMets\test\length_metric.json
   ```
   the explanation also can been seen in the `doc`<br> 
