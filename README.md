@@ -31,8 +31,8 @@ http://diademchallenge.org/metric.html
 5. run command line:
   ```
   python ./pymets.py
-  --test D:\gitProject\mine\PyMets\test\data_example\test\34_18_10_test.swc
-  --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc
+  --test D:\gitProject\mine\PyMets\test\data_example\test\ExampleTest.swc
+  --gold D:\gitProject\mine\PyMets\test\data_example\gold\ExampleGoldStandard.swc
   --metric length_metric
   ```
   the explanation also can been seen in the `doc`<br> 
