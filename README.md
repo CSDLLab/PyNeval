@@ -21,6 +21,8 @@ http://diademchallenge.org/metric.html
 3.1 make a virtual enviroment and activate it, for example:<br>
 `conda create -n pymets_env`<br>
 `conda activate pymets_env`<br>
+3.2 install libspatialindex<br>
+`conda install -c conda-forge libspatialindex=1.9.3`<br>
 3.2 run setup.py<br>
 `python setup.py install`
 
