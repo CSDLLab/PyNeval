@@ -7,7 +7,7 @@ from pymets.io.read_json import read_json
 from pymets.io.save_swc import save_as_swc,print_swc
 
 import time
-import os
+import os,platform
 
 
 def length_metric_3(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
@@ -58,6 +58,8 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
             raise Exception("[Error: ] Read config info threshold {}. suppose to be a float or \"default\"")
 
     detail_path = config["detail"]
+    if platform.system() == "Linux":
+        detail_path = '/'.join(detail_path.split("\\"))
     detail_path = os.path.join(abs_dir, detail_path)
     if config["method"] == 1:
         return length_metric_1(gold_swc_tree=gold_swc_tree,
