@@ -23,7 +23,7 @@ http://diademchallenge.org/metric.html
 `conda activate pymets_env`<br>
 3.2 install libspatialindex<br>
 `conda install -c conda-forge libspatialindex=1.9.3`<br>
-3.2 run setup.py<br>
+3.3 run setup.py<br>
 `python setup.py install`
 
 4. prepare the json config file, the explanation and sample json of different metrics are in `/doc/config`. You can ignore it and program will use default config files<br>
