@@ -78,9 +78,9 @@ class BinaryNode(NodeMixin):
     def to_str(self):
         print("id = {}, pos = {}".format(self.data.get_id(), self.data._pos))
         if self.left_son is not None:
-            print("left son".format(self.left_son.data.get_id()))
+            print("left son: {}".format(self.left_son.data.get_id()))
         if self.left_son is not None:
-            print("right son".format(self.right_son.data.get_id()))
+            print("right son {}".format(self.right_son.data.get_id()))
         print("---------------------------")
 
 

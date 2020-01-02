@@ -6,6 +6,8 @@ import math
 import time
 import queue
 import copy
+from pymets.metric.utils.bin_utils import convert_to_binarytree,swctree_to_binarytree
+from pymets.model.swc_node import SwcNode, SwcTree
 
 # testfunction:
 # input: a swc tree root
@@ -69,8 +71,9 @@ def test1():
 # 测试一下读入整棵树的时间
 def test2():
     start = time.time()
-    tree = swcfile_to_swcnodelist(file_name="..\..\\test\data_example\ExampleGoldStandard.swc")
-    bin_tree = swctree_to_binarytree(tree[0])
+    swc_tree = SwcTree()
+    swc_tree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc")
+    bin_tree = convert_to_binarytree(swc_tree)
     test_print_bin_tree(bin_tree)
     print(time.time() - start)
 
