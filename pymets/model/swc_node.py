@@ -185,7 +185,7 @@ class SwcNode(NodeMixin):
             return 0.0
         if type(tn) == type([]):
             tn = SwcNode(nid=1,center=tn)
-        if tn and self.is_regular() and tn.is_regular():
+        if tn and self.is_regular() and (isinstance(tn, EuclideanPoint) or tn.is_regular()):
             dx = self._pos[0] - tn._pos[0]
             dy = self._pos[1] - tn._pos[1]
             dz = self._pos[2] - tn._pos[2]

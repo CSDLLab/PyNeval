@@ -85,17 +85,17 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
 
 if __name__ == "__main__":
     goldtree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\ExampleGoldStandard.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\sample_rate.swc")
 
     testTree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\sample_rate.swc")
     start = time.time()
     length_metric(gold_swc_tree=goldtree,
                   test_swc_tree=testTree,
                   abs_dir="D:\gitProject\mine\PyMets",
                   config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
-    # length_metric(gold_swc_tree=testTree,
-    #               test_swc_tree=goldtree,
-    #               abs_dir="D:\gitProject\mine\PyMets",
-    #               config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
+    length_metric(gold_swc_tree=testTree,
+                  test_swc_tree=goldtree,
+                  abs_dir="D:\gitProject\mine\PyMets",
+                  config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
     print("time cost = {}".format(time.time() - start))

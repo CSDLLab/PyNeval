@@ -4,8 +4,9 @@ import math
 from pymets.io.read_json import read_json
 from pymets.metric.utils.config_utils import get_default_threshold
 from pymets.model.binary_node import RIGHT
-from pymets.model.swc_node import SwcTree,SwcNode
+from pymets.model.swc_node import SwcTree, SwcNode
 from pymets.metric.utils.diadam_match_utils import get_match_path_length_difference, get_nearby_node_list
+from pymets.metric.utils.bin_utils import convert_to_binarytree
 
 # 阈值
 g_terminal_threshold = 0
@@ -135,7 +136,12 @@ def generate_node_weights(bin_root, spur_set, DEBUG=False):
 
 
 def is_diadem_match(gold_node, nearby_node, bin_gold_list, bin_test_list):
+    if gold_node.data.get_id() == 901 and nearby_node.data.get_id() == 870:
+        print("??")
     length_diff = get_match_path_length_difference(gold_node, nearby_node, bin_gold_list, bin_test_list)
+    print("gold_node = {}, test_node = {}, length_diff = {}".format(
+        gold_node.data.get_id(), nearby_node.data.get_id(), length_diff
+    ))
     if length_diff < 1:
         return True
     else:
@@ -145,15 +151,17 @@ def is_diadem_match(gold_node, nearby_node, bin_gold_list, bin_test_list):
 def get_closest_match(gold_node,
                       bin_gold_list,
                       bin_test_list,
-                      DEBUG = False):
+                      DEBUG=False):
     best_match = None
 
     # Step1: 寻找阈值内的节点
-    nearby_list = get_nearby_node_list(gold_node, bin_test_list)
+    nearby_list = get_nearby_node_list(gold_node=gold_node, bin_test_list=bin_test_list,
+                                       g_matches=g_matches)
     if DEBUG:
-        print("nearby list of {}:".format(gold_node.to_str))
+        print("nearby list of {}:".format(gold_node.data.get_id()))
         for node in nearby_list:
-            print(node.to_str())
+            print(node.data.get_id())
+        print("----END----")
 
     # Step2: 寻找到上下节点匹配的点，标记为match
     match_list = []
@@ -161,12 +169,13 @@ def get_closest_match(gold_node,
         if is_diadem_match(gold_node, nearby_node, bin_gold_list, bin_test_list):
             match_list.append(nearby_node)
 
-    if len(match_list) == 1:
-        best_match = match_list[0]
-    elif len(match_list) >= 1:
-        best_match = get_best_match(match_list, gold_node, bin_test_list)
-
-    return best_match
+    # if len(match_list) == 1:
+    #     best_match = match_list[0]
+    # elif len(match_list) >= 1:
+    #     best_match = get_best_match(match_list, gold_node, bin_test_list)
+    #
+    # return best_match
+    return None
 
 
 def is_continuation(gold_node, bin_test_list, add_to_list=True, DEBUG = False):
@@ -178,7 +187,7 @@ def is_continuation(gold_node, bin_test_list, add_to_list=True, DEBUG = False):
 
     # 寻找gold_node第一个匹配的祖先
     ancestor_match = None
-    ancestor_gold = gold_node.parent()
+    ancestor_gold = gold_node.parent
     gold_path_length.path_length = gold_node.data.path_length
     gold_path_length.xy_path_length = gold_node.data.xy_path_length
     gold_path_length.z_path_length = gold_node.data.z_path_length
@@ -286,8 +295,8 @@ def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
     bin_test_list = bin_test_root.get_node_list()
 
     # 根节点肯定匹配
-    g_matches[bin_gold_root] = bin_test_root
-    g_matches[bin_test_root] = bin_gold_root
+    # g_matches[bin_gold_root] = bin_test_root
+    # g_matches[bin_test_root] = bin_gold_root
 
     number_of_nodes -= len(g_spur_set)
     number_of_nodes += len(bin_gold_list)
@@ -333,7 +342,7 @@ def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
     t_remove = []
     for miss_node in g_miss:
         miss_data = miss_node.data
-        if not miss_data.is_leaf():
+        if miss_node.left_son is not None or miss_node.right_son is not None:
             if is_continuation(miss_node, bin_test_list):
                 weight = g_weight_dict[miss_node]
                 g_score_sum += weight
@@ -366,7 +375,7 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
 
     bin_gold_root = convert_to_binarytree(swc_gold_tree)
     bin_test_root = convert_to_binarytree(swc_test_tree)
-    print(bin_gold_root.data.id())
+
     if g_remove_spur > 0:
         g_spur_set = remove_spurs(bin_gold_root, 1.0)
 
@@ -377,17 +386,15 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
 
 if __name__ == "__main__":
     goldtree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\ExampleGoldStandard.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\sample_rate.swc")
     get_default_threshold(goldtree)
 
     testTree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\sample_rate.swc")
 
     start = time.time()
-    # print(length_metric(test_swc_tree=testTree, gold_swc_tree=goldtree,config=read_json("D:\gitProject\mine\PyMets\\test\length_metric.json")))
     print(diadem_metric(swc_test_tree=testTree,
                         swc_gold_tree=goldtree,
-                        config=read_json("D:\gitProject\mine\PyMets\\test\length_metric.json")))
-    # print(length_metric(test_swc_tree=testTree, gold_swc_tree=goldtree,config=read_json("D:\gitProject\mine\PyMets\\test\length_metric.json")))
+                        config=read_json("D:\gitProject\mine\PyMets\config\diadem_metric.json")))
 
     print(time.time() - start)
