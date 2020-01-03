@@ -5,16 +5,16 @@ import time
 
 # calculate confusion matrix，count branch number
 def branch_detect(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False):
-    # gold中匹配到的，顺便test中匹配到的也有了
+    # get matched edge in two trees
     match_edge = get_match_edges(gold_swc_tree, test_swc_tree, knn, DEBUG)
     gold_size = gold_swc_tree.node_count()
     test_size = test_swc_tree.node_count()
 
-    # 检测到的gold/test分支数目
+    # the number of detected gold/test branch
     true_positive = len(match_edge.keys())
-    # 未重合的gold分支数目
+    # undetected gold branch
     false_negative = (gold_size-1) - true_positive
-    # 未重合的test分支数目
+    # undetected test branch
     true_negative = (test_size-1) - true_positive
 
     print("matched gold branch = {}/{}, rate = {}".format(true_positive, gold_size, true_positive/gold_size))

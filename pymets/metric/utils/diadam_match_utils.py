@@ -6,6 +6,8 @@ from pymets.model.binary_node import BinaryNode
 from pymets.model.euclidean_point import EuclideanPoint
 from pymets.metric.utils.bin_utils import calculate_trajectories_xy,calculate_trajectories_z
 
+_2D = "2d"
+
 TRAJECTORY_NONE = -1.0
 g_xy_threshold = 1.2
 g_z_threshold = 1
@@ -13,33 +15,44 @@ g_default_xy_path_error_threshold = 0.05
 g_default_z_path_error_threshold = 0.05
 g_local_path_error_threshold = 0.4
 
+
+def to_swc_node(node_a, node_b):
+    if isinstance(node_a, BinaryNode):
+        node_a = node_a.data
+    if isinstance(node_b, BinaryNode):
+        node_b = node_b.data
+    return node_a, node_b
+
+
 def get_end_node_XY_dis_diff(gold_swc_node,
                              trajectory,
                              test_swc_node):
-    gold_dist = gold_swc_node.distance(trajectory,mode=_2D)
-    test_dist = test_swc_node.distance(trajectory,mode=_2D)
+    gold_dist = gold_swc_node.distance(trajectory, mode=_2D)
+    test_dist = test_swc_node.distance(trajectory, mode=_2D)
     return gold_dist - test_dist
 
 
 def get_end_node_Z_dis_diff(gold_swc_node,
                             trajectory,
                             test_swc_node):
-    gold_dist = math.fabs(gold_swc_node.z - trajectory.z)
-    test_dist = math.fabs(test_swc_node.z - trajectory.z)
+    gold_dist = math.fabs(gold_swc_node.get_z() - trajectory.get_z())
+    test_dist = math.fabs(test_swc_node.get_z() - trajectory.get_z())
     return gold_dist - test_dist
 
 
-def get_nearby_node_list(gold_node=None, bin_test_set=None, check_previous_use=True):
+def get_nearby_node_list(gold_node=None, bin_test_list=None, check_previous_use=True, g_matches={}):
     nearby_node_list = []
 
-    for test_node in bin_test_set:
-        if (not check_previous_use or test_node not in g_matches) and is_in_threshold(gold_node, test_node):
+    for test_node in bin_test_list:
+        if (not check_previous_use or test_node not in g_matches.keys()) and is_in_threshold(gold_node, test_node):
             nearby_node_list.append(test_node)
 
     return nearby_node_list
 
 
 def is_in_XY_threshold(gold_node, test_node):
+    gold_node, test_node = to_swc_node(gold_node, test_node)
+
     xy_diff = math.sqrt((gold_node._pos[0] - test_node._pos[0])**2 + (gold_node._pos[1] - test_node._pos[1])**2)
 
     if xy_diff <= g_xy_threshold:
@@ -49,10 +62,12 @@ def is_in_XY_threshold(gold_node, test_node):
 
 
 def is_in_threshold(gold_node, test_node):
+    gold_node, test_node = to_swc_node(gold_node, test_node)
+
     xy_diff = math.sqrt((gold_node._pos[0] - test_node._pos[0])**2 + (gold_node._pos[1] - test_node._pos[1])**2)
     z_diff = math.fabs(gold_node._pos[2] - test_node._pos[2])
 
-    if xy_diff <= g_xy_threshold and z_diff <= g_z_threshold:
+    if xy_diff <= g_xy_threshold and z_diff <= g_z_threshold + 0.1:
         return True
     else:
         return False
@@ -156,13 +171,11 @@ def path_length_matches(gold_swc_path_length,
     else:
         return 1
 
+
 def get_match_path_length_difference(gold_node, test_node, bin_gold_list, bin_test_list):
     if test_node.parent is None:
-        return 1
-    gold_target = copy.deepcopy(gold_node)
-    test_XYPathLength = 0
-    testZPathLength = 0
-    percentError = 0
+        return 0
+    gold_target = gold_node
 
     gold_swc_path_length = SwcNode()
     gold_swc_path_length.add_length(gold_node.data)
@@ -209,11 +222,11 @@ def get_match_path_length_difference(gold_node, test_node, bin_gold_list, bin_te
                                   get_end_node_XY_dis_diff(gold_data, ancestor_trajectory, test_node.data)
             test_Z_path_length = test_swc_path_length.z_path_length + \
                                  get_end_node_Z_dis_diff(gold_data, ancestor_trajectory, test_node.data)
-            percentError = path_length_matches(gold_swc_path_length, \
+            percent_error = path_length_matches(gold_swc_path_length, \
                                                test_XY_path_length, \
                                                test_Z_path_length)
-            if percentError < 1:
-                return percentError
+            if percent_error < 1:
+                return percent_error
             else:
                 return 1
         else:

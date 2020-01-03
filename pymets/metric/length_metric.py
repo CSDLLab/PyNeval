@@ -1,7 +1,7 @@
 from anytree import NodeMixin, iterators, RenderTree, PreOrderIter
 from pymets.model.euclidean_point import EuclideanPoint,Line
 from pymets.model.swc_node import SwcTree
-from pymets.metric.utils.edge_match_utils import get_unmatch_edges_e,get_match_edges_e_fast
+from pymets.metric.utils.edge_match_utils import get_match_edges_e_fast
 from pymets.metric.utils.config_utils import get_default_threshold
 from pymets.io.read_json import read_json
 from pymets.io.save_swc import save_as_swc,print_swc
@@ -12,12 +12,13 @@ import os,platform
 
 def length_metric_3(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
     test_swc_tree.get_lca_preprocess()
-    match_fail = get_unmatch_edges_e(gold_swc_tree, test_swc_tree)
-
-    return match_fail
+    # match_fail = get_unmatch_edges_e(gold_swc_tree, test_swc_tree)
+    #
+    # return match_fail
 
 
 def length_metric_2(gold_swc_tree=None, test_swc_tree=None, dis_threshold=0.1, detail_path=None, DEBUG=True):
+    test_swc_tree.get_lca_preprocess()
     match_edges = get_match_edges_e_fast(gold_swc_tree, test_swc_tree,  # tree data
                                          dis_threshold, detail_path, DEBUG=DEBUG)  # configs
 
@@ -26,12 +27,13 @@ def length_metric_2(gold_swc_tree=None, test_swc_tree=None, dis_threshold=0.1, d
         match_length += line_tuple[0].parent_distance()
 
     gold_total_length = round(gold_swc_tree.length(), 8)
+    test_total_length = round(test_swc_tree.length(), 8)
     match_length = round(match_length, 8)
 
     if DEBUG:
         print("match_length a = {}, gold_total_length = {}"
               .format(match_length, gold_total_length))
-    return match_length/gold_total_length
+    return match_length/gold_total_length, match_length/test_total_length
 
 
 def length_metric_1(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
@@ -61,15 +63,19 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
     if platform.system() == "Linux":
         detail_path = '/'.join(detail_path.split("\\"))
     detail_path = os.path.join(abs_dir, detail_path)
+    if os.path.exists(detail_path):
+        os.remove(detail_path)
     if config["method"] == 1:
-        return length_metric_1(gold_swc_tree=gold_swc_tree,
+        ratio = length_metric_1(gold_swc_tree=gold_swc_tree,
                                test_swc_tree=test_swc_tree)
+        print("1 - test_length / gold_length= {}".format(ratio))
     elif config["method"] == 2:
-        print("result = {}".format(length_metric_2(gold_swc_tree=gold_swc_tree,
+        recall, Precision = length_metric_2(gold_swc_tree=gold_swc_tree,
                                 test_swc_tree=test_swc_tree,
                                 dis_threshold=dis_threshold,
                                 detail_path=detail_path,
-                                DEBUG=False)))
+                                DEBUG=False)
+        print("Recall = {}, Precision = {}".format(recall, Precision))
     elif config["method"] == 3:
         match_fail_tuple_set = length_metric_3(gold_swc_tree=gold_swc_tree,
                                                 test_swc_tree=test_swc_tree,
@@ -85,17 +91,17 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
 
 if __name__ == "__main__":
     goldtree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\ExampleGoldStandard.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\34_23_10_gold.swc")
 
     testTree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\34_23_10_test.swc")
     start = time.time()
     length_metric(gold_swc_tree=goldtree,
                   test_swc_tree=testTree,
                   abs_dir="D:\gitProject\mine\PyMets",
                   config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
-    # length_metric(gold_swc_tree=testTree,
-    #               test_swc_tree=goldtree,
-    #               abs_dir="D:\gitProject\mine\PyMets",
-    #               config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
+    length_metric(gold_swc_tree=testTree,
+                  test_swc_tree=goldtree,
+                  abs_dir="D:\gitProject\mine\PyMets",
+                  config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
     print("time cost = {}".format(time.time() - start))

@@ -185,7 +185,7 @@ class SwcNode(NodeMixin):
             return 0.0
         if type(tn) == type([]):
             tn = SwcNode(nid=1,center=tn)
-        if tn and self.is_regular() and tn.is_regular():
+        if tn and self.is_regular() and (isinstance(tn, EuclideanPoint) or tn.is_regular()):
             dx = self._pos[0] - tn._pos[0]
             dy = self._pos[1] - tn._pos[1]
             dz = self._pos[2] - tn._pos[2]
@@ -369,7 +369,7 @@ class SwcTree:
         for node in PreOrderIter(self.root()):
             self.depth_array[node.get_id()] = node.depth()
 
-    # 初始化swc_tree中LCA的相关数据结构
+    # initialize LCA data structure in swc_tree
     def get_lca_preprocess(self):
         self.get_depth_array()
         self.LOG_NODE_NUM = math.ceil(math.log(self.node_count(), 2))
@@ -388,7 +388,7 @@ class SwcTree:
                     self.lca_parent[v][k + 1] = self.lca_parent[int(self.lca_parent[v][k])][k]
         return True
 
-    # 输入两个节点编号，开始计算LCA
+    # input node id of two swc_node，calculate LCA
     def get_lca(self, u, v):
         lca_parent = self.lca_parent
         LOG_NODE_NUM = self.LOG_NODE_NUM

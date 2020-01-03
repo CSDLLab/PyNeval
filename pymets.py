@@ -5,6 +5,13 @@ from pymets.io.read_json import read_json
 from pymets.metric.diadem_metric import diadem_metric
 from pymets.metric.length_metric import length_metric
 
+metric_list = [
+    "diadem_metric",
+    "overall_length",
+    "matched_length",
+    "DM","OL","ML"
+]
+
 def read_parameters():
     parser = argparse.ArgumentParser(
         description="pymet 1.0"
@@ -41,6 +48,12 @@ def read_parameters():
         help="special config for different metric method",
         required=False
     )
+    parser.add_argument(
+        "--reverse",
+        "-R",
+        help="output the answer when we switch the gold and test tree",
+        required=False
+    )
     return parser.parse_args()
 
 def pymets(DEBUG=True):
@@ -55,7 +68,14 @@ def pymets(DEBUG=True):
     test_swc_files = [os.path.join(abs_dir, path) for path in args.test]
     gold_swc_file = os.path.join(abs_dir, args.gold)
 
+    reverse = args.reverse
+    if reverse is None:
+        reverse = False
     metric = args.metric
+    if metric not in metric_list:
+        raise Exception("[Error: ] Unknown metric method {}".format(
+            metric
+        ))
     output_dest = args.output
     if output_dest is not None:
         output_dest = os.path.join(abs_dir, output_dest)
@@ -64,12 +84,12 @@ def pymets(DEBUG=True):
         if platform.system() == "Windows":
             if metric == "diadem_metric" or metric == "DM":
                 config = os.path.join(abs_dir, "config\\diadem_metric.json")
-            if metric == "length_metric" or metric == "LM":
+            if metric in ["overall_length", "matched_length", "OL", "ML"]:
                 config = os.path.join(abs_dir, "config\\length_metric.json")
         elif platform.system() == "Linux":
             if metric == "diadem_metric" or metric == "DM":
                 config = os.path.join(abs_dir, "config/diadem_metric.json")
-            if metric == "length_metric" or metric == "LM":
+            if metric in ["overall_length", "matched_length", "OL", "ML"]:
                 config = os.path.join(abs_dir, "config/length_metric.json")
 
     if DEBUG:
@@ -91,12 +111,24 @@ def pymets(DEBUG=True):
     for test_swc_treeroot in test_swc_trees:
         if metric == "diadem_metric" or metric == "DM":
             diadem_metric(test_swc_treeroot, gold_swc_treeroot)
-        if metric == "length_metric" or metric == "LM":
-            result = length_metric(gold_swc_treeroot, test_swc_treeroot,
-                                   abs_dir, config)
-            print(result)
+            if reverse:
+                diadem_metric(gold_swc_treeroot, test_swc_treeroot)
+        if metric == "overall_length" or metric == "OL":
+            config["method"] = 1
+            length_metric(gold_swc_treeroot, test_swc_treeroot,
+                          abs_dir, config)
+            if reverse:
+                length_metric(test_swc_treeroot, gold_swc_treeroot ,
+                              abs_dir, config)
+        if metric == "matched_length" or metric == "ML":
+            config["method"] = 2
+            length_metric(gold_swc_treeroot, test_swc_treeroot,
+                          abs_dir, config)
+            if reverse:
+                length_metric(test_swc_treeroot, gold_swc_treeroot ,
+                              abs_dir, config)
 
 if __name__ == "__main__":
     pymets()
 # python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric length_metric --config D:\gitProject\mine\PyMets\test\length_metric.json
-# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric length_metric
+# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric ML
