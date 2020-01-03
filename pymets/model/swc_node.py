@@ -369,7 +369,7 @@ class SwcTree:
         for node in PreOrderIter(self.root()):
             self.depth_array[node.get_id()] = node.depth()
 
-    # 初始化swc_tree中LCA的相关数据结构
+    # initialize LCA data structure in swc_tree
     def get_lca_preprocess(self):
         self.get_depth_array()
         self.LOG_NODE_NUM = math.ceil(math.log(self.node_count(), 2))
@@ -388,7 +388,7 @@ class SwcTree:
                     self.lca_parent[v][k + 1] = self.lca_parent[int(self.lca_parent[v][k])][k]
         return True
 
-    # 输入两个节点编号，开始计算LCA
+    # input node id of two swc_node，calculate LCA
     def get_lca(self, u, v):
         lca_parent = self.lca_parent
         LOG_NODE_NUM = self.LOG_NODE_NUM

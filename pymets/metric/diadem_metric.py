@@ -8,10 +8,10 @@ from pymets.model.swc_node import SwcTree, SwcNode
 from pymets.metric.utils.diadam_match_utils import get_match_path_length_difference, get_nearby_node_list
 from pymets.metric.utils.bin_utils import convert_to_binarytree
 
-# 阈值
+# thresholds
 g_terminal_threshold = 0
 
-# 开关
+# switch
 g_remove_spur = False
 g_align_tree_by_root = False
 g_count_excess_nodes = True
@@ -23,8 +23,9 @@ WEIGHT_DEGREE_HARMONIC_MEAN = 3
 WEIGHT_PATH_LENGTH = 4
 WEIGHT_UNIFORM = 5
 _2D = '2d'
+_3D = '3d'
 
-# 统计变量
+# various
 g_weight_sum = 0
 g_score_sum = 0
 g_quantity_score_sum = 0
@@ -154,7 +155,7 @@ def get_closest_match(gold_node,
                       DEBUG=False):
     best_match = None
 
-    # Step1: 寻找阈值内的节点
+    # Step1: find node within threshold
     nearby_list = get_nearby_node_list(gold_node=gold_node, bin_test_list=bin_test_list,
                                        g_matches=g_matches)
     if DEBUG:
@@ -163,7 +164,7 @@ def get_closest_match(gold_node,
             print(node.data.get_id())
         print("----END----")
 
-    # Step2: 寻找到上下节点匹配的点，标记为match
+    # Step2: find match node whose ancestor is also matched
     match_list = []
     for nearby_node in nearby_list:
         if is_diadem_match(gold_node, nearby_node, bin_gold_list, bin_test_list):
@@ -185,7 +186,7 @@ def is_continuation(gold_node, bin_test_list, add_to_list=True, DEBUG = False):
     ancestor_node_matches = []
     gold_path_length = SwcNode()
 
-    # 寻找gold_node第一个匹配的祖先
+    # find the first matched ancestor of the gold_node
     ancestor_match = None
     ancestor_gold = gold_node.parent
     gold_path_length.path_length = gold_node.data.path_length
@@ -219,7 +220,7 @@ def is_continuation(gold_node, bin_test_list, add_to_list=True, DEBUG = False):
         is_left = ancestor_gold.is_left()
         ancestor_gold = ancestor_gold.parent
 
-    # 寻找失败
+    # failed
     return False
 
 
@@ -294,7 +295,7 @@ def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
     bin_gold_list = bin_gold_root.get_node_list()
     bin_test_list = bin_test_root.get_node_list()
 
-    # 根节点肯定匹配
+    # Root is certainly matched
     # g_matches[bin_gold_root] = bin_test_root
     # g_matches[bin_test_root] = bin_gold_root
 
@@ -323,7 +324,7 @@ def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
                                       bin_gold_list = bin_gold_list,
                                       bin_test_list = bin_test_list)
 
-            # 补偿一种寻找方式 (暂时省略)
+            # another match method (temporarily undo)
             # if match is None and gold_node.is_leaf() and g_terminal_threshold > 0:
             #     match = get_extended_termination_match(gold_node = gold_node,
             #                                            bin_gold_list = bin_gold_list,
