@@ -130,5 +130,4 @@ def pymets(DEBUG=True):
 
 if __name__ == "__main__":
     pymets()
-# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric length_metric --config D:\gitProject\mine\PyMets\test\length_metric.json
-# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric ML
+# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric matched_length
