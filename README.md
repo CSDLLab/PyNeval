@@ -33,6 +33,6 @@ http://diademchallenge.org/metric.html
   python ./pymets.py
   --test D:\gitProject\mine\PyMets\test\data_example\test\ExampleTest.swc
   --gold D:\gitProject\mine\PyMets\test\data_example\gold\ExampleGoldStandard.swc
-  --metric length_metric
+  --metric matched_length
   ```
   the explanation also can been seen in the `doc`<br> 
