@@ -9,7 +9,8 @@ from rtree import index
 
 MIN_SIZE = 0.8
 
-# 获取线段的bounding box
+
+# get bounding box of a segment
 def get_bounds(point_a, point_b, extra = 0):
     point_a = np.array(point_a._pos)
     point_b = np.array(point_b._pos)
@@ -18,7 +19,7 @@ def get_bounds(point_a, point_b, extra = 0):
     return tuple(res)
 
 
-# 获取编号到线段的映射
+# get a dict, id_edge_dict[id] = tuple(swc_node1, swc_node2)
 def get_idedge_dict(swc_tree=None):
     id_edge_dict = {}
     swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
@@ -29,7 +30,7 @@ def get_idedge_dict(swc_tree=None):
     return id_edge_dict
 
 
-# 构建rtree
+# construct rtree
 def get_edge_rtree(swc_tree=None):
     swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
     p = index.Property()
@@ -43,7 +44,7 @@ def get_edge_rtree(swc_tree=None):
     return idx3d
 
 
-#基于rtree寻找距离最近的边
+# find the closest edge base on rtree
 def get_nearest_edge_fast(idx3d, point, id_edge_dict, DEBUG=False):
     point_box = (point._pos[0] - MIN_SIZE, point._pos[1] - MIN_SIZE, point._pos[2] - MIN_SIZE,
                  point._pos[0] + MIN_SIZE, point._pos[1] + MIN_SIZE, point._pos[2] + MIN_SIZE)
@@ -63,7 +64,7 @@ def get_nearest_edge_fast(idx3d, point, id_edge_dict, DEBUG=False):
     return s, d
 
 
-#根据边找匹配
+# find successful matched edge
 def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
                            dis_threshold=0.1, detail_path=None, DEBUG=False):
     match_edge = set()
@@ -85,15 +86,25 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
         line_tuple_a, dis_a = get_nearest_edge_fast(idx3d, e_node, id_edge_dict)
         line_tuple_b, dis_b = get_nearest_edge_fast(idx3d, e_parent, id_edge_dict)
 
-        if DEBUG and line_tuple_a is not None and line_tuple_b is not None:
-            print("\nnode = {} {}\nnode.parent = {} {}\nnode_line = {},{}\nnode_p_line = {},{}\n".format(
-                node.get_id(), node._pos,
-                node.parent.get_id(), node.parent._pos,
-                line_tuple_a[0]._pos, line_tuple_a[1]._pos,
-                line_tuple_b[0]._pos, line_tuple_b[1]._pos,
-            ))
+        test_length = 0.0
+        gold_length = 0.0
 
-        if dis_a <= node.radius() and dis_b <= node.parent.radius():
+        if line_tuple_a is not None and line_tuple_b is not None:
+            test_length = get_lca_length(test_swc_tree, \
+                           line_tuple_a, \
+                           line_tuple_b, \
+                           Line([e_node._pos, e_parent._pos]))
+            gold_length = node.parent_distance()
+            if DEBUG:
+                print("\nnode = {} {}\nnode.parent = {} {}\nnode_line = {},{}\nnode_p_line = {},{}\n".format(
+                    node.get_id(), node._pos,
+                    node.parent.get_id(), node.parent._pos,
+                    line_tuple_a[0]._pos, line_tuple_a[1]._pos,
+                    line_tuple_b[0]._pos, line_tuple_b[1]._pos,
+                ))
+
+        if dis_a <= node.radius() and dis_b <= node.parent.radius() and \
+                math.fabs(test_length - gold_length) < gold_length/10:
             match_edge.add(tuple([node, node.parent]))
         else:
             if detail_path is not None:
@@ -111,37 +122,7 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
     return match_edge
 
 
-#根据边找不匹配
-def get_unmatch_edges_e(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
-    match_fail = set()
-    idx3d = get_edge_rtree(test_swc_tree)
-    id_edge_dict = get_idedge_dict(test_swc_tree)
-    gold_node_list = [node for node in PreOrderIter(gold_swc_tree.root())]
-
-    for node in gold_node_list:
-        if node.is_virtual() or node.parent.is_virtual():
-            continue
-
-        e_node = EuclideanPoint(node._pos)
-        e_parent = EuclideanPoint(node.parent._pos)
-
-        line_tuple_a, dis_a = get_nearest_edge_fast(idx3d, e_node, id_edge_dict)
-        line_tuple_b, dis_b = get_nearest_edge_fast(idx3d, e_parent, id_edge_dict)
-
-        test_length = get_lca_length(test_swc_tree, \
-                                     line_tuple_a, \
-                                     line_tuple_b, \
-                                     Line([e_node._pos, e_parent._pos]))
-        gold_length = node.parent_distance()
-        if DEBUG:
-            print("test length = {} gold_length = {}".format(test_length,gold_length))
-        if math.fabs(test_length - gold_length) > gold_length/10:
-            match_fail.add(tuple([node, node.parent, gold_length, test_length]))
-
-    return match_fail
-
-
-# 获取当前节点swc_node到LCA路上遇到的所有节点
+# get all node from current node to the LCA node
 def get_route_node(current_node, lca_id):
     res_list = []
     while not current_node.is_virtual() and not current_node.get_id() == lca_id:
@@ -154,19 +135,7 @@ def get_route_node(current_node, lca_id):
     return res_list
 
 
-# 获取gold_line_a与gold_line_b到LCA边上与testline最远的距离，尚未完成
-def get_lca_max_dis(gold_swc_tree, gold_line_a, gold_line_b, test_line):
-    gold_swc_tree.get_lca_preprocess()
-    lca_id = gold_swc_tree.get_lca(gold_line_a[0].get_id(), gold_line_b[0].get_id())
-    route_list = []
-    route_list += get_route_node(gold_line_a[0], lca_id)
-    route_list += get_route_node(gold_line_b[0], lca_id)
-    # root节点可能有问题
-    for node in route_list:
-        print(node.get_id())
-
-
-# 获取整个LCA相关边的长度
+# get the distance of two matched closest edges
 def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_line):
     point_a, point_b = test_line.get_points()
     gold_line_a = Line(coords=[gold_line_tuple_a[0]._pos, gold_line_tuple_a[1]._pos])
