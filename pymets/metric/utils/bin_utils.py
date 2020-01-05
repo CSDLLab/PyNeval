@@ -10,7 +10,6 @@ _3D = "3d"
 _2D = "2d"
 TRAJECTORY_NONE = -1.0
 FLOAT_INF = 999999999.9
-DEBUG = False
 RIGHT = 'right'
 LEFT = 'left'
 DEFULT = 'DEFULT'
@@ -76,28 +75,28 @@ def re_arrange(bin_node, hight=1, parent=None, side=DEFULT):
 
 
 def calculate_trajectories_xy(origin, first, second, threshold):
-    point = EuclideanPoint()
+    point = EuclideanPoint(center=[0,0,0])
 
-    to_first = origin.distance(first)
-    to_second = origin.distance(second)
+    to_first = origin.distance(first, _2D)
+    to_second = origin.distance(second, _2D)
 
     proportionAlongLine = (threshold - to_first)/(to_second - to_first)
 
-    point._pos[0] = (first._pos[0] + proportionAlongLine*(second._pos[0] - first._pos[0]))
-    point._pos[1] = (first._pos[1] + proportionAlongLine*(second._pos[1] - first._pos[1]))
+    point.set_x(first.get_x() + proportionAlongLine*(second.get_x() - first.get_x()))
+    point.set_y(first.get_y() + proportionAlongLine*(second.get_y() - first.get_y()))
     return point
 
 
 def calculate_trajectories_z(origin, first, second, threshold):
-    to_first = math.fabs(origin._pos[2] - first._pos[2])
-    to_second = math.fabs(origin._pos[2] - second._pos[2])
+    to_first = math.fabs(origin.get_z() - first.get_z())
+    to_second = math.fabs(origin.get_z() - second.get_z())
 
     proportionAlongLine = (threshold - to_first)/(to_second - to_first)
 
-    return first._pos[2] + proportionAlongLine*(second._pos[2] - first._pos[2])
+    return first.get_z() + proportionAlongLine*(second.get_z() - first.get_z())
 
 
-def find_parent_trajectory(node, thereholds):
+def find_parent_trajectory(node, thereholds, DEBUG=False):
     done_x = False
     done_z = False
     xy_dis = 0.0
@@ -107,15 +106,16 @@ def find_parent_trajectory(node, thereholds):
     data = node.data
     c_data = c.data
 
-    point = EuclideanPoint()
+    point = EuclideanPoint(center=[0,0,0])
     while not done_x or not done_z:
         c = c.parent
-        prevData = c_data
+        prev_data = c_data
         c_data = c.data
         if not done_x:
-            xy_dis = data.distance(c_data)
-            if xy_dis > thereholds._pos[0]:
-                tmp_point = calculate_trajectories_xy(data, prevData, c_data, thereholds._pos[0])
+            xy_dis = data.distance(c_data, _2D)
+            if xy_dis > thereholds.get_x():
+                tmp_point = EuclideanPoint(center=[0, 0, 0])
+                tmp_point.add_coord(calculate_trajectories_xy(data, prev_data, c_data, thereholds._pos[0]))
                 point._pos[0] = tmp_point._pos[0]
                 point._pos[1] = tmp_point._pos[1]
                 done_x = True
@@ -127,7 +127,7 @@ def find_parent_trajectory(node, thereholds):
         if not done_z:
             z_dis = math.fabs(data._pos[2] - c_data._pos[2])
             if z_dis > thereholds._pos[2]:
-                point._pos[2] = calculate_trajectories_z(data, prevData, c_data, thereholds._pos[2])
+                point._pos[2] = calculate_trajectories_z(data, prev_data, c_data, thereholds._pos[2])
                 done_z = True
             elif c.is_root:
                 point._pos[2] = c_data._pos[2]
@@ -139,22 +139,23 @@ def find_parent_trajectory(node, thereholds):
     return point
 
 
-def find_child_trajectory(data, child, thresholds):
+def find_child_trajectory(data, child, thresholds, DEBUG=False):
     xy_dis = 0.0
     z_dis = 0.0
     done_x = False
     done_z = False
     prev_data = data
 
-    point = EuclideanPoint()
+    point = EuclideanPoint(center=[0, 0, 0])
     while not done_x or not done_z:
         c_data = child.data
 
         if not done_x:
-            xy_dis = data.distance(c_data)
+            xy_dis = data.distance(c_data, _2D)
 
             if xy_dis > thresholds._pos[0]:
-                tmp_point = calculate_trajectories_xy(data, prev_data, c_data, thresholds._pos[0])
+                tmp_point = EuclideanPoint(center=[0, 0, 0])
+                tmp_point.add_coord(calculate_trajectories_xy(data, prev_data, c_data, thresholds._pos[0]))
                 point._pos[0] = tmp_point._pos[0]
                 point._pos[1] = tmp_point._pos[1]
                 done_x = True
@@ -194,17 +195,17 @@ def add_child_bifurcations(stack, node):
     lson = node.left_son
     rson = node.right_son
 
-    while lson.left_son != None and lson.right_son == None:
+    while lson.left_son is not None and lson.right_son is None:
         lson = lson.left_son
     stack.put(lson)
 
-    while rson.left_son != None and rson.right_son == None:
+    while rson.left_son is not None and rson.right_son is None:
         rson = rson.left_son
     stack.put(rson)
 
 
 # calculate the distance to root
-def calculate_trajectories(bin_root, thresholds, z_in_path_dist = True, current_trajectories = 0.0):
+def calculate_trajectories(bin_root, thresholds, z_in_path_dist =True, current_trajectories=0.0, DEBUG=False):
     stack = queue.LifoQueue()
 
     node = bin_root
@@ -215,29 +216,44 @@ def calculate_trajectories(bin_root, thresholds, z_in_path_dist = True, current_
     while not stack.empty():
         node = stack.get()
         if DEBUG:
-            print("[debug:  ] calculate trajectories for node {}".format(node.data.id))
+            print("[debug:  ] calculate trajectories for node {}".format(node.data.get_id()))
         data = node.data
 
         if not node.is_root():
-            data.parent_trajectory = find_parent_trajectory(node, thresholds)
+            if data.parent_trajectory is None:
+                data.parent_trajectory = EuclideanPoint(center=[0,0,0])
+            data.parent_trajectory.add_coord(find_parent_trajectory(node, thresholds))
 
         if not node.is_leaf():
-            data.left_trajectory = find_child_trajectory(data, node.left_son, thresholds)
-            data.right_trajectory = find_child_trajectory(data, node.right_son, thresholds)
+            if data.left_trajectory is None:
+                data.left_trajectory = EuclideanPoint(center=[0, 0, 0])
+            if data.right_trajectory is None:
+                data.right_trajectory = EuclideanPoint(center=[0, 0, 0])
+            data.left_trajectory.add_coord(find_child_trajectory(data, node.left_son, thresholds))
+            data.right_trajectory.add_coord(find_child_trajectory(data, node.right_son, thresholds))
             add_child_bifurcations(stack, node)
 
+        if DEBUG:
+            print("trajectory:")
+            if data.parent_trajectory is not None:
+                print("pa_tra = {}".format(data.parent_trajectory._pos))
+            if data.left_trajectory is not None:
+                print("left_tra = {}".format(data.left_trajectory._pos))
+            if data.right_trajectory is not None:
+                print("right_tra = {}".format(data.right_trajectory._pos))
 
-def calculate_path_data(bin_node, z_in_path_dist):
+
+def calculate_path_data(bin_node, z_in_path_dist, DEBUG=False):
     data = bin_node.data
     pa_data = bin_node.parent.data
 
     if data.path_length == 0.0:
         if z_in_path_dist:
             data.path_length = data.distance(pa_data)
-            data.xy_path_length = data.distance(pa_data,mode=_2D)
+            data.xy_path_length = data.distance(pa_data, mode=_2D)
         else:
-            data.path_length = data.distance(pa_data,mode=_2D)
-            data.xy_path_length = data.distance(pa_data,mode=_2D)
+            data.path_length = data.distance(pa_data, mode=_2D)
+            data.xy_path_length = data.distance(pa_data, mode=_2D)
         data.z_path_length = math.fabs(pa_data._pos[2] - data._pos[2])
         data.surface_area = data.path_length*math.pi*data.radius()*2
         data.volume = data.path_length*math.pi*data.radius()*data.radius()

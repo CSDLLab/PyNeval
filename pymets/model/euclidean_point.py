@@ -1,9 +1,10 @@
 import numpy as np
 import math
 
+
 class EuclideanPoint(object):
     def __init__(self,
-                 center=[0,0,0]):
+                 center=[0, 0, 0]):
         self._pos=center
 
     def get_x(self):
@@ -26,6 +27,11 @@ class EuclideanPoint(object):
 
     def to_str(self):
         print("EuclideanPoint: {}".format(self._pos))
+
+    def add_coord(self, point_a):
+        self._pos[0] += point_a.get_x()
+        self._pos[1] += point_a.get_y()
+        self._pos[2] += point_a.get_z()
 
     def get_foot_point(self, line):
         if len(line.coords) != 2:

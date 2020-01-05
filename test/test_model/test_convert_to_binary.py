@@ -20,9 +20,7 @@ def test_print_tree(root_node):
     while not q.empty():
         num += 1
         cur = q.get()
-        print(cur.id)
         for item in cur.son:
-            print(item.id)
             q.put(item)
         print("-----------")
     print("tree node num = {}".format(num))
@@ -34,12 +32,11 @@ def test_print_bin_tree(root_node):
     while not q.empty():
         # num += 1
         cur = q.get()
-        print(cur.data._id)
-        if ((cur.left_son != None and cur.right_son != None) or \
-               (cur.left_son == None and cur.right_son == None)):
-            # print("node_id = {}, Left = {}, Right = {}".format(cur.data.id,cur.left_son, cur.right_son))
-            # print("出大问题！")
-            num += 1
+        # if ((cur.left_son != None and cur.right_son != None) or \
+        #        (cur.left_son == None and cur.right_son == None)):
+        #     # print("node_id = {}, Left = {}, Right = {}".format(cur.data.id,cur.left_son, cur.right_son))
+        #     # print("出大问题！")
+        #     num += 1
         if cur.left_son != None:
             # print(cur.left_son.data.id)
             q.put(cur.left_son)

@@ -152,7 +152,7 @@ def path_length_matches(gold_swc_path_length,
         ))
 
     z_diff = math.fabs(gold_swc_path_length.z_path_length - test_Z_path_length)
-    z_err = z_diff / gold_swc_path_length.z_path_length
+    z_err = z_diff / gold_swc_path_length.path_length
 
     if gold_swc_path_length.xy_path_length < g_xy_threshold:
         if test_XY_path_length < g_xy_threshold:
@@ -205,9 +205,9 @@ def get_match_path_length_difference(gold_node, test_node, bin_gold_list, bin_te
             gold_data = gold_node.data
 
             if is_branch_left:
-                ancestor_trajectory = gold_data.right_trajectory
-            else:
                 ancestor_trajectory = gold_data.left_trajectory
+            else:
+                ancestor_trajectory = gold_data.right_trajectory
 
             if ancestor_trajectory.get_x() == TRAJECTORY_NONE or \
                 ancestor_trajectory.get_z() == TRAJECTORY_NONE:
