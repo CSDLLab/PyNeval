@@ -10,7 +10,7 @@ _2D = "2d"
 
 TRAJECTORY_NONE = -1.0
 g_xy_threshold = 1.2
-g_z_threshold = 1
+g_z_threshold = 0.0
 g_default_xy_path_error_threshold = 0.05
 g_default_z_path_error_threshold = 0.05
 g_local_path_error_threshold = 0.4
@@ -257,6 +257,32 @@ def get_match_path_length_difference(gold_node, test_node, bin_gold_list, bin_te
                     test_swc_path_length.add_length(test_node.data)
                     test_node = test_node.parent
     return 1
+
+
+def LCA(node1, node2, kca):
+    node1_list = []
+
+    node1 = node1.parent
+    while node1 != kca:
+        node1_list.append(node1)
+        node1 = node1.parent
+
+    node1 = node2.parent
+    while node2 != kca and node2 is not None:
+        if node2 in node1_list:
+            return node2
+        node2 = node2.parent
+
+    return None
+
+
+def is_within_dis_match_threshold(node1, node2):
+    if isinstance(node1, BinaryNode):
+        node1 = node1.data
+    if isinstance(node2, BinaryNode):
+        node2 = node2.data
+    return node1.distance(node2, _2D) <= g_xy_threshold * 3 \
+           and math.fabs(node1.get_z() - node2.get_z()) < g_z_threshold * 3 + 0.1
 
 
 if __name__ == "__main__":
