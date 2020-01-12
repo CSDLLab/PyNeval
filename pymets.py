@@ -110,7 +110,9 @@ def pymets(DEBUG=True):
     gold_swc_treeroot = gold_swc_trees[0]
     for test_swc_treeroot in test_swc_trees:
         if metric == "diadem_metric" or metric == "DM":
-            diadem_metric(test_swc_treeroot, gold_swc_treeroot)
+            diadem_metric(swc_test_tree=test_swc_treeroot,
+                          swc_gold_tree=gold_swc_treeroot,
+                          config=read_json("D:\gitProject\mine\PyMets\config\diadem_metric.json"))
             if reverse:
                 diadem_metric(gold_swc_treeroot, test_swc_treeroot)
         if metric == "overall_length" or metric == "OL":
@@ -131,3 +133,4 @@ def pymets(DEBUG=True):
 if __name__ == "__main__":
     pymets()
 # python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric matched_length
+# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\ExampleTest.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\ExampleGoldStandard.swc --metric diadem_metric
