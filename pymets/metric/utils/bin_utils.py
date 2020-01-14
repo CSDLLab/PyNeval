@@ -57,45 +57,6 @@ def swctree_to_binarytree(node):
     return binary_root
 
 
-def swctree_to_binarytree2(node):
-    binary_root = BinaryNode(data=node)
-
-    # the nodes in this list is the root of a binary tree
-    binnary_son_list = []
-    son = list(node.children)
-
-    for son_node in son:
-        # print(type(son_node))
-        binnary_node = swctree_to_binarytree(son_node)
-        binnary_son_list.append(binnary_node)
-
-    while len(binnary_son_list) > 2:
-        best1 = binnary_son_list[0]
-        best2 = binnary_son_list[1]
-        distance = FLOAT_INF
-        for i in range(len(binnary_son_list)- 1):
-            bin_node1 = binnary_son_list[i]
-            for j in range(i+1, len(binnary_son_list)):
-                bin_node2 = binnary_son_list[j]
-                if bin_node1.data.distance(bin_node2.data) < distance:
-                    best1 = bin_node1
-                    best2 = bin_node2
-                    distance = bin_node1.data.distance(bin_node2.data)
-
-        new_swcnode = copy.deepcopy(node)
-        new_binnode = BinaryNode(data=new_swcnode,left_son=best1,right_son=best2)
-        binnary_son_list.remove(best1)
-        binnary_son_list.remove(best2)
-        binnary_son_list.append(new_binnode)
-
-    if len(binnary_son_list) >= 1:
-        binary_root.left_son = binnary_son_list[0]
-    if len(binnary_son_list) == 2:
-        binary_root.right_son = binnary_son_list[1]
-
-    return binary_root
-
-
 def re_arrange(bin_node, hight=1, parent=None, side=DEFULT):
     bin_node.hight = hight
     bin_node.parent = parent
