@@ -101,7 +101,7 @@ def get_trajectory_for_path(ancestor_node, descendant_node):
             if not down_z and sec_data.left_trajectory.get_z() != TRAJECTORY_NONE:
                 trajectory.set_z(sec_data.left_trajectory.get_z())
                 down_z = True
-        elif next_descendant.is_right() and sec_data.right_trajectory is not None:
+        elif not next_descendant.is_left() and sec_data.right_trajectory is not None:
             if not down_x and sec_data.right_trajectory.get_x() != TRAJECTORY_NONE:
                 trajectory.set_x(sec_data.right_trajectory.get_x())
                 trajectory.set_y(sec_data.right_trajectory.get_y())
@@ -144,6 +144,8 @@ def path_length_matches(gold_swc_path_length,
     z_path_error_threshold = g_default_z_path_error_threshold
 
     xy_diff = math.fabs(gold_swc_path_length.xy_path_length - test_XY_path_length)
+    if gold_swc_path_length.path_length == 0:
+        return 0
     xy_err = xy_diff / gold_swc_path_length.path_length
 
     if DEBUG:
