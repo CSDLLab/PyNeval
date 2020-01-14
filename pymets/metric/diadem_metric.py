@@ -15,7 +15,6 @@ from pymets.metric.utils.bin_utils import convert_to_binarytree
 # thresholds
 g_terminal_threshold = 0
 
-WEIGHT_MODE = 1
 WEIGHT_DEGREE = 1
 WEIGHT_SQRT_DEGREE = 2
 WEIGHT_DEGREE_HARMONIC_MEAN = 3
@@ -29,6 +28,9 @@ g_remove_spur = False
 g_align_tree_by_root = False
 g_count_excess_nodes = True
 g_weight_node = WEIGHT_DEGREE
+g_list_miss = False
+g_list_distant_matches = False
+g_list_continuations = False
 
 # various
 g_weight_sum = 0
@@ -102,7 +104,7 @@ def generate_node_weights(bin_root, spur_set, DEBUG=False):
     while not main_stack.empty():
         node = main_stack.get()
 
-        if WEIGHT_MODE == WEIGHT_UNIFORM:
+        if g_weight_node == WEIGHT_UNIFORM:
             g_weight_dict[node] = 1
         else:
             if DEBUG:
@@ -127,13 +129,13 @@ def generate_node_weights(bin_root, spur_set, DEBUG=False):
                     degree += degree_dict[node.left_son]
                     degree += degree_dict[node.right_son]
                 degree_dict[node] = degree
-                if WEIGHT_MODE == WEIGHT_DEGREE:
+                if g_weight_node == WEIGHT_DEGREE:
                     g_weight_dict[node] = degree
-                elif WEIGHT_MODE == WEIGHT_SQRT_DEGREE:
+                elif g_weight_node == WEIGHT_SQRT_DEGREE:
                     g_weight_dict[node] = math.sqrt(degree)
-                elif WEIGHT_MODE == WEIGHT_DEGREE_HARMONIC_MEAN:
+                elif g_weight_node == WEIGHT_DEGREE_HARMONIC_MEAN:
                     g_weight_dict[node] = 2.0 / (1.0/degree_dict[node.getLeft()] + 1.0/degree_dict.get[node.getRight()])
-                elif WEIGHT_MODE == WEIGHT_PATH_LENGTH:
+                elif g_weight_node == WEIGHT_PATH_LENGTH:
                     g_weight_dict[node] = node.data.path_length
                 if DEBUG:
                     print("nodeId = {}, degree = {}".format(node.data._id, degree))
@@ -143,6 +145,8 @@ def generate_node_weights(bin_root, spur_set, DEBUG=False):
 
 
 def is_diadem_match(gold_node, nearby_node, bin_gold_list, bin_test_list, DEBUG=False):
+    #debug:
+    print(gold_node.data.get_id())
     length_diff = get_match_path_length_difference(gold_node, nearby_node, bin_gold_list, bin_test_list)
     if DEBUG:
         print("gold_node = {}, test_node = {}, length_diff = {}".format(
@@ -565,12 +569,19 @@ def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
     bin_test_list = bin_test_root.get_node_list()
 
     # Root is certainly matched
-    # g_matches[bin_gold_root] = bin_test_root
-    # g_matches[bin_test_root] = bin_gold_root
+    g_matches[bin_gold_root] = bin_test_root
+    g_matches[bin_test_root] = bin_gold_root
+    g_score_sum += g_weight_dict[bin_gold_root]
+    g_weight_sum += g_weight_dict[bin_gold_root]
+
+    # Increment quantity (non-continuations)
+    g_quantity_score_sum += 1
 
     number_of_nodes -= len(g_spur_set)
     number_of_nodes += len(bin_gold_list)
-    stack.put(bin_gold_root)
+
+    stack.put(bin_gold_root.left_son)
+    stack.put(bin_gold_root.right_son)
 
     while not stack.empty():
         gold_node = stack.get()
@@ -660,22 +671,33 @@ def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
             ))
 
 
-def diadem_metric(swc_gold_tree, swc_test_tree, config):
-    global g_spur_set
-    global g_weight_dict
+def switch_initialize(config):
+    # switch
+    global g_remove_spur
+    global g_align_tree_by_root
+    global g_count_excess_nodes
+    global g_weight_node
+    global g_list_miss
+    global g_list_distant_matches
+    global g_list_continuations
 
-    if g_align_tree_by_root:
-        swc_test_tree.align_root(swc_gold_tree)
+    if "remove_spur" in config.keys():
+        g_remove_spur = config["remove_spur"]
+    if "align_tree_by_root" in config.keys():
+        g_align_tree_by_root = config["align_tree_by_root"]
+    if "count_excess_nodes" in config.keys():
+        g_count_excess_nodes = config["count_excess_nodes"]
+    if "weight_node" in config.keys():
+        g_weight_node = config["weight_node"]
+    if "list_miss":
+        g_list_miss = config["list_miss"]
+    if "list_distant_matches":
+        g_list_distant_matches = config["list_distant_matches"]
+    if "list_continuations":
+        g_list_continuations = config["list_continuations"]
 
-    bin_gold_root = convert_to_binarytree(swc_gold_tree)
-    bin_test_root = convert_to_binarytree(swc_test_tree)
 
-    if g_remove_spur > 0:
-        g_spur_set = remove_spurs(bin_gold_root, 1.0)
-
-    generate_node_weights(bin_gold_root, g_spur_set)
-    score_trees(bin_gold_root, bin_test_root, DEBUG=False)
-
+def print_result():
     start = time.time()
     print("g_weight_sum = {}".format(
         g_weight_sum
@@ -689,16 +711,82 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
     print("time cost = {}".format(
         time.time() - start)
     )
+    if g_list_miss:
+        if len(g_miss) > 0:
+            print("---Nodes that are missed (position and weight)---")
+            for node in g_miss:
+                print("node_ID = {} poi = {} weight = {}".format(
+                    node.data.get_id(), node.data._pos, g_weight_dict[node]
+                ))
+            print("--END--")
+        else:
+            print("---Nodes that are missed:None---")
+
+        print("")
+
+        if len(g_excess_nodes) > 0:
+            print("---extra Nodes in test reconstruction (position and weight)---")
+            for node in g_excess_nodes.keys():
+                print("node_ID = {} poi = {} weight = {}".format(
+                    node.data.get_id(), node.data._pos, g_excess_nodes[node]
+                ))
+        else:
+            print("---extra Nodes in test reconstruction: None---")
+
+    if g_list_continuations:
+        print("")
+        if len(g_continuation) > 0:
+            print("---continuation Nodes (position and weight)---")
+            for node in g_continuation:
+                print("node_ID = {} poi = {} weight = {}".format(
+                    node.data.get_id(), node.data._pos, g_weight_dict[node]
+                ))
+        else:
+            print("---continuation Nodes None---")
+
+    if g_list_distant_matches:
+        print("")
+        if len(g_distance_match) > 0:
+            print("Distant Matches")
+            for node in g_distance_match:
+                print("node_ID = {} poi = {} weight = {}".format(
+                    node.data.get_id(), node.data._pos, g_weight_dict[node]
+                ))
+        else:
+            print("Distant Matches: none")
+
+
+def diadem_metric(swc_gold_tree, swc_test_tree, config):
+    global g_spur_set
+    global g_weight_dict
+
+    switch_initialize(config)
+
+    if g_align_tree_by_root:
+        swc_test_tree.align_root(swc_gold_tree)
+
+    bin_gold_root = convert_to_binarytree(swc_gold_tree)
+    bin_test_root = convert_to_binarytree(swc_test_tree)
+
+    if g_remove_spur > 0:
+        g_spur_set = remove_spurs(bin_gold_root, 1.0)
+
+    generate_node_weights(bin_gold_root, g_spur_set)
+    score_trees(bin_gold_root, bin_test_root, DEBUG=False)
+    print_result()
     return 0
 
 
 if __name__ == "__main__":
+    testTree = SwcTree()
     goldtree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\ExampleGoldStandard.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\34_23_10_test.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\34_23_10_gold.swc")
+    # goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\\gold\\ExampleGoldStandard.swc")
+    # testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
     get_default_threshold(goldtree)
 
-    testTree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
+
 
     diadem_metric(swc_test_tree=testTree,
                   swc_gold_tree=goldtree,

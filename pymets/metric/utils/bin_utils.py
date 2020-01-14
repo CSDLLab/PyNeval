@@ -43,8 +43,8 @@ def swctree_to_binarytree(node):
                     best2 = bin_node2
                     distance = bin_node1.data.distance(bin_node2.data)
 
-        new_swcnode = copy.deepcopy(node)
-        new_binnode = BinaryNode(data=new_swcnode,left_son=best1,right_son=best2)
+        # new_swcnode = copy.copy(node)
+        new_binnode = BinaryNode(data=best1.data,left_son=best1,right_son=best2)
         binnary_son_list.remove(best1)
         binnary_son_list.remove(best2)
         binnary_son_list.append(new_binnode)
