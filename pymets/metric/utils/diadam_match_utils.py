@@ -10,7 +10,7 @@ _2D = "2d"
 
 TRAJECTORY_NONE = -1.0
 g_xy_threshold = 1.2
-g_z_threshold = 1
+g_z_threshold = 0.0
 g_default_xy_path_error_threshold = 0.05
 g_default_z_path_error_threshold = 0.05
 g_local_path_error_threshold = 0.4
@@ -101,7 +101,7 @@ def get_trajectory_for_path(ancestor_node, descendant_node):
             if not down_z and sec_data.left_trajectory.get_z() != TRAJECTORY_NONE:
                 trajectory.set_z(sec_data.left_trajectory.get_z())
                 down_z = True
-        elif next_descendant.is_right() and sec_data.right_trajectory is not None:
+        elif not next_descendant.is_left() and sec_data.right_trajectory is not None:
             if not down_x and sec_data.right_trajectory.get_x() != TRAJECTORY_NONE:
                 trajectory.set_x(sec_data.right_trajectory.get_x())
                 trajectory.set_y(sec_data.right_trajectory.get_y())
@@ -144,6 +144,8 @@ def path_length_matches(gold_swc_path_length,
     z_path_error_threshold = g_default_z_path_error_threshold
 
     xy_diff = math.fabs(gold_swc_path_length.xy_path_length - test_XY_path_length)
+    if gold_swc_path_length.path_length == 0:
+        return 0
     xy_err = xy_diff / gold_swc_path_length.path_length
 
     if DEBUG:
@@ -152,7 +154,7 @@ def path_length_matches(gold_swc_path_length,
         ))
 
     z_diff = math.fabs(gold_swc_path_length.z_path_length - test_Z_path_length)
-    z_err = z_diff / gold_swc_path_length.z_path_length
+    z_err = z_diff / gold_swc_path_length.path_length
 
     if gold_swc_path_length.xy_path_length < g_xy_threshold:
         if test_XY_path_length < g_xy_threshold:
@@ -205,9 +207,9 @@ def get_match_path_length_difference(gold_node, test_node, bin_gold_list, bin_te
             gold_data = gold_node.data
 
             if is_branch_left:
-                ancestor_trajectory = gold_data.right_trajectory
-            else:
                 ancestor_trajectory = gold_data.left_trajectory
+            else:
+                ancestor_trajectory = gold_data.right_trajectory
 
             if ancestor_trajectory.get_x() == TRAJECTORY_NONE or \
                 ancestor_trajectory.get_z() == TRAJECTORY_NONE:
@@ -257,6 +259,32 @@ def get_match_path_length_difference(gold_node, test_node, bin_gold_list, bin_te
                     test_swc_path_length.add_length(test_node.data)
                     test_node = test_node.parent
     return 1
+
+
+def LCA(node1, node2, kca):
+    node1_list = []
+
+    node1 = node1.parent
+    while node1 != kca:
+        node1_list.append(node1)
+        node1 = node1.parent
+
+    node1 = node2.parent
+    while node2 != kca and node2 is not None:
+        if node2 in node1_list:
+            return node2
+        node2 = node2.parent
+
+    return None
+
+
+def is_within_dis_match_threshold(node1, node2):
+    if isinstance(node1, BinaryNode):
+        node1 = node1.data
+    if isinstance(node2, BinaryNode):
+        node2 = node2.data
+    return node1.distance(node2, _2D) <= g_xy_threshold * 3 \
+           and math.fabs(node1.get_z() - node2.get_z()) < g_z_threshold * 3 + 0.1
 
 
 if __name__ == "__main__":
