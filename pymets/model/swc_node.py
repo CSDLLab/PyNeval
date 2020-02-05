@@ -67,6 +67,21 @@ def compute_surface_area(tn, range_radius):
     return area
 
 
+def get_lca(u, v):
+    tmp_set = set()
+    tmp_u = u
+    tmp_v = v
+    while u.get_id() != -1:
+        tmp_set.add(u.get_id())
+        u = u.parent
+
+    while v.get_id() != -1:
+        if v.get_id() in tmp_set:
+            return v.get_id()
+        v = v.parent
+    return None
+
+
 class SwcNode(NodeMixin):
     """
         this is a class that temporarily store SWC file
@@ -221,6 +236,20 @@ class SwcNode(NodeMixin):
 
     def get_parent_id(self):
         return -2 if self.is_root else self.parent.get_id()
+
+    def add_child(self, swc_node):
+        if not isinstance(swc_node, SwcNode):
+            return False
+        children = list(self.children)
+        children.append(swc_node)
+        self.children = tuple(children)
+
+    def remove_child(self, swc_node):
+        if not isinstance(swc_node, SwcNode):
+            return False
+        children = list(self.children)
+        children.remove(swc_node)
+        self.children = tuple(children)
 
     def __str__(self):
         return '%d (%d): %s, %g' % (self._id, self._type, str(self._pos), self._radius)

@@ -1,5 +1,6 @@
 from pymets.model.euclidean_point import EuclideanPoint,Line
 from pymets.metric.utils.config_utils import DINF
+from pymets.model.swc_node import get_lca
 import os
 import time
 import numpy as np
@@ -45,7 +46,7 @@ def get_edge_rtree(swc_tree=None):
 
 
 # find the closest edge base on rtree
-def get_nearest_edge_fast(idx3d, point, id_edge_dict, DEBUG=False):
+def get_nearest_edge_fast(idx3d, point, id_edge_dict, not_self=False, DEBUG=False):
     point_box = (point._pos[0] - MIN_SIZE, point._pos[1] - MIN_SIZE, point._pos[2] - MIN_SIZE,
                  point._pos[0] + MIN_SIZE, point._pos[1] + MIN_SIZE, point._pos[2] + MIN_SIZE)
     hits = list(idx3d.intersection(point_box))
@@ -58,10 +59,31 @@ def get_nearest_edge_fast(idx3d, point, id_edge_dict, DEBUG=False):
                 point._pos, line_tuple[0]._pos, line_tuple[1]._pos)
             )
         new_d = point.distance(Line(swc_node_1=line_tuple[0], swc_node_2=line_tuple[1]))
+        if not_self and new_d == 0:
+            continue
         if new_d < d:
             d = new_d
             s = line_tuple
     return s, d
+
+
+# find the closest edge base on rtree
+def get_nearby_edges(idx3d, point, id_edge_dict, not_self=False, DEBUG=False):
+    point_box = (point._pos[0] - MIN_SIZE, point._pos[1] - MIN_SIZE, point._pos[2] - MIN_SIZE,
+                 point._pos[0] + MIN_SIZE, point._pos[1] + MIN_SIZE, point._pos[2] + MIN_SIZE)
+    hits = list(idx3d.intersection(point_box))
+    nearby_edges = []
+    for h in hits:
+        line_tuple = id_edge_dict[h]
+        if DEBUG:
+            print("\npoint = {}, line_a = {}, line_b = {}".format(
+                point._pos, line_tuple[0]._pos, line_tuple[1]._pos)
+            )
+        new_d = point.distance(Line(swc_node_1=line_tuple[0], swc_node_2=line_tuple[1]))
+        if not_self and new_d == 0:
+            continue
+        nearby_edges.append(tuple([line_tuple, new_d]))
+    return nearby_edges
 
 
 # find successful matched edge
@@ -149,6 +171,8 @@ def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_lin
             return foot_a.distance(foot_b)
 
     lca_id = gold_swc_tree.get_lca(gold_line_tuple_a[0].get_id(), gold_line_tuple_b[0].get_id())
+    if lca_id is None:
+        return DINF
 
     route_list_a = get_route_node(gold_line_tuple_a[0], lca_id)
     route_list_b = get_route_node(gold_line_tuple_b[0], lca_id)

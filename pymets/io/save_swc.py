@@ -1,4 +1,5 @@
 import os
+from anytree import PreOrderIter
 
 
 def is_path_valid(file_path):
@@ -39,6 +40,7 @@ def save_line_tuple_as_swc(match_fail, file_path):
                                                   line_tuple[1].parent.get_id()))
         f.write("# --End--")
 
+
 def save_as_swc(object, file_path):
     if not is_path_valid(file_path):
         return False
@@ -46,13 +48,31 @@ def save_as_swc(object, file_path):
     if isinstance(object, set):
         save_line_tuple_as_swc(object, file_path)
 
+
 def print_line_tuple_swc(match_fail_set):
     for line_tuple in match_fail_set:
         print("pos_1: {}, pos_2 {}".format(line_tuple[0]._pos, line_tuple[1]._pos))
 
+
 def print_swc(object):
     if isinstance(object, set):
         print_line_tuple_swc(object)
+
+
+def swc_save(swc_tree, out_path):
+    if not is_path_valid(out_path):
+        return False
+    swc_node_list = [node for node in PreOrderIter(swc_tree.root())]
+
+    with open(out_path, 'a') as f:
+        f.truncate()
+        for node in swc_node_list:
+            if node.is_virtual():
+                continue
+            f.write("{} {} {} {} {} {} {}\n".format(
+                node.get_id(), node._type, node.get_x(), node.get_y(), node.get_z(), node.radius(), node.parent.get_id()
+            ))
+
 
 if __name__ == "__main__":
     # os.makedirs("a/b/c")
