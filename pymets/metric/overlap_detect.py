@@ -19,11 +19,8 @@ def get_self_match_edges_e_fast(swc_tree=None,
             continue
         parent = node.parent
 
-        e_node = EuclideanPoint(node._pos)
-        e_parent = EuclideanPoint(parent._pos)
-
-        line_tuple_as = get_nearby_edges(idx3d, e_node, id_edge_dict, not_self=True)
-        line_tuple_bs = get_nearby_edges(idx3d, e_parent, id_edge_dict,  not_self=True)
+        line_tuple_as = get_nearby_edges(idx3d, node, id_edge_dict, not_self=True)
+        line_tuple_bs = get_nearby_edges(idx3d, node.parent, id_edge_dict,  not_self=True)
 
         done = False
         for line_tuple_a_d in line_tuple_as:
@@ -38,7 +35,7 @@ def get_self_match_edges_e_fast(swc_tree=None,
                 test_length = get_lca_length(swc_tree, \
                                line_tuple_a, \
                                line_tuple_b, \
-                               Line([e_node._pos, e_parent._pos]))
+                               Line([node._pos, node.parent._pos]))
                 gold_length = node.distance(parent)
 
                 if dis_threshold == -1:

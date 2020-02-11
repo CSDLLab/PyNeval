@@ -1,5 +1,5 @@
 {
   "method": 2,
-  "thereshold": "default",
+  "threshold": "default",
   "detail": "output\\length_metric_detail.txt"
 }
