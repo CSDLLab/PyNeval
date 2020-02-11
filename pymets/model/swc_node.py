@@ -401,7 +401,7 @@ class SwcTree:
     # initialize LCA data structure in swc_tree
     def get_lca_preprocess(self):
         self.get_depth_array()
-        self.LOG_NODE_NUM = math.ceil(math.log(self.node_count(), 2))
+        self.LOG_NODE_NUM = math.ceil(math.log(self.node_count(), 2)) + 1
         self.lca_parent = np.zeros(shape=(self.node_count()+10, self.LOG_NODE_NUM),dtype=int)
         tree_node_list = [node for node in PreOrderIter(self.root())]
 
@@ -410,7 +410,7 @@ class SwcTree:
                 continue
             self.lca_parent[node.get_id()][0] = node.parent.get_id()
         for k in range(self.LOG_NODE_NUM - 1):
-            for v in range(1,self.node_count()):
+            for v in range(1, self.node_count() + 1):
                 if self.lca_parent[v][k] < 0:
                     self.lca_parent[v][k + 1] = -1
                 else:
