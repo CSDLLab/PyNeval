@@ -64,7 +64,7 @@ def swc_save(swc_tree, out_path):
         return False
     swc_node_list = [node for node in PreOrderIter(swc_tree.root())]
 
-    with open(out_path, 'a') as f:
+    with open(out_path, 'w') as f:
         f.truncate()
         for node in swc_node_list:
             if node.is_virtual():

@@ -11,6 +11,7 @@ from anytree import PreOrderIter
 from rtree import index
 
 MIN_SIZE = 0.8
+FLOAT_ERROR = 0.000001
 
 
 # get bounding box of a segment
@@ -91,8 +92,10 @@ def get_nearby_edges(idx3d, point, id_edge_dict, not_self=False, DEBUG=False):
 
 
 def is_intered(inter1, inter2):
-    if inter1[0] <= inter2[0] < inter1[1] or inter1[0] < inter2[1] <= inter1[1] or \
-       inter2[0] <= inter1[0] < inter2[1] or inter2[0] < inter1[1] <= inter2[1]:
+    if inter1[0] == inter1[1] or inter2[0] == inter2[1]:
+        return False
+    if inter1[0] <= inter2[0] <= inter1[1] or inter1[0] <= inter2[1] <= inter1[1] or \
+       inter2[0] <= inter1[0] <= inter2[1] or inter2[0] <= inter1[1] <= inter2[1]:
         return True
     return False
 
@@ -100,6 +103,8 @@ def is_intered(inter1, inter2):
 def add_interval(dic, edge, interval):
     if edge not in dic.keys():
         dic[edge] = set()
+    if interval[0] > interval[1]:
+        return True
     for inter in dic[edge]:
         if is_intered(inter, interval):
             return False
@@ -125,8 +130,7 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
     for node in gold_node_list:
         if node.is_virtual() or node.parent.is_virtual():
             continue
-        if node.get_id() == 5:
-            print("pass")
+
         line_tuple_a_set = get_nearby_edges(idx3d=idx3d, point=node, id_edge_dict=id_edge_dict,
                                             not_self=False, DEBUG=False)
         line_tuple_b_set = get_nearby_edges(idx3d=idx3d, point=node.parent, id_edge_dict=id_edge_dict,
@@ -162,22 +166,14 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
                 #     ))
 
                 if dis_a <= node.radius() and dis_b <= node.parent.radius() and \
-                        math.fabs(test_length - gold_length) < gold_length / 5:
-                        # is_route_clean(gold_swc_tree = test_swc_tree,
-                        #                gold_line_tuple_a=line_tuple_a, gold_line_tuple_b = line_tuple_b,
-                        #                test_line=Line([node._pos, node.parent._pos]),
-                        #                edge_use_dict=edge_use_dict, vis_list= vis_list):
-                    if DEBUG:
-                        print("\nnode = {} {}\nnode.parent = {} {}\nnode_line = {},{}\nnode_p_line = {},{}\n".format(
-                            node.get_id(), node._pos,
-                            node.parent.get_id(), node.parent._pos,
-                            line_tuple_a[0]._pos, line_tuple_a[1]._pos,
-                            line_tuple_b[0]._pos, line_tuple_b[1]._pos,
-                        ))
-
+                        math.fabs(test_length - gold_length) < gold_length / 5 and \
+                        is_route_clean(gold_swc_tree = test_swc_tree,
+                                           gold_line_tuple_a=line_tuple_a, gold_line_tuple_b = line_tuple_b,
+                                           node1=node, node2=node.parent,
+                                           edge_use_dict=edge_use_dict, vis_list= vis_list, DEBUG=False):
                     match_edge.add(tuple([node, node.parent]))
                     node._type = 3
-                    node.parent._type = 3
+                    # node.parent._type = 3
                     done = True
                     break
 
@@ -244,9 +240,18 @@ def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_lin
     return lca_length
 
 
+def exist(dic, edge):
+    if edge not in dic.keys():
+        return False
+    if len(dic[edge]) > 0:
+        return True
+    return False
+
+
 # get the distance of two matched closest edges
-def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_line, edge_use_dict, vis_list):
-    point_a, point_b = test_line.get_points()
+def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, node2, edge_use_dict, vis_list, DEBUG):
+    point_a = EuclideanPoint(node1._pos)
+    point_b = EuclideanPoint(node2._pos)
     gold_line_a = Line(coords=[gold_line_tuple_a[0]._pos, gold_line_tuple_a[1]._pos])
     gold_line_b = Line(coords=[gold_line_tuple_b[0]._pos, gold_line_tuple_b[1]._pos])
 
@@ -259,6 +264,13 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_lin
             total_length = gold_line_tuple_a[0].distance(gold_line_tuple_a[1])
             start = foot_a.distance(EuclideanPoint(center=gold_line_tuple_a[0]._pos)) / total_length
             end = foot_b.distance(EuclideanPoint(center=gold_line_tuple_a[0]._pos)) / total_length
+            end -= FLOAT_ERROR
+            if DEBUG:
+                print("node = {} {}\nnode.parent = {} {}\nnode_line = {},{} usage = {} {}\n".format(
+                        node1.get_id(), node1._pos,
+                        node2.get_id(), node2._pos,
+                        gold_line_tuple_a[0].get_id(), gold_line_tuple_a[1].get_id(), start, end,
+                    ))
             if start > end:
                 start, end = end, start
             return add_interval(edge_use_dict, gold_line_tuple_a[0], tuple([start, end]))
@@ -287,11 +299,22 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_lin
         start_b = 0.0
         end_b = foot_b.distance(EuclideanPoint(center=gold_line_tuple_b[0]._pos)) / gold_line_tuple_b[0].parent_distance()
 
+    if DEBUG:
+        print("\nnode = {} {}\nnode.parent = {} {}\nnode_line = {},{} usage = {} {}\nnode_p_line = {},{} usage = {} {}\n".format(
+            node1.get_id(), node1._pos,
+            node2.get_id(), node2._pos,
+            gold_line_tuple_a[0].get_id(), gold_line_tuple_a[1].get_id(),start_a,end_a,
+            gold_line_tuple_b[0].get_id(), gold_line_tuple_b[1].get_id(),start_b,end_b,
+        ))
+
+    # for each internal left point is included, right is not
+    end_a -= FLOAT_ERROR
+    end_b -= FLOAT_ERROR
     route_list = route_list_a + route_list_b
     for node in route_list:
         if node.get_id() == lca_id:
             continue
-        if vis_list[node.get_id()] == 1:
+        if vis_list[node.get_id()] == 1 or exist(edge_use_dict, node):
             return False
     if add_interval(edge_use_dict, gold_line_tuple_a[0], tuple([start_a, end_a])) and \
         add_interval(edge_use_dict, gold_line_tuple_b[0], tuple([start_b, end_b])):

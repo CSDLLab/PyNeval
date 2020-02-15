@@ -167,6 +167,8 @@ if __name__ == "__main__":
 
 # python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric matched_length
 
-# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\ExampleTest.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\ExampleGoldStandard.swc --metric diadem_metric
+# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\diadem\diadem1.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\diadem\diadem1.swc --metric diadem_metric
 
-# python ./pymets.py --gold D:\gitProject\mine\PyMets\test\data_example\gold\overlap_sample5.swc --metric overlap_detect --output D:\gitProject\mine\PyMets\output\overlap_output5.swc
+# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\34_23_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\34_23_10_gold.swc --metric diadem_metric
+
+# python ./pymets.py --gold D:\gitProject\mine\PyMets\test\data_example\gold\overlap\overlap_sample5.swc --metric overlap_detect --output D:\gitProject\mine\PyMets\output\overlap\overlap_output5.swc

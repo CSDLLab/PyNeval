@@ -1,8 +1,10 @@
 import queue
 import time
 import math
-from pymets.io.read_json import read_json
+
 from pymets.metric.utils.config_utils import get_default_threshold
+
+from test.test_model.test_convert_to_binary import test_print_tree
 from pymets.model.binary_node import BinaryNode,RIGHT
 from pymets.model.swc_node import SwcTree, SwcNode
 from pymets.model.euclidean_point import EuclideanPoint
@@ -11,6 +13,8 @@ from pymets.metric.utils.diadam_match_utils import \
     get_end_node_XY_dis_diff, get_end_node_Z_dis_diff, get_trajectory_for_path, \
     path_length_matches,is_within_dis_match_threshold,LCA
 from pymets.metric.utils.bin_utils import convert_to_binarytree
+from pymets.io.read_json import read_json
+import numpy as np
 
 # thresholds
 g_terminal_threshold = 0
@@ -31,6 +35,7 @@ g_weight_node = WEIGHT_DEGREE
 g_list_miss = False
 g_list_distant_matches = False
 g_list_continuations = False
+g_find_proper_root = False
 
 # various
 g_weight_sum = 0
@@ -47,6 +52,7 @@ g_weight_dict = {}
 g_excess_nodes = {}
 g_distance_match = []
 g_continuation = []
+
 
 def remove_spurs(bin_root, threshold):
     spur_set = set()
@@ -680,6 +686,7 @@ def switch_initialize(config):
     global g_list_miss
     global g_list_distant_matches
     global g_list_continuations
+    global g_find_proper_root
 
     if "remove_spur" in config.keys():
         g_remove_spur = config["remove_spur"]
@@ -689,12 +696,14 @@ def switch_initialize(config):
         g_count_excess_nodes = config["count_excess_nodes"]
     if "weight_node" in config.keys():
         g_weight_node = config["weight_node"]
-    if "list_miss":
+    if "list_miss" in config.keys():
         g_list_miss = config["list_miss"]
-    if "list_distant_matches":
+    if "list_distant_matches" in config.keys():
         g_list_distant_matches = config["list_distant_matches"]
-    if "list_continuations":
+    if "list_continuations" in config.keys():
         g_list_continuations = config["list_continuations"]
+    if "find_proper_root" in config.keys():
+        g_find_proper_root = config["find_proper_root"]
 
 
 def print_result():
@@ -761,9 +770,11 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
     global g_weight_dict
 
     switch_initialize(config)
-
+    if g_find_proper_root:
+        swc_test_tree.change_root(swc_gold_tree, 0.1)
+    # swc_test_tree.change_root(swc_gold_tree)
     if g_align_tree_by_root:
-        swc_test_tree.align_root(swc_gold_tree)
+        swc_test_tree.align_roots(swc_gold_tree,mode='root')
 
     bin_gold_root = convert_to_binarytree(swc_gold_tree)
     bin_test_root = convert_to_binarytree(swc_test_tree)
@@ -779,15 +790,14 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
 
 if __name__ == "__main__":
     testTree = SwcTree()
-    goldtree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\ExampleGoldStandard.swc")
+    goldTree = SwcTree()
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\diadem\diadem1.swc")
+    goldTree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\diadem\diadem1.swc")
+
     # goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\\gold\\ExampleGoldStandard.swc")
     # testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
-    get_default_threshold(goldtree)
-
-
+    get_default_threshold(goldTree)
 
     diadem_metric(swc_test_tree=testTree,
-                  swc_gold_tree=goldtree,
+                  swc_gold_tree=goldTree,
                   config=read_json("D:\gitProject\mine\PyMets\config\diadem_metric.json"))
