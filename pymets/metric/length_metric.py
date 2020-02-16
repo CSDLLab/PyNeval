@@ -62,12 +62,12 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
                                 test_swc_tree=test_swc_tree)
         print("1 - test_length / gold_length= {}".format(ratio))
     elif config["method"] == 2:
-        recall, Precision = length_metric_2(gold_swc_tree=gold_swc_tree,
+        recall, precision = length_metric_2(gold_swc_tree=gold_swc_tree,
                                             test_swc_tree=test_swc_tree,
                                             dis_threshold=dis_threshold,
                                             detail_path=detail_path,
                                             DEBUG=True)
-        print("Recall = {}, Precision = {}".format(recall, Precision))
+        print("Recall = {}, Precision = {}".format(recall, precision))
     else:
         raise Exception("[Error: ] Read config info method {}. length metric only have 1 and 2 two methods")
 
@@ -76,8 +76,8 @@ if __name__ == "__main__":
     goldtree = SwcTree()
 
     testTree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\multy_useage\\useage1.swc")
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\multy_useage\\useage1.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\ExampleTest.swc")
 
     start = time.time()
     length_metric(gold_swc_tree=goldtree,

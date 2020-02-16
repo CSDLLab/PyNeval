@@ -772,7 +772,7 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
     switch_initialize(config)
     if g_find_proper_root:
         swc_test_tree.change_root(swc_gold_tree, 0.1)
-    # swc_test_tree.change_root(swc_gold_tree)
+
     if g_align_tree_by_root:
         swc_test_tree.align_roots(swc_gold_tree,mode='root')
 
@@ -791,8 +791,8 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
 if __name__ == "__main__":
     testTree = SwcTree()
     goldTree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\diadem\diadem1.swc")
-    goldTree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\diadem\diadem1.swc")
+    goldTree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\34_23_10_gold.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\34_23_10_test.swc")
 
     # goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\\gold\\ExampleGoldStandard.swc")
     # testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")

@@ -6,6 +6,6 @@
   "list_miss": false,
   "list_distant_matches": false,
   "list_continuations": false,
-  "find_proper_root": true,
+  "find_proper_root": false,
   "debug": false
 }

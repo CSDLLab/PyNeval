@@ -178,6 +178,7 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
                     break
 
         if not done and detail_path is not None:
+            node._type = node.parent._type = 4
             unmatch_edge.add(tuple([node, node.parent]))
     # debugging
     swc_save(gold_swc_tree, "D:\gitProject\mine\PyMets\output\gold_tree_out.swc")

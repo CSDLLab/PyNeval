@@ -1,11 +1,10 @@
 import argparse
 import sys,os,platform
-import numpy as np
 from pymets.io.read_swc import read_swc_trees
 from pymets.io.read_json import read_json
 from pymets.metric.diadem_metric import diadem_metric
 from pymets.metric.length_metric import length_metric
-from pymets.metric.overlap_detect import overlap_detect
+from cli.overlap_detect import overlap_detect
 
 metric_list = [
     "diadem_metric",
@@ -144,14 +143,15 @@ def pymets(DEBUG=True):
             length_metric(gold_swc_treeroot, test_swc_treeroot,
                           abs_dir, config)
             if reverse:
-                length_metric(test_swc_treeroot, gold_swc_treeroot ,
+                length_metric(test_swc_treeroot, gold_swc_treeroot,
                               abs_dir, config)
         if metric == "matched_length" or metric == "ML":
             config["method"] = 2
             length_metric(gold_swc_treeroot, test_swc_treeroot,
                           abs_dir, config)
             if reverse:
-                length_metric(test_swc_treeroot, gold_swc_treeroot ,
+                config["detail"] = config["detail"][:-4] + "_reverse.swc"
+                length_metric(test_swc_treeroot, gold_swc_treeroot,
                               abs_dir, config)
     if metric == "overlap_detect" or metric == "OD":
         # debug
@@ -165,7 +165,7 @@ def pymets(DEBUG=True):
 if __name__ == "__main__":
     pymets()
 
-# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric matched_length
+# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric matched_length --reverse true
 
 # python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\diadem\diadem1.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\diadem\diadem1.swc --metric diadem_metric
 
