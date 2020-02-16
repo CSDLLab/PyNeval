@@ -21,9 +21,9 @@ def is_path_valid(file_path):
 
 def save_line_tuple_as_swc(match_fail, file_path):
     with open(file_path, 'w') as f:
-        f.write("# total unmatched edges: {}".format(len(match_fail)))
+        f.truncate()
+        f.write("# total unmatched edges: {}\n".format(len(match_fail)))
         for line_tuple in match_fail:
-            print("??")
             f.write("{} {} {} {} {} {} {}\n".format(line_tuple[0].get_id(),
                                                   line_tuple[0]._type,
                                                   line_tuple[0]._pos[0],
@@ -31,14 +31,14 @@ def save_line_tuple_as_swc(match_fail, file_path):
                                                   line_tuple[0]._pos[2],
                                                   line_tuple[0].radius(),
                                                   line_tuple[0].parent.get_id()))
-            f.write("{} {} {} {} {} {} {}\n".format(line_tuple[1].get_id(),
-                                                  line_tuple[1]._type,
-                                                  line_tuple[1]._pos[0],
-                                                  line_tuple[1]._pos[1],
-                                                  line_tuple[1]._pos[2],
-                                                  line_tuple[1].radius(),
-                                                  line_tuple[1].parent.get_id()))
-        f.write("# --End--")
+            # f.write("{} {} {} {} {} {} {}\n".format(line_tuple[1].get_id(),
+            #                                       line_tuple[1]._type,
+            #                                       line_tuple[1]._pos[0],
+            #                                       line_tuple[1]._pos[1],
+            #                                       line_tuple[1]._pos[2],
+            #                                       line_tuple[1].radius(),
+            #                                       -1))
+        f.write("# --End--\n")
 
 
 def save_as_swc(object, file_path):
@@ -64,7 +64,7 @@ def swc_save(swc_tree, out_path):
         return False
     swc_node_list = [node for node in PreOrderIter(swc_tree.root())]
 
-    with open(out_path, 'a') as f:
+    with open(out_path, 'w') as f:
         f.truncate()
         for node in swc_node_list:
             if node.is_virtual():

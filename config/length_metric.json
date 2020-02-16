@@ -1,5 +1,5 @@
 {
   "method": 2,
-  "thereshold": "default",
-  "detail": "output\\length_metric_detail.txt"
+  "threshold": "default",
+  "detail": "output\\length_metric_detail.swc"
 }

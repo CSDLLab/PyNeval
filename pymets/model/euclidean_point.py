@@ -45,6 +45,19 @@ class EuclideanPoint(object):
         foot = k * (b - a) + a
         return EuclideanPoint(foot.tolist())
 
+    def get_closest_point(self, line):
+        foot = self.get_foot_point(line)
+        if foot.on_line(line):
+            return foot
+        else:
+            dis1 = self.distance(EuclideanPoint(center=line.coords[0]))
+            dis2 = self.distance(EuclideanPoint(center=line.coords[1]))
+            if dis1 <dis2:
+                return EuclideanPoint(center=line.coords[0])
+            else:
+                return EuclideanPoint(center=line.coords[1])
+
+
     def get_foot_point_fast(self, line):
         if len(line.coords) != 2:
             raise Exception("[Error: ]in function get_foot_point. read line error")

@@ -4,12 +4,32 @@
 from anytree import NodeMixin, iterators, RenderTree
 from pymets.model.euclidean_point import EuclideanPoint
 from anytree import PreOrderIter
+from functools import cmp_to_key
 import math
 import queue
 import numpy as np
 
 _3D = "3d"
 _2D = "2d"
+
+
+def swc_dis_cmp(tuple1, tuple2):
+    return tuple1[1] < tuple2[1]
+
+
+def get_nearby_node_list(gold_node, test_swc_list, threshold):
+    tmp_list = []
+    for node in test_swc_list:
+        if node.is_virtual() or gold_node.is_virtual():
+            continue
+        if node.distance(gold_node) < threshold:
+            tmp_list.append(tuple([node, node.distance(gold_node)]))
+    tmp_list.sort(key=cmp_to_key(swc_dis_cmp))
+    res_list = []
+    for tu in tmp_list:
+        res_list.append(tu[0])
+    return res_list
+
 
 def Make_Virtual():
     return SwcNode(nid=-1)
@@ -401,7 +421,7 @@ class SwcTree:
     # initialize LCA data structure in swc_tree
     def get_lca_preprocess(self):
         self.get_depth_array()
-        self.LOG_NODE_NUM = math.ceil(math.log(self.node_count(), 2))
+        self.LOG_NODE_NUM = math.ceil(math.log(self.node_count(), 2)) + 1
         self.lca_parent = np.zeros(shape=(self.node_count()+10, self.LOG_NODE_NUM),dtype=int)
         tree_node_list = [node for node in PreOrderIter(self.root())]
 
@@ -410,7 +430,7 @@ class SwcTree:
                 continue
             self.lca_parent[node.get_id()][0] = node.parent.get_id()
         for k in range(self.LOG_NODE_NUM - 1):
-            for v in range(1,self.node_count()):
+            for v in range(1, self.node_count() + 1):
                 if self.lca_parent[v][k] < 0:
                     self.lca_parent[v][k + 1] = -1
                 else:
@@ -470,6 +490,40 @@ class SwcTree:
 
             for son in node.children:
                 stack.put(son)
+
+    def change_root(self, swc_gold_tree, threshold):
+        # test_roots = self.root().children
+        gold_roots = swc_gold_tree.root().children
+        swc_test_list = [node for node in PreOrderIter(self.root())]
+        vis_list = np.zeros(shape=(len(swc_test_list) + 10,))
+        pa_list = [None]*(len(swc_test_list))
+
+        for root in gold_roots:
+            nearby_nodes = get_nearby_node_list(gold_node=root, test_swc_list=swc_test_list, threshold=threshold)
+            for node in nearby_nodes:
+                if vis_list[node.get_id()]:
+                    continue
+                # reconstruct the tree with another root
+                stack = queue.LifoQueue()
+                stack.put(node)
+                pa_list[node.get_id()] = self.root()
+                while not stack.empty():
+                    cur_node = stack.get()
+                    vis_list[cur_node.get_id()] = True
+                    for son in cur_node.children:
+                        if not vis_list[son.get_id()]:
+                            stack.put(son)
+                            pa_list[son.get_id()] = cur_node
+                    if cur_node.parent is not None and \
+                            cur_node.parent.get_id() != -1 and \
+                            not vis_list[cur_node.parent.get_id()]:
+                        stack.put(cur_node.parent)
+                        pa_list[cur_node.parent.get_id()] = cur_node
+                break
+        for i in range(1, len(pa_list)):
+            swc_test_list[i].parent = self.root()
+        for i in range(1, len(pa_list)):
+            swc_test_list[i].parent = pa_list[swc_test_list[i].get_id()]
 
 
 if __name__ == '__main__':

@@ -9,6 +9,7 @@ import copy
 from pymets.metric.utils.bin_utils import convert_to_binarytree,swctree_to_binarytree
 from pymets.model.swc_node import SwcNode, SwcTree
 
+
 # testfunction:
 # input: a swc tree root
 # return: none
@@ -20,7 +21,7 @@ def test_print_tree(root_node):
     while not q.empty():
         num += 1
         cur = q.get()
-        for item in cur.son:
+        for item in cur.children:
             q.put(item)
         print("-----------")
     print("tree node num = {}".format(num))
