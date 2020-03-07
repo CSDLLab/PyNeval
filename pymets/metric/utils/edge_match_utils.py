@@ -165,20 +165,23 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
                 #         node.get_id(), lca_info[3].get_id(), lca_info[4].get_id()
                 #     ))
 
-                if dis_a <= node.radius() and dis_b <= node.parent.radius() and \
-                        math.fabs(test_length - gold_length) < gold_length / 5 and \
-                        is_route_clean(gold_swc_tree = test_swc_tree,
-                                           gold_line_tuple_a=line_tuple_a, gold_line_tuple_b = line_tuple_b,
-                                           node1=node, node2=node.parent,
-                                           edge_use_dict=edge_use_dict, vis_list= vis_list, DEBUG=False):
-                    match_edge.add(tuple([node, node.parent]))
-                    node._type = 3
-                    # node.parent._type = 3
-                    done = True
-                    break
+                if not (dis_a <= node.radius() and dis_b <= node.parent.radius()):
+                    continue
+                if not (math.fabs(test_length - gold_length) < gold_length / 5):
+                    continue
+                if not is_route_clean(gold_swc_tree = test_swc_tree,
+                                      gold_line_tuple_a=line_tuple_a, gold_line_tuple_b = line_tuple_b,
+                                      node1=node, node2=node.parent,
+                                      edge_use_dict=edge_use_dict, vis_list= vis_list, DEBUG=False):
+                    continue
+                match_edge.add(tuple([node, node.parent]))
+                node._type = 3
+                # node.parent._type = 3
+                done = True
+                break
 
         if not done and detail_path is not None:
-            node._type = node.parent._type = 4
+            node._type = 4
             unmatch_edge.add(tuple([node, node.parent]))
     # debugging
     swc_save(gold_swc_tree, "D:\gitProject\mine\PyMets\output\gold_tree_out.swc")

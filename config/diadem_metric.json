@@ -1,11 +1,12 @@
 {
   "WEIGHT_MODE": "WEIGHT_DEGREE",
+  "detail_path": "D:\\gitProject\\mine\\PyMets\\output\\gold_tree_out.swc",
   "remove_spur": false,
   "count_excess_nodes": true,
   "align_tree_by_root": false,
   "list_miss": false,
   "list_distant_matches": false,
   "list_continuations": false,
-  "find_proper_root": false,
+  "find_proper_root": true,
   "debug": false
 }
