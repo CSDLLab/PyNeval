@@ -141,7 +141,6 @@ def get_self_match_edges_e_fast(swc_tree=None,
         list_size = len(node_list)
 
     vis_list = np.zeros(list_size + 10)
-    print(time.time() - DEBUG)
     for node in node_list:
         if node.is_virtual() or node.parent.is_virtual():
             continue
@@ -214,33 +213,26 @@ def overlap_detect(swc_tree, out_path, loc_config=None):
 def overlap_clean(swc_tree, out_path, loc_config=None):
     dis_threshold, length_threshold, ang_threshold = \
         loc_config["radius_threshold"], loc_config["length_threshold"], loc_config["ang_threshold"]
-    start = time.time()
     down_pa, is_active = down_sample(tree, 170)
-    print(time.time() - start)
     new_swc_tree = reconstruct_tree(swc_tree, is_active, down_pa)
-    print(time.time() - start)
     new_swc_tree.get_lca_preprocess(swc_tree.node_count())
-    print(time.time() - start)
+    swc_tree.get_lca_preprocess(swc_tree.node_count())
 
-    get_self_match_edges_e_fast(swc_tree=new_swc_tree,
+    get_self_match_edges_e_fast(swc_tree=swc_tree,
                                 dis_threshold=dis_threshold,
                                 threshold_l=length_threshold,
                                 list_size=swc_tree.node_count(),
-                                mode="not_self", DEBUG=start)
-    print(time.time() - start)
+                                mode="not_self", DEBUG=False)
     color_origin_tree(new_swc_tree, swc_tree)
-    print(time.time() - start)
     # delete_overlap_node(swc_tree)
-    swc_save(new_swc_tree, out_path)
-    print(time.time() - start)
-
+    swc_save(swc_tree, out_path)
 
 
 if __name__ == '__main__':
     tree = SwcTree()
-    tree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\2_18_gold.swc")
+    tree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\overlap\\branches3_screen.swc")
 
     config = read_json("D:\gitProject\mine\PyMets\config\overlap_detect.json")
     overlap_clean(tree,
-                  "../output/2_18_gold.swc",
+                  "../output/branches3_screen.swc",
                   config)
