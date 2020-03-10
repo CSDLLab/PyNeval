@@ -1,11 +1,10 @@
+import os
 import queue
 import time
 import math
 
 from pymets.metric.utils.config_utils import get_default_threshold
-
-from test.test_model.test_convert_to_binary import test_print_tree
-from pymets.model.binary_node import BinaryNode,RIGHT
+from pymets.model.binary_node import RIGHT
 from pymets.model.swc_node import SwcTree, SwcNode
 from pymets.model.euclidean_point import EuclideanPoint
 from pymets.metric.utils.diadam_match_utils import \
@@ -14,7 +13,7 @@ from pymets.metric.utils.diadam_match_utils import \
     path_length_matches,is_within_dis_match_threshold,LCA
 from pymets.metric.utils.bin_utils import convert_to_binarytree
 from pymets.io.read_json import read_json
-import numpy as np
+from pymets.io.save_swc import swc_save
 
 # thresholds
 g_terminal_threshold = 0
@@ -151,8 +150,6 @@ def generate_node_weights(bin_root, spur_set, DEBUG=False):
 
 
 def is_diadem_match(gold_node, nearby_node, bin_gold_list, bin_test_list, DEBUG=False):
-    # debug:
-    # print(gold_node.data.get_id())
     length_diff = get_match_path_length_difference(gold_node, nearby_node, bin_gold_list, bin_test_list)
     if DEBUG:
         print("gold_node = {}, test_node = {}, length_diff = {}".format(
@@ -635,7 +632,6 @@ def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
         print("--END--")
 
     for miss_node in g_miss:
-        miss_data = miss_node.data
         if miss_node.left_son is not None or miss_node.right_son is not None:
             if is_continuation(miss_node, bin_test_list):
                 weight = g_weight_dict[miss_node]
@@ -706,7 +702,7 @@ def switch_initialize(config):
         g_find_proper_root = config["find_proper_root"]
 
 
-def print_result():
+def print_result(swc_tree, out_path):
     start = time.time()
     print("g_weight_sum = {}".format(
         g_weight_sum
@@ -727,6 +723,8 @@ def print_result():
                 print("node_ID = {} poi = {} weight = {}".format(
                     node.data.get_id(), node.data._pos, g_weight_dict[node]
                 ))
+                # 3 means this node is missed
+                node.data._type = 3
             print("--END--")
         else:
             print("---Nodes that are missed:None---")
@@ -739,6 +737,8 @@ def print_result():
                 print("node_ID = {} poi = {} weight = {}".format(
                     node.data.get_id(), node.data._pos, g_excess_nodes[node]
                 ))
+                # 4 means this node is excessive
+                node.data._type = 4
         else:
             print("---extra Nodes in test reconstruction: None---")
 
@@ -750,6 +750,8 @@ def print_result():
                 print("node_ID = {} poi = {} weight = {}".format(
                     node.data.get_id(), node.data._pos, g_weight_dict[node]
                 ))
+                # 5 means this node is a continuation
+                node.data._type = 5
         else:
             print("---continuation Nodes None---")
 
@@ -761,20 +763,24 @@ def print_result():
                 print("node_ID = {} poi = {} weight = {}".format(
                     node.data.get_id(), node.data._pos, g_weight_dict[node]
                 ))
+                # 6 means this node is a distant match
+                node.data._type = 6
         else:
             print("Distant Matches: none")
+    if os.path.isfile(out_path) and out_path[-4:] == ".swc":
+        swc_save(swc_tree=swc_tree, out_path=out_path)
 
 
 def diadem_metric(swc_gold_tree, swc_test_tree, config):
     global g_spur_set
     global g_weight_dict
-
+    t_matches = {}
     switch_initialize(config)
     if g_find_proper_root:
-        swc_test_tree.change_root(swc_gold_tree, 0.1)
+        swc_test_tree.change_root(swc_gold_tree, t_matches)
 
     if g_align_tree_by_root:
-        swc_test_tree.align_roots(swc_gold_tree,mode='root')
+        swc_test_tree.align_roots(swc_gold_tree, t_matches)
 
     bin_gold_root = convert_to_binarytree(swc_gold_tree)
     bin_test_root = convert_to_binarytree(swc_test_tree)
@@ -784,7 +790,7 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
 
     generate_node_weights(bin_gold_root, g_spur_set)
     score_trees(bin_gold_root, bin_test_root, DEBUG=False)
-    print_result()
+    print_result(swc_tree=swc_gold_tree, out_path=config["detail_path"])
     return 0
 
 

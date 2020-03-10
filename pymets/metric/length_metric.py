@@ -42,11 +42,11 @@ def length_metric_1(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
 
 def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
     # get config threshold
-    if "threshold" not in config.keys() or config["threshold"] == "default":
-        dis_threshold = get_default_threshold(gold_swc_tree)
+    if "rad_threshold" not in config.keys() or config["rad_threshold"] == "default":
+        rad_threshold = get_default_threshold(gold_swc_tree)
     else:
         try:
-            dis_threshold = float(config["threshold"])
+            rad_threshold = float(config["rad_threshold"])
         except:
             raise Exception("[Error: ] Read config info threshold {}. suppose to be a float or \"default\"")
     # get config detail path
@@ -64,7 +64,7 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
     elif config["method"] == 2:
         recall, precision = length_metric_2(gold_swc_tree=gold_swc_tree,
                                             test_swc_tree=test_swc_tree,
-                                            dis_threshold=dis_threshold,
+                                            dis_threshold=rad_threshold,
                                             detail_path=detail_path,
                                             DEBUG=True)
         print("Recall = {}, Precision = {}".format(recall, precision))
@@ -76,14 +76,14 @@ if __name__ == "__main__":
     goldtree = SwcTree()
 
     testTree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc")
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\ExampleTest.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\2_18_gold.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\2_18_test.swc")
 
     start = time.time()
-    length_metric(gold_swc_tree=goldtree,
-                  test_swc_tree=testTree,
-                  abs_dir="D:\gitProject\mine\PyMets",
-                  config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
+    # length_metric(gold_swc_tree=goldtree,
+    #               test_swc_tree=testTree,
+    #               abs_dir="D:\gitProject\mine\PyMets",
+    #               config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
     length_metric(gold_swc_tree=testTree,
                   test_swc_tree=goldtree,
                   abs_dir="D:\gitProject\mine\PyMets",

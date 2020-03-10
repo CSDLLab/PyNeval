@@ -1,5 +1,6 @@
 {
   "radius_threshold": -1,
   "length_threshold": -1,
+  "ang_threshold": 175,
   "output_path": -1
 }

@@ -413,16 +413,19 @@ class SwcTree:
     def radius(self, nid):
         return self.node(nid).radius()
 
-    def get_depth_array(self):
-        self.depth_array = [0] * (self.node_count()+10)
+    def get_depth_array(self, node_num):
+        self.depth_array = [0] * (node_num+10)
         for node in PreOrderIter(self.root()):
             self.depth_array[node.get_id()] = node.depth()
 
     # initialize LCA data structure in swc_tree
-    def get_lca_preprocess(self):
-        self.get_depth_array()
-        self.LOG_NODE_NUM = math.ceil(math.log(self.node_count(), 2)) + 1
-        self.lca_parent = np.zeros(shape=(self.node_count()+10, self.LOG_NODE_NUM),dtype=int)
+    def get_lca_preprocess(self, node_num=-1):
+        if node_num == -1:
+            node_num = self.node_count()
+
+        self.get_depth_array(node_num)
+        self.LOG_NODE_NUM = math.ceil(math.log(node_num, 2)) + 1
+        self.lca_parent = np.zeros(shape=(node_num+10, self.LOG_NODE_NUM),dtype=int)
         tree_node_list = [node for node in PreOrderIter(self.root())]
 
         for node in tree_node_list:
@@ -430,7 +433,7 @@ class SwcTree:
                 continue
             self.lca_parent[node.get_id()][0] = node.parent.get_id()
         for k in range(self.LOG_NODE_NUM - 1):
-            for v in range(1, self.node_count() + 1):
+            for v in range(1, node_num + 1):
                 if self.lca_parent[v][k] < 0:
                     self.lca_parent[v][k + 1] = -1
                 else:
@@ -456,42 +459,41 @@ class SwcTree:
                 v = lca_parent[v][k]
         return lca_parent[u][0]
 
-    def align_roots(self, gold_tree, mode="average", DEBUG=False):
+    def align_roots(self, gold_tree, matches, DEBUG=False):
         offset = EuclideanPoint()
         stack = queue.LifoQueue()
-        gold_anchor = np.zeros(3)
-        test_anchor = np.zeros(3)
-        if mode == "average":
-            gold_tree_list = [node for node in PreOrderIter(gold_tree.root())]
-            test_tree_list = [node for node in PreOrderIter(self.root())]
-            for node in gold_tree_list:
-                gold_anchor += np.array(node._pos)
-            for node in test_tree_list:
-                test_anchor += np.array(node._pos)
-            gold_anchor /= len(gold_tree_list) - 1
-            test_anchor /= len(test_tree_list) - 1
-        elif mode == "root":
-            test_anchor = list(self.root().children)[0]
-            gold_anchor = list(gold_tree.root().children)[0]
+        swc_test_list = [node for node in PreOrderIter(self.root())]
 
-        offset._pos = (gold_anchor - test_anchor).tolist()
-        if DEBUG:
-            print("off_set:x = {}, y = {}, z = {}".format(offset._pos[0], offset._pos[1], offset._pos[2]))
+        for root in gold_tree.root().children:
+            gold_anchor = np.array(root._pos)
+            if root in matches.keys():
+                test_anchor = np.array(matches[root]._pos)
+            else:
+                nearby_nodes = get_nearby_node_list(gold_node=root, test_swc_list=swc_test_list,
+                                                    threshold=root.radius()/2)
+                if len(nearby_nodes) == 0:
+                    continue
+                test_anchor = nearby_nodes[0]._pos
 
-        stack.put(self.root().children[0])
-        while not stack.empty():
-            node = stack.get()
-            if node.is_virtual():
-                continue
+            offset._pos = (test_anchor - gold_anchor).tolist()
+            if DEBUG:
+                print("off_set:x = {}, y = {}, z = {}".format(
+                    offset._pos[0], offset._pos[1], offset._pos[2]))
 
-            node._pos[0] += offset._pos[0]
-            node._pos[1] += offset._pos[1]
-            node._pos[2] += offset._pos[2]
+            stack.put(root)
+            while not stack.empty():
+                node = stack.get()
+                if node.is_virtual():
+                    continue
 
-            for son in node.children:
-                stack.put(son)
+                node._pos[0] += offset._pos[0]
+                node._pos[1] += offset._pos[1]
+                node._pos[2] += offset._pos[2]
 
-    def change_root(self, swc_gold_tree, threshold):
+                for son in node.children:
+                    stack.put(son)
+
+    def change_root(self, swc_gold_tree, matches):
         # test_roots = self.root().children
         gold_roots = swc_gold_tree.root().children
         swc_test_list = [node for node in PreOrderIter(self.root())]
@@ -499,7 +501,8 @@ class SwcTree:
         pa_list = [None]*(len(swc_test_list))
 
         for root in gold_roots:
-            nearby_nodes = get_nearby_node_list(gold_node=root, test_swc_list=swc_test_list, threshold=threshold)
+            nearby_nodes = get_nearby_node_list(gold_node=root, test_swc_list=swc_test_list,
+                                                threshold=root.radius()/2)
             for node in nearby_nodes:
                 if vis_list[node.get_id()]:
                     continue
@@ -519,6 +522,7 @@ class SwcTree:
                             not vis_list[cur_node.parent.get_id()]:
                         stack.put(cur_node.parent)
                         pa_list[cur_node.parent.get_id()] = cur_node
+                matches[root] = node
                 break
         for i in range(1, len(pa_list)):
             swc_test_list[i].parent = self.root()
