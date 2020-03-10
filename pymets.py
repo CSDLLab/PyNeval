@@ -60,6 +60,7 @@ def read_parameters():
     return parser.parse_args()
 
 
+# command program
 def pymets(DEBUG=True):
     # init path parameter
     abs_dir = os.path.abspath("")

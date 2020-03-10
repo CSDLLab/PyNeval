@@ -326,6 +326,35 @@ class SwcTree:
         if tn:
             return tn.children
 
+    def load_list(self, lines):
+        self.clear()
+        nodeDict = dict()
+        for line in lines:
+            if not self.is_comment(line):
+                #                     print line
+                data = list(map(float, line.split()))
+                #                     print(data)
+                if len(data) == 7:
+                    nid = int(data[0])
+                    ntype = int(data[1])
+                    pos = data[2:5]
+                    radius = data[5]
+                    parentId = data[6]
+                    tn = SwcNode(nid=nid, ntype=ntype, radius=radius, center=pos)
+                    nodeDict[nid] = (tn, parentId)
+
+        for _, value in nodeDict.items():
+            tn = value[0]
+            parentId = value[1]
+            if parentId == -1:
+                tn.parent = self._root
+                tn._depth = 0
+            else:
+                parentNode = nodeDict.get(parentId)
+                if parentNode:
+                    tn.parent = parentNode[0]
+                    tn._depth = tn.parent._depth + 1
+
     def load(self, path):
         self.clear()
         with open(path, 'r') as fp:
@@ -422,7 +451,6 @@ class SwcTree:
     def get_lca_preprocess(self, node_num=-1):
         if node_num == -1:
             node_num = self.node_count()
-
         self.get_depth_array(node_num)
         self.LOG_NODE_NUM = math.ceil(math.log(node_num, 2)) + 1
         self.lca_parent = np.zeros(shape=(node_num+10, self.LOG_NODE_NUM),dtype=int)
@@ -529,6 +557,13 @@ class SwcTree:
         for i in range(1, len(pa_list)):
             swc_test_list[i].parent = pa_list[swc_test_list[i].get_id()]
 
+    def type_clear(self, x):
+        for node in PreOrderIter(self.root()):
+            node._type = x
+
+    def radius_limit(self, x):
+        for node in PreOrderIter(self.root()):
+            node._radius /= x
 
 if __name__ == '__main__':
     print('testing ...')

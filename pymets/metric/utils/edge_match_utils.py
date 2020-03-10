@@ -11,7 +11,7 @@ from anytree import PreOrderIter
 from rtree import index
 
 MIN_SIZE = 0.8
-FLOAT_ERROR = 0.000001
+FLOAT_ERROR = 0.001
 
 
 # get bounding box of a segment
@@ -88,6 +88,7 @@ def get_nearby_edges(idx3d, point, id_edge_dict, not_self=False, DEBUG=False):
         if not_self and new_d == 0:
             continue
         nearby_edges.append(tuple([line_tuple, new_d]))
+    nearby_edges.sort(key = lambda x:x[1])
     return nearby_edges
 
 
@@ -175,13 +176,14 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
                                       edge_use_dict=edge_use_dict, vis_list= vis_list, DEBUG=False):
                     continue
                 match_edge.add(tuple([node, node.parent]))
-                node._type = 3
+                # node._type = 3
                 # node.parent._type = 3
                 done = True
                 break
 
-        if not done and detail_path is not None:
-            node._type = 4
+        if not done:
+            node._type = 6
+            node.parent._type = 6
             unmatch_edge.add(tuple([node, node.parent]))
     # debugging
     swc_save(gold_swc_tree, "D:\gitProject\mine\PyMets\output\gold_tree_out.swc")
@@ -268,7 +270,6 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
             total_length = gold_line_tuple_a[0].distance(gold_line_tuple_a[1])
             start = foot_a.distance(EuclideanPoint(center=gold_line_tuple_a[0]._pos)) / total_length
             end = foot_b.distance(EuclideanPoint(center=gold_line_tuple_a[0]._pos)) / total_length
-            end -= FLOAT_ERROR
             if DEBUG:
                 print("node = {} {}\nnode.parent = {} {}\nnode_line = {},{} usage = {} {}\n".format(
                         node1.get_id(), node1._pos,
@@ -277,6 +278,7 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
                     ))
             if start > end:
                 start, end = end, start
+            end -= FLOAT_ERROR
             return add_interval(edge_use_dict, gold_line_tuple_a[0], tuple([start, end]))
 
     lca_id = gold_swc_tree.get_lca(gold_line_tuple_a[0].get_id(), gold_line_tuple_b[0].get_id())

@@ -19,8 +19,16 @@ def read_swc_trees(swc_file_paths):
 
 
 def adjust_swcfile(swc_str):
-    words = swc_str.split(" ")
-    print(words)
+    words = swc_str.split("\n")
+    return words
+
+
+def read_from_str(swc_str):
+    swc_tree = SwcTree()
+    swc_list = adjust_swcfile(swc_str)
+    swc_tree.load_list(swc_list)
+    return swc_tree
+
 
 if __name__ == "__main__":
     pass

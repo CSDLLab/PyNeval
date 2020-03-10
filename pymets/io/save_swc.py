@@ -74,6 +74,15 @@ def swc_save(swc_tree, out_path):
             ))
 
 
-if __name__ == "__main__":
-    # os.makedirs("a/b/c")
-    save_as_swc(None, "a/b/c")
+def swc_to_list(swc_tree):
+    swc_node_list = [node for node in PreOrderIter(swc_tree.root())]
+    swc_str = []
+    for node in swc_node_list:
+        if node.is_virtual():
+            continue
+        swc_str.append(
+            "{} {} {} {} {} {} {}\n".format(
+                node.get_id(), node._type, node._pos[0], node._pos[1], node._pos[2], node.radius(), node.parent.get_id()
+            )
+        )
+    return "".join(swc_str)
