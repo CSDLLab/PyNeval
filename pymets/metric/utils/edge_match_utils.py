@@ -1,12 +1,10 @@
 from pymets.model.euclidean_point import EuclideanPoint,Line
 from pymets.metric.utils.config_utils import DINF
-from pymets.model.swc_node import get_lca
+from pymets.model.swc_node import get_lca, SwcNode
 from pymets.io.save_swc import swc_save
 
-import os
-import time
 import numpy as np
-import math
+import math, copy
 from anytree import PreOrderIter
 from rtree import index
 
@@ -71,8 +69,7 @@ def get_nearest_edge_fast(idx3d, point, id_edge_dict, not_self=False, DEBUG=Fals
 
 
 # find the closest edge base on rtree
-def get_nearby_edges(idx3d, point, id_edge_dict, not_self=False, DEBUG=False):
-    threshold = point.radius()
+def get_nearby_edges(idx3d, point, id_edge_dict, threshold, not_self=False, DEBUG=False):
     point_box = (point._pos[0] - threshold, point._pos[1] - threshold, point._pos[2] - threshold,
                  point._pos[0] + threshold, point._pos[1] + threshold, point._pos[2] + threshold)
     hits = list(idx3d.intersection(point_box))
@@ -109,14 +106,14 @@ def add_interval(dic, edge, interval):
     for inter in dic[edge]:
         if is_intered(inter, interval):
             return False
-
-    dic[edge].add(interval)
     return True
 
 
 # find successful matched edge
-def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
-                           dis_threshold=0.1, detail_path=None, DEBUG=False):
+def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
+                    vertical_tree=None,
+                    rad_threshold=-1.0, len_threshold=0.2,
+                    detail_path=None, DEBUG=False):
     match_edge = set()
     unmatch_edge = set()
     edge_use_dict = {}
@@ -132,12 +129,13 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
         if node.is_virtual() or node.parent.is_virtual():
             continue
 
-        line_tuple_a_set = get_nearby_edges(idx3d=idx3d, point=node, id_edge_dict=id_edge_dict,
-                                            not_self=False, DEBUG=False)
-        line_tuple_b_set = get_nearby_edges(idx3d=idx3d, point=node.parent, id_edge_dict=id_edge_dict,
-                                            not_self=False, DEBUG=False)
-        done = False
+        rad_threshold1, rad_threshold2 = cal_rad_threshold(rad_threshold, node.radius(), node.parent.radius())
 
+        line_tuple_a_set = get_nearby_edges(idx3d=idx3d, point=node, id_edge_dict=id_edge_dict,
+                                            threshold=rad_threshold1, not_self=False, DEBUG=False)
+        line_tuple_b_set = get_nearby_edges(idx3d=idx3d, point=node.parent, id_edge_dict=id_edge_dict,
+                                            threshold=rad_threshold2, not_self=False, DEBUG=False)
+        done = False
         for line_tuple_a_dis in line_tuple_a_set:
             if done:
                 break
@@ -156,26 +154,31 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
                 if test_length == DINF:
                     continue
 
-                # debugging:
-                # if len(lca_info) == 1:
-                #     print("node_id = {}".format(
-                #         node.get_id()
-                #     ))
-                # else:
-                #     print("node_id = {} terminal_a = {} terminal_b = {}".format(
-                #         node.get_id(), lca_info[3].get_id(), lca_info[4].get_id()
-                #     ))
-
-                if not (dis_a <= node.radius() and dis_b <= node.parent.radius()):
+                len_threshold1 = cal_len_threshold(len_threshold, gold_length)
+                if not (dis_a <= rad_threshold1 and dis_b <= rad_threshold2):
+                    # print(node.get_id(), dis_a, rad_threshold1, dis_b, rad_threshold2, "error1")
                     continue
-                if not (math.fabs(test_length - gold_length) < gold_length / 5):
+                if not (math.fabs(test_length - gold_length) < len_threshold1):
+                    # print(node.get_id(), "error2")
                     continue
-                if not is_route_clean(gold_swc_tree = test_swc_tree,
-                                      gold_line_tuple_a=line_tuple_a, gold_line_tuple_b = line_tuple_b,
+                if not is_route_clean(gold_swc_tree=test_swc_tree,
+                                      gold_line_tuple_a=line_tuple_a, gold_line_tuple_b=line_tuple_b,
                                       node1=node, node2=node.parent,
                                       edge_use_dict=edge_use_dict, vis_list= vis_list, DEBUG=False):
+                    # print(node.get_id(), "error3")
                     continue
                 match_edge.add(tuple([node, node.parent]))
+
+                swc_foot_a = swc_get_foot(node, line_tuple_a)
+                swc_foot_b = swc_get_foot(node.parent, line_tuple_b)
+                tmp_node = SwcNode(center=node._pos, radius=node.radius(), ntype=node._type)
+                tmp_node_p = SwcNode(center=node.parent._pos, radius=node.parent.radius(), ntype=node.parent._type)
+
+                vertical_tree.add_child(vertical_tree.root(), tmp_node)
+                vertical_tree.add_child(vertical_tree.root(), tmp_node_p)
+                vertical_tree.add_child(tmp_node, swc_foot_a)
+                vertical_tree.add_child(tmp_node_p, swc_foot_b)
+
                 # node._type = 3
                 # node.parent._type = 3
                 done = True
@@ -187,7 +190,30 @@ def get_match_edges_e_fast(gold_swc_tree=None, test_swc_tree=None,
             unmatch_edge.add(tuple([node, node.parent]))
     # debugging
     swc_save(gold_swc_tree, "D:\gitProject\mine\PyMets\output\gold_tree_out.swc")
+    swc_save(vertical_tree, "D:\gitProject\mine\PyMets\output\\vertical_tree.swc")
+
     return match_edge, unmatch_edge
+
+
+def swc_get_foot(swc_node, swc_line_tuple):
+    e_node = EuclideanPoint(center=swc_node._pos)
+    e_line = Line(swc_node_1=swc_line_tuple[0], swc_node_2=swc_line_tuple[1])
+
+    e_foot = e_node.get_closest_point(e_line)
+    swc_foot = SwcNode(center=e_foot._pos, radius=1.0, ntype=0)
+
+    return swc_foot
+
+
+def cal_rad_threshold(rad_threshold, dis1, dis2):
+    if rad_threshold < 0:
+        return -rad_threshold*dis1, -rad_threshold*dis2
+    else:
+        return rad_threshold, rad_threshold
+
+
+def cal_len_threshold(len_threshold, length):
+    return length * len_threshold
 
 
 # get all node from current node to the LCA node
@@ -279,7 +305,9 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
             if start > end:
                 start, end = end, start
             end -= FLOAT_ERROR
-            return add_interval(edge_use_dict, gold_line_tuple_a[0], tuple([start, end]))
+            if add_interval(edge_use_dict, gold_line_tuple_a[0], tuple([start, end])):
+                edge_use_dict[gold_line_tuple_a[0]].add(tuple([start, end]))
+            return True
 
     lca_id = gold_swc_tree.get_lca(gold_line_tuple_a[0].get_id(), gold_line_tuple_b[0].get_id())
     if lca_id is None:
@@ -324,6 +352,9 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
             return False
     if add_interval(edge_use_dict, gold_line_tuple_a[0], tuple([start_a, end_a])) and \
         add_interval(edge_use_dict, gold_line_tuple_b[0], tuple([start_b, end_b])):
+        edge_use_dict[gold_line_tuple_a[0]].add(tuple([start_a, end_a]))
+        edge_use_dict[gold_line_tuple_b[0]].add(tuple([start_b, end_b]))
+
         for node in route_list:
             if node.get_id() == lca_id:
                 continue

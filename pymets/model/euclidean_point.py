@@ -57,19 +57,6 @@ class EuclideanPoint(object):
             else:
                 return EuclideanPoint(center=line.coords[1])
 
-
-    def get_foot_point_fast(self, line):
-        if len(line.coords) != 2:
-            raise Exception("[Error: ]in function get_foot_point. read line error")
-
-        a_p = [line.coords[0][0] - self._pos[0], line.coords[0][1] - self._pos[1], line.coords[0][2] - self._pos[2]]
-        b_a = [line.coords[1][0] - line.coords[0][0], line.coords[1][1] - line.coords[0][1], line.coords[1][2] - line.coords[0][2]]
-        k_up = a_p[0]*b_a[0] + a_p[1]*b_a[1] + a_p[2]*b_a[2]
-        k_down = b_a[0]**2+b_a[1]**2+b_a[2]**2
-        k = -k_up/k_down
-        foot = [k*b_a[0]+line.coords[0][0], k*b_a[1]+line.coords[0][1], k*b_a[2]+line.coords[0][2]]
-        return EuclideanPoint(foot)
-
     def on_line(self, line):
         p = np.array(self._pos)
         a = np.array(line.coords[0])

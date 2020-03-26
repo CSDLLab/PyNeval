@@ -1,7 +1,7 @@
 from anytree import NodeMixin, iterators, RenderTree, PreOrderIter
 from pymets.model.euclidean_point import EuclideanPoint,Line
 from pymets.model.swc_node import SwcTree
-from pymets.metric.utils.edge_match_utils import get_match_edges_e_fast
+from pymets.metric.utils.edge_match_utils import get_match_edges
 from pymets.metric.utils.config_utils import get_default_threshold
 from pymets.io.read_json import read_json
 from pymets.io.save_swc import save_as_swc, swc_to_list
@@ -11,10 +11,14 @@ import time
 import os,platform
 
 
-def length_metric_2(gold_swc_tree=None, test_swc_tree=None, dis_threshold=0.1, detail_path=None, DEBUG=True):
+def length_metric_2(gold_swc_tree=None, test_swc_tree=None,
+                    rad_threshold=-1.0, len_threshold=0.2, detail_path=None, DEBUG=True):
+    vertical_tree = SwcTree()
+
     test_swc_tree.get_lca_preprocess()
-    match_edges, un_match_edges = get_match_edges_e_fast(gold_swc_tree, test_swc_tree,  # tree data
-                                                         dis_threshold, detail_path, DEBUG=False)  # configs
+    match_edges, un_match_edges = get_match_edges(gold_swc_tree, test_swc_tree,  # tree data
+                                                  vertical_tree, # a empty tree helps
+                                                  rad_threshold, len_threshold, detail_path, DEBUG=False)  # configs
     if detail_path is not None:
         save_as_swc(object=un_match_edges, file_path=detail_path)
     match_length = 0.0
@@ -48,12 +52,21 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
 
     # get config threshold
     if "rad_threshold" not in config.keys() or config["rad_threshold"] == "default":
-        rad_threshold = get_default_threshold(gold_swc_tree)
+        rad_threshold = -1.0
     else:
         try:
             rad_threshold = float(config["rad_threshold"])
         except:
             raise Exception("[Error: ] Read config info threshold {}. suppose to be a float or \"default\"")
+
+    if "len_threshold" not in config.keys() or config["len_threshold"] == "default":
+        len_threshold = 0.2
+    else:
+        try:
+            len_threshold = float(config["len_threshold"])
+        except:
+            raise Exception("[Error: ] Read config info threshold {}. suppose to be a float or \"default\"")
+
     # get config detail path
     if "detail" in config.keys():
         detail_path = config["detail"]
@@ -72,9 +85,11 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
         print("1 - test_length / gold_length= {}".format(ratio))
         return ratio
     elif config["method"] == 2:
-        recall, precision = length_metric_2(gold_swc_tree=gold_swc_tree,
-                                            test_swc_tree=test_swc_tree,
-                                            dis_threshold=rad_threshold,
+        # check every edge in test, if it is overlap with any edge in gold three
+        recall, precision = length_metric_2(gold_swc_tree=test_swc_tree,
+                                            test_swc_tree=gold_swc_tree,
+                                            rad_threshold=rad_threshold,
+                                            len_threshold=len_threshold,
                                             detail_path=detail_path,
                                             DEBUG=False)
         print("Recall = {}, Precision = {}".format(recall, precision))
@@ -93,36 +108,40 @@ def web_length_metric(gold_swc, test_swc, method, rad_threshold, len_threshold):
     gold_tree.load_list(adjust_swcfile(gold_swc))
     test_tree.load_list(adjust_swcfile(test_swc))
 
-
     config = {
         'method': method,
-        'length_threshold': len_threshold,
+        'len_threshold': len_threshold,
         'rad_threshold': rad_threshold
     }
-    print("method = {}".format(
-        config['method']
-    ))
+
     recall, precision = length_metric(gold_swc_tree=gold_tree,
                                       test_swc_tree=test_tree,
                                       abs_dir="",
                                       config=config)
-    gold_tree.radius_limit(10)
-    test_tree.radius_limit(10)
-    return recall, precision, swc_to_list(gold_tree), swc_to_list(test_tree)
+    # gold_tree.radius_limit(10)
+    # test_tree.radius_limit(10)
+
+    result = {
+        'recall': recall,
+        'precision': precision,
+        'gold_swc': swc_to_list(gold_tree),
+        'test_swc': swc_to_list(test_tree)
+    }
+    return result
 
 
 if __name__ == "__main__":
     goldtree = SwcTree()
 
     testTree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\34_23_10_gold.swc")
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\34_23_10_test.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\2_18_gold.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\2_18_test.swc")
 
     start = time.time()
-    length_metric(gold_swc_tree=goldtree,
-                  test_swc_tree=testTree,
-                  abs_dir="D:\gitProject\mine\PyMets",
-                  config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
+    # length_metric(gold_swc_tree=goldtree,
+    #               test_swc_tree=testTree,
+    #               abs_dir="D:\gitProject\mine\PyMets",
+    #               config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
     length_metric(gold_swc_tree=testTree,
                   test_swc_tree=goldtree,
                   abs_dir="D:\gitProject\mine\PyMets",
