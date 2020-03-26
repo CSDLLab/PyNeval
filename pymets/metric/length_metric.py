@@ -6,9 +6,10 @@ from pymets.metric.utils.config_utils import get_default_threshold
 from pymets.io.read_json import read_json
 from pymets.io.save_swc import save_as_swc, swc_to_list
 from pymets.io.read_swc import adjust_swcfile
+from pymets.io.read_config import read_float_config, read_path_config
 
 import time
-import os,platform
+import os, platform
 
 
 def length_metric_2(gold_swc_tree=None, test_swc_tree=None,
@@ -51,32 +52,11 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
     test_swc_tree.type_clear(4)
 
     # get config threshold
-    if "rad_threshold" not in config.keys() or config["rad_threshold"] == "default":
-        rad_threshold = -1.0
-    else:
-        try:
-            rad_threshold = float(config["rad_threshold"])
-        except:
-            raise Exception("[Error: ] Read config info threshold {}. suppose to be a float or \"default\"")
-
-    if "len_threshold" not in config.keys() or config["len_threshold"] == "default":
-        len_threshold = 0.2
-    else:
-        try:
-            len_threshold = float(config["len_threshold"])
-        except:
-            raise Exception("[Error: ] Read config info threshold {}. suppose to be a float or \"default\"")
+    rad_threshold = read_float_config(config=config, config_name="rad_threshold", default=-1.0)
+    len_threshold = read_float_config(config=config, config_name="len_threshold", default=0.2)
 
     # get config detail path
-    if "detail" in config.keys():
-        detail_path = config["detail"]
-        if platform.system() == "Linux":
-            detail_path = '/'.join(detail_path.split("\\"))
-        detail_path = os.path.join(abs_dir, detail_path)
-        if os.path.exists(detail_path):
-            os.remove(detail_path)
-    else:
-        detail_path = None
+    detail_path = read_path_config(config=config, config_name="detail", abs_dir=abs_dir, default=None)
 
     # get config method
     if config["method"] == 1:
@@ -134,14 +114,14 @@ if __name__ == "__main__":
     goldtree = SwcTree()
 
     testTree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\2_18_gold.swc")
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\2_18_test.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\conner.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\conner.swc")
 
     start = time.time()
-    # length_metric(gold_swc_tree=goldtree,
-    #               test_swc_tree=testTree,
-    #               abs_dir="D:\gitProject\mine\PyMets",
-    #               config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
+    length_metric(gold_swc_tree=goldtree,
+                  test_swc_tree=testTree,
+                  abs_dir="D:\gitProject\mine\PyMets",
+                  config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
     length_metric(gold_swc_tree=testTree,
                   test_swc_tree=goldtree,
                   abs_dir="D:\gitProject\mine\PyMets",

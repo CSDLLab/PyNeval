@@ -4,6 +4,7 @@ from anytree import PreOrderIter
 from pymets.model.swc_node import SwcTree
 from pymets.metric.utils.config_utils import get_default_threshold
 
+
 # for length metric (unused)
 def get_kdtree_data(kd_node):
     return kd_node[0].data
@@ -90,6 +91,7 @@ def get_match_edges_p(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False
     if DEBUG:
         print(len(match_edge))
     return match_edge
+
 
 # for diadem metric
 # def find

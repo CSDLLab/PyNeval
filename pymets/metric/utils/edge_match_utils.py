@@ -12,108 +12,23 @@ MIN_SIZE = 0.8
 FLOAT_ERROR = 0.001
 
 
-# get bounding box of a segment
-def get_bounds(point_a, point_b, extra = 0):
-    point_a = np.array(point_a._pos)
-    point_b = np.array(point_b._pos)
-    res = (np.where(point_a>point_b,point_b,point_a) - extra).tolist() + (np.where(point_a>point_b,point_a,point_b) + extra).tolist()
-
-    return tuple(res)
-
-
-# get a dict, id_edge_dict[id] = tuple(swc_node1, swc_node2)
-def get_idedge_dict(swc_tree=None):
-    id_edge_dict = {}
-    swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
-    for node in swc_tree_list:
-        if node.is_virtual() or node.parent.is_virtual():
-            continue
-        id_edge_dict[node.get_id()] = tuple([node, node.parent])
-    return id_edge_dict
-
-
-# construct rtree
-def get_edge_rtree(swc_tree=None):
-    swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
-    p = index.Property()
-    p.dimension = 3
-    idx3d = index.Index(properties=p)
-    for node in swc_tree_list:
-        if node.is_virtual() or node.parent.is_virtual():
-            continue
-
-        idx3d.insert(node.get_id(), get_bounds(node, node.parent, extra = node.radius()))
-    return idx3d
-
-
-# find the closest edge base on rtree
-def get_nearest_edge_fast(idx3d, point, id_edge_dict, not_self=False, DEBUG=False):
-    point_box = (point._pos[0] - MIN_SIZE, point._pos[1] - MIN_SIZE, point._pos[2] - MIN_SIZE,
-                 point._pos[0] + MIN_SIZE, point._pos[1] + MIN_SIZE, point._pos[2] + MIN_SIZE)
-    hits = list(idx3d.intersection(point_box))
-    d = DINF
-    s = None
-    for h in hits:
-        line_tuple = id_edge_dict[h]
-        if DEBUG:
-            print("\npoint = {}, line_a = {}, line_b = {}".format(
-                point._pos, line_tuple[0]._pos, line_tuple[1]._pos)
-            )
-        new_d = point.distance(Line(swc_node_1=line_tuple[0], swc_node_2=line_tuple[1]))
-        if not_self and new_d == 0:
-            continue
-        if new_d < d:
-            d = new_d
-            s = line_tuple
-    return s, d
-
-
-# find the closest edge base on rtree
-def get_nearby_edges(idx3d, point, id_edge_dict, threshold, not_self=False, DEBUG=False):
-    point_box = (point._pos[0] - threshold, point._pos[1] - threshold, point._pos[2] - threshold,
-                 point._pos[0] + threshold, point._pos[1] + threshold, point._pos[2] + threshold)
-    hits = list(idx3d.intersection(point_box))
-    nearby_edges = []
-    for h in hits:
-        line_tuple = id_edge_dict[h]
-        if DEBUG:
-            print("\npoint = {}, line_a = {}, line_b = {}".format(
-                point._pos, line_tuple[0]._pos, line_tuple[1]._pos)
-            )
-        e_point = EuclideanPoint(center=point._pos)
-        new_d = e_point.distance(Line(swc_node_1=line_tuple[0], swc_node_2=line_tuple[1]))
-        if not_self and new_d == 0:
-            continue
-        nearby_edges.append(tuple([line_tuple, new_d]))
-    nearby_edges.sort(key = lambda x:x[1])
-    return nearby_edges
-
-
-def is_intered(inter1, inter2):
-    if inter1[0] == inter1[1] or inter2[0] == inter2[1]:
-        return False
-    if inter1[0] <= inter2[0] <= inter1[1] or inter1[0] <= inter2[1] <= inter1[1] or \
-       inter2[0] <= inter1[0] <= inter2[1] or inter2[0] <= inter1[1] <= inter2[1]:
-        return True
-    return False
-
-
-def add_interval(dic, edge, interval):
-    if edge not in dic.keys():
-        dic[edge] = set()
-    if interval[0] > interval[1]:
-        return True
-    for inter in dic[edge]:
-        if is_intered(inter, interval):
-            return False
-    return True
-
-
+# public
 # find successful matched edge
 def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                     vertical_tree=None,
                     rad_threshold=-1.0, len_threshold=0.2,
                     detail_path=None, DEBUG=False):
+    """
+    :param gold_swc_tree: Swc_Tree
+    :param test_swc_tree: Swc_Tree
+    :param vertical_tree: Swc_Tree, initially empty tree, store vertical edge between two trees
+    :param rad_threshold: float, radius threshold
+    :param len_threshold: float, length threshold
+    :param detail_path: string, path for extra detail
+    :param DEBUG: bool, true or false, to show DEBUG info or not
+    :return: match_edge set contains tuple of two swc nodes
+    level: 0
+    """
     match_edge = set()
     unmatch_edge = set()
     edge_use_dict = {}
@@ -123,7 +38,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
     gold_node_list = [node for node in PreOrderIter(gold_swc_tree.root())]
     test_node_list = [node for node in PreOrderIter(test_swc_tree.root())]
 
-    vis_list = np.zeros(len(test_node_list) + 5, dtype='uint8')
+    vis_list = np.zeros(len(test_node_list) + 5, dtype='int8')
 
     for node in gold_node_list:
         if node.is_virtual() or node.parent.is_virtual():
@@ -168,7 +83,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                     # print(node.get_id(), "error3")
                     continue
                 match_edge.add(tuple([node, node.parent]))
-
+                # adjust vertical tree
                 swc_foot_a = swc_get_foot(node, line_tuple_a)
                 swc_foot_b = swc_get_foot(node.parent, line_tuple_b)
                 tmp_node = SwcNode(center=node._pos, radius=node.radius(), ntype=node._type)
@@ -195,14 +110,56 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
     return match_edge, unmatch_edge
 
 
-def swc_get_foot(swc_node, swc_line_tuple):
-    e_node = EuclideanPoint(center=swc_node._pos)
-    e_line = Line(swc_node_1=swc_line_tuple[0], swc_node_2=swc_line_tuple[1])
+# private
+# construct rtree
+def get_edge_rtree(swc_tree=None):
+    """
+    :param swc_tree: Swc_Tree, to build rtree
+    :return: rtree
+    level: 1
+    """
+    swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
+    p = index.Property()
+    p.dimension = 3
+    idx3d = index.Index(properties=p)
+    for node in swc_tree_list:
+        if node.is_virtual() or node.parent.is_virtual():
+            continue
 
-    e_foot = e_node.get_closest_point(e_line)
-    swc_foot = SwcNode(center=e_foot._pos, radius=1.0, ntype=0)
+        idx3d.insert(node.get_id(), get_bounds(node, node.parent, extra=node.radius()))
+    return idx3d
 
-    return swc_foot
+
+# get bounding box of a segment
+def get_bounds(point_a, point_b, extra = 0):
+    """
+    :param point_a: two points to identify the square
+    :param point_b:
+    :param extra: float, a threshold
+    :return:
+    """
+    point_a = np.array(point_a._pos)
+    point_b = np.array(point_b._pos)
+    res = (np.where(point_a>point_b,point_b,point_a) - extra).tolist() + (np.where(point_a>point_b,point_a,point_b) + extra).tolist()
+
+    return tuple(res)
+
+
+# get a dict, id_edge_dict[id] = tuple(swc_node1, swc_node2)
+def get_idedge_dict(swc_tree=None):
+    '''
+    :param swc_tree:
+    :return:Dict
+    get a dict mapping id and edge on the swc tree.
+    level:1
+    '''
+    id_edge_dict = {}
+    swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
+    for node in swc_tree_list:
+        if node.is_virtual() or node.parent.is_virtual():
+            continue
+        id_edge_dict[node.get_id()] = tuple([node, node.parent])
+    return id_edge_dict
 
 
 def cal_rad_threshold(rad_threshold, dis1, dis2):
@@ -216,21 +173,42 @@ def cal_len_threshold(len_threshold, length):
     return length * len_threshold
 
 
-# get all node from current node to the LCA node
-def get_route_node(current_node, lca_id):
-    res_list = []
-    while not current_node.is_virtual() and not current_node.get_id() == lca_id:
-        res_list.append(current_node)
-        current_node = current_node.parent
-    # if current_node.is_virtual():
-    #
-    #     raise Exception("[Error: ] something wrong in LCA process")
-    res_list.append(current_node)
-    return res_list
+# find the closest edge base on rtree
+def get_nearby_edges(idx3d, point, id_edge_dict, threshold, not_self=False, DEBUG=False):
+    '''
+    :param idx3d:
+    :param point:
+    :param id_edge_dict:
+    :param threshold:
+    :param not_self: exclude self,used in overlap detect
+    :param DEBUG:
+    :return: a list of tuple(edge, dis). Sorted according to dis
+    level: 1
+    '''
+    point_box = (point._pos[0] - threshold, point._pos[1] - threshold, point._pos[2] - threshold,
+                 point._pos[0] + threshold, point._pos[1] + threshold, point._pos[2] + threshold)
+    hits = list(idx3d.intersection(point_box))
+    nearby_edges = []
+    for h in hits:
+        line_tuple = id_edge_dict[h]
+        if DEBUG:
+            print("\npoint = {}, line_a = {}, line_b = {}".format(
+                point._pos, line_tuple[0]._pos, line_tuple[1]._pos)
+            )
+        e_point = EuclideanPoint(center=point._pos)
+        new_d = e_point.distance(Line(swc_node_1=line_tuple[0], swc_node_2=line_tuple[1]))
+        if not_self and new_d == 0:
+            continue
+        nearby_edges.append(tuple([line_tuple, new_d]))
+    nearby_edges.sort(key=lambda x: x[1])
+    return nearby_edges
 
 
 # get the distance of two matched closest edges
 def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_line):
+    '''
+    level: 1
+    '''
     point_a, point_b = test_line.get_points()
     gold_line_a = Line(coords=[gold_line_tuple_a[0]._pos, gold_line_tuple_a[1]._pos])
     gold_line_b = Line(coords=[gold_line_tuple_b[0]._pos, gold_line_tuple_b[1]._pos])
@@ -272,16 +250,12 @@ def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_lin
     return lca_length
 
 
-def exist(dic, edge):
-    if edge not in dic.keys():
-        return False
-    if len(dic[edge]) > 0:
-        return True
-    return False
-
-
-# get the distance of two matched closest edges
+#
 def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, node2, edge_use_dict, vis_list, DEBUG):
+    '''
+    level: 1
+    check if any part between two pedals is used
+    '''
     point_a = EuclideanPoint(node1._pos)
     point_b = EuclideanPoint(node2._pos)
     gold_line_a = Line(coords=[gold_line_tuple_a[0]._pos, gold_line_tuple_a[1]._pos])
@@ -309,6 +283,7 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
                 edge_use_dict[gold_line_tuple_a[0]].add(tuple([start, end]))
             return True
 
+    # not on the same edge, get lca first
     lca_id = gold_swc_tree.get_lca(gold_line_tuple_a[0].get_id(), gold_line_tuple_b[0].get_id())
     if lca_id is None:
         raise Exception("[Error:] No Lca found")
@@ -350,8 +325,9 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
             continue
         if vis_list[node.get_id()] == 1 or exist(edge_use_dict, node):
             return False
+
     if add_interval(edge_use_dict, gold_line_tuple_a[0], tuple([start_a, end_a])) and \
-        add_interval(edge_use_dict, gold_line_tuple_b[0], tuple([start_b, end_b])):
+       add_interval(edge_use_dict, gold_line_tuple_b[0], tuple([start_b, end_b])):
         edge_use_dict[gold_line_tuple_a[0]].add(tuple([start_a, end_a]))
         edge_use_dict[gold_line_tuple_b[0]].add(tuple([start_b, end_b]))
 
@@ -361,3 +337,65 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
             vis_list[node.get_id()] = 1
         return True
     return False
+
+
+def is_intered(inter1, inter2):
+    """
+    level: 2
+    """
+    if inter1[0] == inter1[1] or inter2[0] == inter2[1]:
+        return False
+    if inter1[0] <= inter2[0] <= inter1[1] or inter1[0] <= inter2[1] <= inter1[1] or \
+       inter2[0] <= inter1[0] <= inter2[1] or inter2[0] <= inter1[1] <= inter2[1]:
+        return True
+    return False
+
+
+def add_interval(dic, edge, interval):
+    """
+        level: 2
+    """
+    if edge not in dic.keys():
+        dic[edge] = set()
+    if interval[0] > interval[1]:
+        return True
+    for inter in dic[edge]:
+        if is_intered(inter, interval):
+            return False
+    return True
+
+
+def get_route_node(current_node, lca_id):
+    """
+    get all node from current node to the LCA node
+    """
+    res_list = []
+    while not current_node.is_virtual() and not current_node.get_id() == lca_id:
+        res_list.append(current_node)
+        current_node = current_node.parent
+    # if current_node.is_virtual():
+    #
+    #     raise Exception("[Error: ] something wrong in LCA process")
+    res_list.append(current_node)
+    return res_list
+
+
+def exist(dic, edge):
+    """
+    check if any part of edge is used
+    """
+    if edge not in dic.keys():
+        return False
+    if len(dic[edge]) > 0:
+        return True
+    return False
+
+
+def swc_get_foot(swc_node, swc_line_tuple):
+    e_node = EuclideanPoint(center=swc_node._pos)
+    e_line = Line(swc_node_1=swc_line_tuple[0], swc_node_2=swc_line_tuple[1])
+
+    e_foot = e_node.get_closest_point(e_line)
+    swc_foot = SwcNode(center=e_foot._pos, radius=1.0, ntype=0)
+
+    return swc_foot

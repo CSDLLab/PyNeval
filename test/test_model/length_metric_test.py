@@ -1,9 +1,10 @@
 import unittest
 import numpy as np
-from pymets.metric.utils.edge_match_utils import get_idedge_dict,get_edge_rtree,get_nearest_edge_fast
+from pymets.metric.utils.edge_match_utils import get_idedge_dict, get_edge_rtree, get_nearby_edges
 from pymets.model.swc_node import SwcTree,SwcNode
 from pymets.model.euclidean_point import EuclideanPoint,Line
 from rtree import index
+
 
 # 获取线段的bounding box
 def get_bounds(point_a, point_b):
@@ -35,7 +36,7 @@ class TestStringMethods(unittest.TestCase):
         rtree = get_edge_rtree(swctree)
         id_edge_dict = get_idedge_dict(swctree)
         point = SwcNode(center=[22.5822, 172.856, 300.413])
-        line_tuple, dis = get_nearest_edge_fast(rtree, point, id_edge_dict)
+        (line_tuple, dis) = get_nearby_edges(rtree, point, id_edge_dict, point.radius())[0]
 
         print(point.distance(Line(coords=[[15.3249, 130.821, 327.012],[19.8495, 132.384, 323.395]])))
         print("dis = {}, line:{}, {}".format(

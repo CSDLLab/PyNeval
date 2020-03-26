@@ -13,10 +13,6 @@ _3D = "3d"
 _2D = "2d"
 
 
-def swc_dis_cmp(tuple1, tuple2):
-    return tuple1[1] < tuple2[1]
-
-
 def get_nearby_node_list(gold_node, test_swc_list, threshold):
     tmp_list = []
     for node in test_swc_list:
@@ -24,7 +20,7 @@ def get_nearby_node_list(gold_node, test_swc_list, threshold):
             continue
         if node.distance(gold_node) < threshold:
             tmp_list.append(tuple([node, node.distance(gold_node)]))
-    tmp_list.sort(key=cmp_to_key(swc_dis_cmp))
+    tmp_list.sort(key=cmp_to_key(lambda x: x[1]))
     res_list = []
     for tu in tmp_list:
         res_list.append(tu[0])
