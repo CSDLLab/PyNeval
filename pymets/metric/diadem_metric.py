@@ -2,7 +2,7 @@ import os
 import queue
 import time
 import math
-
+from anytree import PreOrderIter
 from pymets.metric.utils.config_utils import get_default_threshold
 from pymets.model.binary_node import RIGHT
 from pymets.model.swc_node import SwcTree, SwcNode
@@ -13,7 +13,8 @@ from pymets.metric.utils.diadam_match_utils import \
     path_length_matches,is_within_dis_match_threshold,LCA
 from pymets.metric.utils.bin_utils import convert_to_binarytree
 from pymets.io.read_json import read_json
-from pymets.io.save_swc import swc_save
+from pymets.io.save_swc import swc_save, swc_to_list
+from pymets.io.read_swc import adjust_swcfile
 
 # thresholds
 g_terminal_threshold = 0
@@ -702,6 +703,31 @@ def switch_initialize(config):
         g_find_proper_root = config["find_proper_root"]
 
 
+def color_tree_only():
+    print("color")
+    if g_list_miss:
+        if len(g_miss) > 0:
+            for node in g_miss:
+                # 3 means this node is missed
+                node.data._type = 3
+        if len(g_excess_nodes) > 0:
+            for node in g_excess_nodes.keys():
+                # 4 means this node is excessive
+                node.data._type = 4
+
+    if g_list_continuations:
+        if len(g_continuation) > 0:
+            for node in g_continuation:
+                # 5 means this node is a continuation
+                node.data._type = 5
+
+    if g_list_distant_matches:
+        if len(g_distance_match) > 0:
+            for node in g_distance_match:
+                # 6 means this node is a distant match
+                node.data._type = 6
+
+
 def print_result(swc_tree, out_path):
     start = time.time()
     print("g_weight_sum = {}".format(
@@ -774,11 +800,16 @@ def print_result(swc_tree, out_path):
 def diadem_metric(swc_gold_tree, swc_test_tree, config):
     global g_spur_set
     global g_weight_dict
+    swc_gold_tree.type_clear(0)
+    swc_test_tree.type_clear(1)
+
     t_matches = {}
     switch_initialize(config)
+    # print(swc_to_list(swc_test_tree))
     if g_find_proper_root:
         swc_test_tree.change_root(swc_gold_tree, t_matches)
 
+    # print(swc_to_list(swc_test_tree))
     if g_align_tree_by_root:
         swc_test_tree.align_roots(swc_gold_tree, t_matches)
 
@@ -790,15 +821,43 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
 
     generate_node_weights(bin_gold_root, g_spur_set)
     score_trees(bin_gold_root, bin_test_root, DEBUG=False)
-    print_result(swc_tree=swc_gold_tree, out_path=config["detail_path"])
+    if 'detail_path' in config.keys():
+        print_result(swc_tree=swc_gold_tree, out_path=config["detail_path"])
+    else:
+        color_tree_only()
     return 0
+
+
+def web_diadem_metric(gold_swc, test_swc, config):
+    gold_tree = SwcTree()
+    test_tree = SwcTree()
+
+    gold_tree.load_list(adjust_swcfile(gold_swc))
+    test_tree.load_list(adjust_swcfile(test_swc))
+
+    diadem_metric(swc_gold_tree=gold_tree,
+                  swc_test_tree=test_tree,
+                  config=config)
+
+    # gold_tree.radius_limit(10)
+    # test_tree.radius_limit(10)
+    print(swc_to_list(test_tree))
+    result = {
+        'gold_swc': swc_to_list(gold_tree),
+        'test_swc': swc_to_list(test_tree),
+        'weight_sum': g_weight_sum,
+        'score_sum': g_score_sum,
+        'final_score': g_final_score
+    }
+
+    return result
 
 
 if __name__ == "__main__":
     testTree = SwcTree()
     goldTree = SwcTree()
-    goldTree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\34_23_10_gold.swc")
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\34_23_10_test.swc")
+    goldTree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\2_18_gold.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\2_18_test.swc")
 
     # goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\\gold\\ExampleGoldStandard.swc")
     # testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")

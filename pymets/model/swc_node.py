@@ -153,13 +153,13 @@ class SwcNode(NodeMixin):
         self.volume = volume
         self._depth = depth
 
-        self.parent_trajectory=parent_trajectory
-        self.left_trajectory=left_trajectory
-        self.right_trajectory=right_trajectory
+        self.parent_trajectory = parent_trajectory
+        self.left_trajectory = left_trajectory
+        self.right_trajectory = right_trajectory
 
-        self.path_length=path_length
-        self.xy_path_length=xy_path_length
-        self.z_path_length=z_path_lenth
+        self.path_length = path_length
+        self.xy_path_length = xy_path_length
+        self.z_path_length = z_path_lenth
 
     def add_length(self, swc_node):
         self.path_length += swc_node.path_length
@@ -204,12 +204,15 @@ class SwcNode(NodeMixin):
         """
         return self._id >= 0
 
+    def set_id(self, id):
+        self._id = id
+
     def get_id(self):
         """Returns the ID of the node.
         """
         return self._id
 
-    def distance(self, tn = None, mode = _3D):
+    def distance(self, tn=None, mode=_3D):
         """ Returns the distance to another node.
         It returns 0 if either of the nodes is not regular.
 
@@ -219,7 +222,7 @@ class SwcNode(NodeMixin):
         if tn is None:
             return 0.0
         if type(tn) == type([]):
-            tn = SwcNode(nid=1,center=tn)
+            tn = SwcNode(nid=1, center=tn)
         if tn and self.is_regular() and (isinstance(tn, EuclideanPoint) or tn.is_regular()):
             dx = self._pos[0] - tn._pos[0]
             dy = self._pos[1] - tn._pos[1]
@@ -252,24 +255,11 @@ class SwcNode(NodeMixin):
             self._radius *= math.sqrt(sx * sy)
 
     def to_swc_str(self):
-        return '%d %d %g %g %g %g %d\n' % (self._id, self._type, self._pos[0], self._pos[1], self._pos[2], self._radius, self.parent.get_id())
+        return '%d %d %g %g %g %g %d\n' % (
+        self._id, self._type, self._pos[0], self._pos[1], self._pos[2], self._radius, self.parent.get_id())
 
     def get_parent_id(self):
         return -2 if self.is_root else self.parent.get_id()
-
-    def add_child(self, swc_node):
-        if not isinstance(swc_node, SwcNode):
-            return False
-        children = list(self.children)
-        children.append(swc_node)
-        self.children = tuple(children)
-
-    def remove_child(self, swc_node):
-        if not isinstance(swc_node, SwcNode):
-            return False
-        children = list(self.children)
-        children.remove(swc_node)
-        self.children = tuple(children)
 
     def __str__(self):
         return '%d (%d): %s, %g' % (self._id, self._type, str(self._pos), self._radius)
@@ -286,8 +276,8 @@ class SwcTree:
         self._total_length = None
 
         self.depth_array = None
-        self.LOG_NODE_NUM=None
-        self.lca_parent=None
+        self.LOG_NODE_NUM = None
+        self.lca_parent = None
 
     def _print(self):
         print(RenderTree(self._root).by_attr("_id"))
@@ -385,7 +375,7 @@ class SwcTree:
                     parentNode = nodeDict.get(parentId)
                     if parentNode:
                         tn.parent = parentNode[0]
-                        tn._depth = tn.parent._depth+1
+                        tn._depth = tn.parent._depth + 1
 
     def save(self, path):
         with open(path, 'w') as fp:
@@ -398,8 +388,8 @@ class SwcTree:
     def has_regular_node(self):
         return len(self.regular_root()) > 0
 
-    def node_count(self, regular=True, force_update=False):
-        if force_update == False and self._size is not None:
+    def node_count(self, regular=True):
+        if self._size is not None:
             return self._size
 
         count = 0
@@ -443,7 +433,7 @@ class SwcTree:
         return self.node(nid).radius()
 
     def get_depth_array(self, node_num):
-        self.depth_array = [0] * (node_num+10)
+        self.depth_array = [0] * (node_num + 10)
         for node in PreOrderIter(self.root()):
             self.depth_array[node.get_id()] = node.depth()
 
@@ -453,7 +443,7 @@ class SwcTree:
             node_num = self.node_count()
         self.get_depth_array(node_num)
         self.LOG_NODE_NUM = math.ceil(math.log(node_num, 2)) + 1
-        self.lca_parent = np.zeros(shape=(node_num+10, self.LOG_NODE_NUM),dtype=int)
+        self.lca_parent = np.zeros(shape=(node_num + 10, self.LOG_NODE_NUM), dtype=int)
         tree_node_list = [node for node in PreOrderIter(self.root())]
 
         for node in tree_node_list:
@@ -475,13 +465,13 @@ class SwcTree:
         depth_array = self.depth_array
 
         if depth_array[u] > depth_array[v]:
-            u,v = v,u
+            u, v = v, u
         for k in range(LOG_NODE_NUM):
             if depth_array[v] - depth_array[u] >> k & 1:
                 v = lca_parent[v][k]
         if u == v:
             return u
-        for k in range(LOG_NODE_NUM -1,-1,-1):
+        for k in range(LOG_NODE_NUM - 1, -1, -1):
             if lca_parent[u][k] != lca_parent[v][k]:
                 u = lca_parent[u][k]
                 v = lca_parent[v][k]
@@ -498,7 +488,7 @@ class SwcTree:
                 test_anchor = np.array(matches[root]._pos)
             else:
                 nearby_nodes = get_nearby_node_list(gold_node=root, test_swc_list=swc_test_list,
-                                                    threshold=root.radius()/2)
+                                                    threshold=root.radius() / 2)
                 if len(nearby_nodes) == 0:
                     continue
                 test_anchor = nearby_nodes[0]._pos
@@ -526,32 +516,39 @@ class SwcTree:
         gold_roots = swc_gold_tree.root().children
         swc_test_list = [node for node in PreOrderIter(self.root())]
         vis_list = np.zeros(shape=(len(swc_test_list) + 10,))
-        pa_list = [None]*(len(swc_test_list))
+        pa_list = [None] * (len(swc_test_list))
+        for node in swc_test_list:
+            pa_list[node.get_id()] = node.parent
 
         for root in gold_roots:
-            nearby_nodes = get_nearby_node_list(gold_node=root, test_swc_list=swc_test_list,
-                                                threshold=root.radius()/2)
-            for node in nearby_nodes:
-                if vis_list[node.get_id()]:
-                    continue
-                # reconstruct the tree with another root
-                stack = queue.LifoQueue()
-                stack.put(node)
-                pa_list[node.get_id()] = self.root()
-                while not stack.empty():
-                    cur_node = stack.get()
-                    vis_list[cur_node.get_id()] = True
-                    for son in cur_node.children:
-                        if not vis_list[son.get_id()]:
-                            stack.put(son)
-                            pa_list[son.get_id()] = cur_node
-                    if cur_node.parent is not None and \
-                            cur_node.parent.get_id() != -1 and \
-                            not vis_list[cur_node.parent.get_id()]:
-                        stack.put(cur_node.parent)
-                        pa_list[cur_node.parent.get_id()] = cur_node
-                matches[root] = node
-                break
+            down = False
+            for r_node in PreOrderIter(root):
+                if down:
+                    break
+                nearby_nodes = get_nearby_node_list(gold_node=r_node, test_swc_list=swc_test_list,
+                                                    threshold=root.radius() / 2)
+                for node in nearby_nodes:
+                    if vis_list[node.get_id()]:
+                        continue
+                    # reconstruct the tree with another root
+                    stack = queue.LifoQueue()
+                    stack.put(node)
+                    pa_list[node.get_id()] = self.root()
+                    while not stack.empty():
+                        cur_node = stack.get()
+                        vis_list[cur_node.get_id()] = True
+                        for son in cur_node.children:
+                            if not vis_list[son.get_id()]:
+                                stack.put(son)
+                                pa_list[son.get_id()] = cur_node
+                        if cur_node.parent is not None and \
+                                cur_node.parent.get_id() != -1 and \
+                                not vis_list[cur_node.parent.get_id()]:
+                            stack.put(cur_node.parent)
+                            pa_list[cur_node.parent.get_id()] = cur_node
+                    matches[r_node] = node
+                    down = True
+                    break
         for i in range(1, len(pa_list)):
             swc_test_list[i].parent = self.root()
         for i in range(1, len(pa_list)):
@@ -565,9 +562,23 @@ class SwcTree:
         for node in PreOrderIter(self.root()):
             node._radius /= x
 
+    def next_id(self):
+        return self.node_count() + 1
+
+    def add_child(self, swc_node, swc_son_node):
+        if not isinstance(swc_son_node, SwcNode) or not isinstance(swc_node, SwcNode):
+            return False
+        swc_son_node.set_id(self.next_id())
+        swc_son_node.children = tuple([])
+        swc_son_node.parent = swc_node
+
+        self._size += 1
+        return True
+
+
 if __name__ == '__main__':
     print('testing ...')
     tree = SwcTree()
     tree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\gold.swc")
     tree.get_lca_preprocess()
-    print(tree.get_lca(2,6))
+    print(tree.get_lca(2, 6))
