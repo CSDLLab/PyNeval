@@ -53,7 +53,7 @@ def get_nearby_node_list(gold_node=None, bin_test_list=None, check_previous_use=
 def is_in_XY_threshold(gold_node, test_node):
     gold_node, test_node = to_swc_node(gold_node, test_node)
 
-    xy_diff = math.sqrt((gold_node._pos[0] - test_node._pos[0])**2 + (gold_node._pos[1] - test_node._pos[1])**2)
+    xy_diff = math.sqrt((gold_node.get_x() - test_node.get_x())**2 + (gold_node.get_y() - test_node.get_y())**2)
 
     if xy_diff <= g_xy_threshold:
         return True
@@ -64,8 +64,8 @@ def is_in_XY_threshold(gold_node, test_node):
 def is_in_threshold(gold_node, test_node):
     gold_node, test_node = to_swc_node(gold_node, test_node)
 
-    xy_diff = math.sqrt((gold_node._pos[0] - test_node._pos[0])**2 + (gold_node._pos[1] - test_node._pos[1])**2)
-    z_diff = math.fabs(gold_node._pos[2] - test_node._pos[2])
+    xy_diff = math.sqrt((gold_node.get_x() - test_node.get_x())**2 + (gold_node.get_y() - test_node.get_y())**2)
+    z_diff = math.fabs(gold_node.get_z() - test_node.get_z())
 
     if xy_diff <= g_xy_threshold and z_diff <= g_z_threshold + 0.1:
         return True

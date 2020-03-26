@@ -856,8 +856,8 @@ def web_diadem_metric(gold_swc, test_swc, config):
 if __name__ == "__main__":
     testTree = SwcTree()
     goldTree = SwcTree()
-    goldTree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\2_18_gold.swc")
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\2_18_test.swc")
+    goldTree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\ExampleTest.swc")
 
     # goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\\gold\\ExampleGoldStandard.swc")
     # testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")

@@ -115,26 +115,26 @@ def find_parent_trajectory(node, thereholds, DEBUG=False):
             xy_dis = data.distance(c_data, _2D)
             if xy_dis > thereholds.get_x():
                 tmp_point = EuclideanPoint(center=[0, 0, 0])
-                tmp_point.add_coord(calculate_trajectories_xy(data, prev_data, c_data, thereholds._pos[0]))
-                point._pos[0] = tmp_point._pos[0]
-                point._pos[1] = tmp_point._pos[1]
+                tmp_point.add_coord(calculate_trajectories_xy(data, prev_data, c_data, thereholds.get_x()))
+                point.set_x(tmp_point.get_x())
+                point.set_y(tmp_point.get_y())
                 done_x = True
             elif c.is_root:
-                point._pos[0] = c_data._pos[0]
-                point._pos[1] = c_data._pos[1]
+                point.set_x(c_data.get_x())
+                point.set_y(c_data.get_y())
                 done_x = True
 
         if not done_z:
-            z_dis = math.fabs(data._pos[2] - c_data._pos[2])
-            if z_dis > thereholds._pos[2]:
-                point._pos[2] = calculate_trajectories_z(data, prev_data, c_data, thereholds._pos[2])
+            z_dis = math.fabs(data.get_z() - c_data.get_z())
+            if z_dis > thereholds.get_z():
+                point.set_z(calculate_trajectories_z(data, prev_data, c_data, thereholds.get_z()))
                 done_z = True
             elif c.is_root:
-                point._pos[2] = c_data._pos[2]
+                point.set_z(c_data.get_z())
                 done_z = True
     if DEBUG:
         print(node.data._id)
-        print("trx = {}, try = {}, trz = {}".format(point._pos[0], point._pos[1], point._pos[2]))
+        print("trx = {}, try = {}, trz = {}".format(point.get_x(), point.get_y(), point.get_z()))
         print("----------------------------------------------------------------")
     return point
 
@@ -153,31 +153,31 @@ def find_child_trajectory(data, child, thresholds, DEBUG=False):
         if not done_x:
             xy_dis = data.distance(c_data, _2D)
 
-            if xy_dis > thresholds._pos[0]:
+            if xy_dis > thresholds.get_x():
                 tmp_point = EuclideanPoint(center=[0, 0, 0])
-                tmp_point.add_coord(calculate_trajectories_xy(data, prev_data, c_data, thresholds._pos[0]))
-                point._pos[0] = tmp_point._pos[0]
-                point._pos[1] = tmp_point._pos[1]
+                tmp_point.add_coord(calculate_trajectories_xy(data, prev_data, c_data, thresholds.get_x()))
+                point.set_x(tmp_point.get_x())
+                point.set_y(tmp_point.get_y())
                 done_x = True
             elif child.is_leaf():
-                point._pos[0] = c_data._pos[0]
-                point._pos[1] = c_data._pos[1]
+                point.set_x(c_data.get_x())
+                point.set_y(c_data.get_y())
                 done_x = True
             elif child.right_son != None:
-                point._pos[0] = TRAJECTORY_NONE
-                point._pos[1] = TRAJECTORY_NONE
+                point.set_x(TRAJECTORY_NONE)
+                point.set_y(TRAJECTORY_NONE)
                 done_x = True
 
         if not done_z:
-            z_dis = math.fabs(data._pos[2] - c_data._pos[2])
-            if z_dis > thresholds._pos[2]:
-                point._pos[2] = calculate_trajectories_z(data, prev_data, c_data, thresholds._pos[2])
+            z_dis = math.fabs(data.get_z() - c_data.get_z())
+            if z_dis > thresholds.get_z():
+                point.set_z(calculate_trajectories_z(data, prev_data, c_data, thresholds.get_z()))
                 done_z = True
             elif child.is_leaf():
-                point._pos[2] = c_data._pos[2]
+                point.set_z(c_data.get_z())
                 done_z = True
             elif child.right_son != None:
-                point._pos[2] = TRAJECTORY_NONE
+                point.set_z(TRAJECTORY_NONE)
                 done_z = True
 
         prev_data = c_data
@@ -186,7 +186,7 @@ def find_child_trajectory(data, child, thresholds, DEBUG=False):
 
     if DEBUG:
         print(data.id)
-        print("trx = {}, try = {}, trz = {}".format(point._pos[0], point._pos[1], point._pos[2]))
+        print("trx = {}, try = {}, trz = {}".format(point.get_x(), point.get_y(), point.get_z()))
         print("----------------------------------------------------------------")
     return point
 
@@ -246,6 +246,8 @@ def calculate_trajectories(bin_root, thresholds, z_in_path_dist =True, current_t
 def calculate_path_data(bin_node, z_in_path_dist, DEBUG=False):
     data = bin_node.data
     pa_data = bin_node.parent.data
+    if pa_data.get_id() == -1:
+        return
 
     if data.path_length == 0.0:
         if z_in_path_dist:
@@ -254,7 +256,7 @@ def calculate_path_data(bin_node, z_in_path_dist, DEBUG=False):
         else:
             data.path_length = data.distance(pa_data, mode=_2D)
             data.xy_path_length = data.distance(pa_data, mode=_2D)
-        data.z_path_length = math.fabs(pa_data._pos[2] - data._pos[2])
+        data.z_path_length = math.fabs(pa_data.get_z() - data.get_z())
         data.surface_area = data.path_length*math.pi*data.radius()*2
         data.volume = data.path_length*math.pi*data.radius()*data.radius()
     if DEBUG:
@@ -264,7 +266,7 @@ def calculate_path_data(bin_node, z_in_path_dist, DEBUG=False):
                                                                           data.z_path_length))
 
 
-def remove_continuations(swc_root, bin_root, calc_path_dist,z_in_path_dist):
+def remove_continuations(swc_root, bin_root, calc_path_dist, z_in_path_dist):
     stack = queue.LifoQueue()
 
     # swc_node: data
@@ -279,11 +281,12 @@ def remove_continuations(swc_root, bin_root, calc_path_dist,z_in_path_dist):
     while not stack.empty():
         node = stack.get()
         data = node.data
+
         if not node.is_leaf():
             stack.put(node.left_son)
             if calc_path_dist:
                 calculate_path_data(node.left_son, z_in_path_dist)
-            if node.right_son == None:
+            if node.right_son is None:
                 # prepare to remove the node
                 child = node.left_son
                 child_data = child.data

@@ -89,5 +89,6 @@ class PymetsTotCase(unittest.TestCase):
         self.assertEqual(precision1, 0.9385873563259137)
         self.assertEqual(precision2, 0.0)
 
+
 if __name__ == '__main__':
     unittest.main()

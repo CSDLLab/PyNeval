@@ -26,9 +26,9 @@ def save_line_tuple_as_swc(match_fail, file_path):
         for line_tuple in match_fail:
             f.write("{} {} {} {} {} {} {}\n".format(line_tuple[0].get_id(),
                                                   line_tuple[0]._type,
-                                                  line_tuple[0]._pos[0],
-                                                  line_tuple[0]._pos[1],
-                                                  line_tuple[0]._pos[2],
+                                                  line_tuple[0].get_x(),
+                                                  line_tuple[0].get_y(),
+                                                  line_tuple[0].get_z(),
                                                   line_tuple[0].radius(),
                                                   line_tuple[0].parent.get_id()))
             # f.write("{} {} {} {} {} {} {}\n".format(line_tuple[1].get_id(),

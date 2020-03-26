@@ -5,6 +5,8 @@ import math
 class EuclideanPoint(object):
     def __init__(self,
                  center=[0, 0, 0]):
+        if not isinstance(center, list):
+            raise Exception("[Error: ]not a list")
         self._pos=center
 
     def get_x(self):
@@ -108,15 +110,15 @@ class EuclideanPoint(object):
 class Line:
     def __init__(self,
                  coords=None,
-                 swc_node_1=None,
-                 swc_node_2=None,
+                 e_node_1=None,
+                 e_node_2=None,
                  is_segment=True):
         if coords is not None:
             self.coords = coords
         else:
             self.coords = [[],[]]
-            self.coords[0] = swc_node_1._pos
-            self.coords[1] = swc_node_2._pos
+            self.coords[0] = e_node_1._pos
+            self.coords[1] = e_node_2._pos
         self.is_segment = is_segment
 
     def to_str(self):

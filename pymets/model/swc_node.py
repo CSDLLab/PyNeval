@@ -104,11 +104,9 @@ class SwcNode(NodeMixin):
         Attributes:
         id: id of the node,
         type: leaf = 1,continuation = 2, bifurcation = 3,
-        parent: pa node id,
+        parent: pa node,
         son=[]: son list,
-        x: x coordinate,
-        y: y coordinate,
-        z: z coordinate,
+        center: Euclidean point describe node center
         radius: radius of the node
         surface_area: surface area of the cylinder, radius is current radius, length is the distance to its parent
         volume: volume of the cylinder. radious is the same as above
@@ -125,8 +123,8 @@ class SwcNode(NodeMixin):
     def __init__(self,
                  nid=-1,
                  ntype=0,
-                 radius=1,
-                 center=[0, 0, 0],
+                 radius=1.0,
+                 center=None,
                  parent=None,
                  depth=0,
 
@@ -170,22 +168,31 @@ class SwcNode(NodeMixin):
         self.surface_area += swc_node.surface_area
 
     def get_x(self):
-        return self._pos[0]
+        return self._pos.get_x()
 
     def get_y(self):
-        return self._pos[1]
+        return self._pos.get_y()
 
     def get_z(self):
-        return self._pos[2]
+        return self._pos.get_z()
 
     def set_x(self, x):
-        self._pos[0] = x
+        self._pos[0].set_x(x)
 
     def set_y(self, y):
-        self._pos[1] = y
+        self._pos[1].set_y(y)
 
     def set_z(self, z):
-        self._pos[2] = z
+        self._pos[2].set_z(z)
+
+    def get_center(self):
+        return self._pos
+
+    def set_center(self, center):
+        if not isinstance(center, EuclideanPoint):
+            raise Exception("[Error: ]not EuclideanPoint")
+        del self._pos
+        self._pos = center
 
     def is_virtual(self):
         """Returns True iff the node is virtual.
@@ -220,9 +227,9 @@ class SwcNode(NodeMixin):
         if type(tn) == type([]):
             tn = SwcNode(nid=1, center=tn)
         if tn and self.is_regular() and (isinstance(tn, EuclideanPoint) or tn.is_regular()):
-            dx = self._pos[0] - tn._pos[0]
-            dy = self._pos[1] - tn._pos[1]
-            dz = self._pos[2] - tn._pos[2]
+            dx = self.get_x() - tn.get_x()
+            dy = self.get_y() - tn.get_y()
+            dz = self.get_z() - tn.get_z()
             if mode == _2D:
                 dz = 0.0
             d2 = dx * dx + dy * dy + dz * dz
@@ -252,7 +259,7 @@ class SwcNode(NodeMixin):
 
     def to_swc_str(self):
         return '%d %d %g %g %g %g %d\n' % (
-        self._id, self._type, self._pos[0], self._pos[1], self._pos[2], self._radius, self.parent.get_id())
+            self._id, self._type, self._pos[0], self._pos[1], self._pos[2], self._radius, self.parent.get_id())
 
     def get_parent_id(self):
         return -2 if self.is_root else self.parent.get_id()
@@ -323,7 +330,7 @@ class SwcTree:
                 if len(data) == 7:
                     nid = int(data[0])
                     ntype = int(data[1])
-                    pos = data[2:5]
+                    pos = EuclideanPoint(center=data[2:5])
                     radius = data[5]
                     parentId = data[6]
                     tn = SwcNode(nid=nid, ntype=ntype, radius=radius, center=pos)
@@ -354,7 +361,7 @@ class SwcTree:
                     if len(data) == 7:
                         nid = int(data[0])
                         ntype = int(data[1])
-                        pos = data[2:5]
+                        pos = EuclideanPoint(center=data[2:5])
                         radius = data[5]
                         parentId = data[6]
                         tn = SwcNode(nid=nid, ntype=ntype, radius=radius, center=pos)
