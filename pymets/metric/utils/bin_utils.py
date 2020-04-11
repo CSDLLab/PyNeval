@@ -44,7 +44,7 @@ def swctree_to_binarytree(node):
                     distance = bin_node1.data.distance(bin_node2.data)
 
         # new_swcnode = copy.copy(node)
-        new_binnode = BinaryNode(data=best1.data,left_son=best1,right_son=best2)
+        new_binnode = BinaryNode(data=node, left_son=best1, right_son=best2)
         binnary_son_list.remove(best1)
         binnary_son_list.remove(best2)
         binnary_son_list.append(new_binnode)
@@ -205,7 +205,7 @@ def add_child_bifurcations(stack, node):
 
 
 # calculate the distance to root
-def calculate_trajectories(bin_root, thresholds, z_in_path_dist =True, current_trajectories=0.0, DEBUG=False):
+def calculate_trajectories(swc_root, bin_root, thresholds, z_in_path_dist =True, current_trajectories=0.0, DEBUG=False):
     stack = queue.LifoQueue()
 
     node = bin_root
@@ -219,10 +219,15 @@ def calculate_trajectories(bin_root, thresholds, z_in_path_dist =True, current_t
             print("[debug:  ] calculate trajectories for node {}".format(node.data.get_id()))
         data = node.data
 
+        if data.parent_trajectory is None:
+            data.parent_trajectory = EuclideanPoint(center=[0, 0, 0])
         if not node.is_root():
-            if data.parent_trajectory is None:
-                data.parent_trajectory = EuclideanPoint(center=[0,0,0])
             data.parent_trajectory.add_coord(find_parent_trajectory(node, thresholds))
+        else:
+            tmp_pa = BinaryNode(data=swc_root)
+            node.parent = tmp_pa
+            data.parent_trajectory.add_coord(find_parent_trajectory(node, thresholds))
+            node.parent = None
 
         if not node.is_leaf():
             if data.left_trajectory is None:
@@ -270,12 +275,22 @@ def remove_continuations(swc_root, bin_root, calc_path_dist, z_in_path_dist):
     stack = queue.LifoQueue()
 
     # swc_node: data
-    data = None
     child_data = None
 
     # bin_node: node
     res_root = bin_root
     child = None
+
+    if calc_path_dist:
+        data = bin_root.data
+
+        if z_in_path_dist:
+            data.path_length = swc_root.distance(data)
+            data.xy_path_length = swc_root.distance(data, mode="2d")
+        else:
+            data.path_length = swc_root.distance(data, mode="2d")
+            data.xy_path_length = swc_root.distance(data, mode="2d")
+        data.z_path_length = math.fabs(swc_root.get_z() - bin_root.data.get_z())
 
     stack.put(bin_root)
     while not stack.empty():
@@ -308,16 +323,29 @@ def remove_continuations(swc_root, bin_root, calc_path_dist, z_in_path_dist):
     return res_root
 
 
-def convert_to_binarytree(swc_tree):
-    bintree_root = swctree_to_binarytree(swc_tree.root())
+def convert_to_binarytree(tot_root, swc_root):
+    # swc_tree._print()
+    bintree_root = swctree_to_binarytree(swc_root)
+    # debug
+    # bintree_root.print_tree()
+
     re_arrange(bintree_root)
-    calculate_trajectories(bin_root=bintree_root,
+    calculate_trajectories(swc_root=tot_root,
+                           bin_root=bintree_root,
                            thresholds=EuclideanPoint([1.2,0,0]),
                            z_in_path_dist=True)
 
-    bintree_root = remove_continuations(swc_root=swc_tree.root(),
+    bintree_root = remove_continuations(swc_root=tot_root,
                                         bin_root=bintree_root,
                                         calc_path_dist=True,
-                                        z_in_path_dist=True)
-    # test_print_bin_tree(bintree_root)
+                                        z_in_path_dist=False)
     return bintree_root
+
+
+def convert_to_binarytrees(root):
+    tot_root = BinaryNode(data=root)
+    bin_root_list = []
+    for node in root.children:
+        bin_node = convert_to_binarytree(root, node)
+        bin_root_list.append(bin_node)
+    return tot_root, bin_root_list

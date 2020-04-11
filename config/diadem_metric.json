@@ -4,9 +4,9 @@
   "remove_spur": false,
   "count_excess_nodes": true,
   "align_tree_by_root": false,
-  "list_miss": false,
-  "list_distant_matches": false,
-  "list_continuations": false,
+  "list_miss": true,
+  "list_distant_matches": true,
+  "list_continuations": true,
   "find_proper_root": true,
   "debug": false
 }

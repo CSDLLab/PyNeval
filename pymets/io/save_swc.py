@@ -24,20 +24,7 @@ def save_line_tuple_as_swc(match_fail, file_path):
         f.truncate()
         f.write("# total unmatched edges: {}\n".format(len(match_fail)))
         for line_tuple in match_fail:
-            f.write("{} {} {} {} {} {} {}\n".format(line_tuple[0].get_id(),
-                                                  line_tuple[0]._type,
-                                                  line_tuple[0].get_x(),
-                                                  line_tuple[0].get_y(),
-                                                  line_tuple[0].get_z(),
-                                                  line_tuple[0].radius(),
-                                                  line_tuple[0].parent.get_id()))
-            # f.write("{} {} {} {} {} {} {}\n".format(line_tuple[1].get_id(),
-            #                                       line_tuple[1]._type,
-            #                                       line_tuple[1]._pos[0],
-            #                                       line_tuple[1]._pos[1],
-            #                                       line_tuple[1]._pos[2],
-            #                                       line_tuple[1].radius(),
-            #                                       -1))
+            f.write(line_tuple[0].to_swc_str())
         f.write("# --End--\n")
 
 
@@ -80,9 +67,5 @@ def swc_to_list(swc_tree):
     for node in swc_node_list:
         if node.is_virtual():
             continue
-        swc_str.append(
-            "{} {} {} {} {} {} {}\n".format(
-                node.get_id(), node._type, node._pos[0], node._pos[1], node._pos[2], node.radius(), node.parent.get_id()
-            )
-        )
+        swc_str.append(node.to_swc_str())
     return "".join(swc_str)

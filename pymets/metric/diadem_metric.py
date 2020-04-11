@@ -2,16 +2,17 @@ import os
 import queue
 import time
 import math
+import numpy as np
 from anytree import PreOrderIter
 from pymets.metric.utils.config_utils import get_default_threshold
 from pymets.model.binary_node import RIGHT
-from pymets.model.swc_node import SwcTree, SwcNode
+from pymets.model.swc_node import SwcTree, SwcNode, get_nearby_swc_node_list
 from pymets.model.euclidean_point import EuclideanPoint
 from pymets.metric.utils.diadam_match_utils import \
     get_match_path_length_difference, get_nearby_node_list, \
     get_end_node_XY_dis_diff, get_end_node_Z_dis_diff, get_trajectory_for_path, \
     path_length_matches,is_within_dis_match_threshold,LCA
-from pymets.metric.utils.bin_utils import convert_to_binarytree
+from pymets.metric.utils.bin_utils import convert_to_binarytrees
 from pymets.io.read_json import read_json
 from pymets.io.save_swc import swc_save, swc_to_list
 from pymets.io.read_swc import adjust_swcfile
@@ -89,65 +90,65 @@ def remove_spurs(bin_root, threshold):
     return spur_set
 
 
-def generate_node_weights(bin_root, spur_set, DEBUG=False):
+def generate_node_weights(bin_root, bin_subroot, spur_set, DEBUG=False):
     init_stack = queue.LifoQueue()
     main_stack = queue.LifoQueue()
     degree_dict = {}
     global g_weight_dict
     degree = 0
+    for subroot in bin_subroot:
+        init_stack.put(subroot)
+        main_stack.put(subroot)
 
-    init_stack.put(bin_root)
-    main_stack.put(bin_root)
+        while not init_stack.empty():
+            node = init_stack.get()
+            if node.has_children():
+                init_stack.put(node.left_son)
+                init_stack.put(node.right_son)
+                main_stack.put(node.left_son)
+                main_stack.put(node.right_son)
 
-    while not init_stack.empty():
-        node = init_stack.get()
-        if node.has_children():
-            init_stack.put(node.left_son)
-            init_stack.put(node.right_son)
-            main_stack.put(node.left_son)
-            main_stack.put(node.right_son)
+        while not main_stack.empty():
+            node = main_stack.get()
 
-    while not main_stack.empty():
-        node = main_stack.get()
-
-        if g_weight_node == WEIGHT_UNIFORM:
-            g_weight_dict[node] = 1
-        else:
-            if DEBUG:
-                print("Determining weight for {}".format(node.data.id))
-
-            if node.is_leaf():
+            if g_weight_node == WEIGHT_UNIFORM:
                 g_weight_dict[node] = 1
-                degree_dict[node] = 1
             else:
-                degree = 0
-                if node.left_son.is_leaf() and node.right_son.is_leaf():
-                    if node.left_son in spur_set or node.right_son in spur_set:
-                        degree = 1
-                    else:
-                        degree = 2
-                elif node in spur_set:
-                    if node.left_son.is_leaf():
-                        degree += degree_dict[node.right_son]
+                if DEBUG:
+                    print("Determining weight for {}".format(node.data.id))
+
+                if node.is_leaf():
+                    g_weight_dict[node] = 1
+                    degree_dict[node] = 1
+                else:
+                    degree = 0
+                    if node.left_son.is_leaf() and node.right_son.is_leaf():
+                        if node.left_son in spur_set or node.right_son in spur_set:
+                            degree = 1
+                        else:
+                            degree = 2
+                    elif node in spur_set:
+                        if node.left_son.is_leaf():
+                            degree += degree_dict[node.right_son]
+                        else:
+                            degree += degree_dict[node.left_son]
                     else:
                         degree += degree_dict[node.left_son]
-                else:
-                    degree += degree_dict[node.left_son]
-                    degree += degree_dict[node.right_son]
-                degree_dict[node] = degree
-                if g_weight_node == WEIGHT_DEGREE:
-                    g_weight_dict[node] = degree
-                elif g_weight_node == WEIGHT_SQRT_DEGREE:
-                    g_weight_dict[node] = math.sqrt(degree)
-                elif g_weight_node == WEIGHT_DEGREE_HARMONIC_MEAN:
-                    g_weight_dict[node] = 2.0 / (1.0/degree_dict[node.getLeft()] + 1.0/degree_dict.get[node.getRight()])
-                elif g_weight_node == WEIGHT_PATH_LENGTH:
-                    g_weight_dict[node] = node.data.path_length
-                if DEBUG:
-                    print("nodeId = {}, degree = {}".format(node.data._id, degree))
-                    if node.parent is not None:
-                        print("pa = {}".format(node.parent.data._id))
-                    print("-----------")
+                        degree += degree_dict[node.right_son]
+                    degree_dict[node] = degree
+                    if g_weight_node == WEIGHT_DEGREE:
+                        g_weight_dict[node] = degree
+                    elif g_weight_node == WEIGHT_SQRT_DEGREE:
+                        g_weight_dict[node] = math.sqrt(degree)
+                    elif g_weight_node == WEIGHT_DEGREE_HARMONIC_MEAN:
+                        g_weight_dict[node] = 2.0 / (1.0/degree_dict[node.getLeft()] + 1.0/degree_dict.get[node.getRight()])
+                    elif g_weight_node == WEIGHT_PATH_LENGTH:
+                        g_weight_dict[node] = node.data.path_length
+                    if DEBUG:
+                        print("nodeId = {}, degree = {}".format(node.data._id, degree))
+                        if node.parent is not None:
+                            print("pa = {}".format(node.parent.data._id))
+                        print("-----------")
 
 
 def is_diadem_match(gold_node, nearby_node, bin_gold_list, bin_test_list, DEBUG=False):
@@ -491,7 +492,7 @@ def remove_nearest_node(node, nearby_nodes, bin_gold_list):
     bin_gold_list.remove(closest_match)
 
 
-def weight_excess(bin_test_root, bin_gold_root, DEBUG=False):
+def weight_excess(bin_gold_subroot, bin_test_subroot, DEBUG=False):
     global g_excess_nodes
 
     if DEBUG:
@@ -499,64 +500,69 @@ def weight_excess(bin_test_root, bin_gold_root, DEBUG=False):
             print("matches = {}".format(node.data.get_id()))
 
     sum_weight = 0.0
-    gold_bin_list = bin_gold_root.get_node_list()
-
+    gold_bin_list = []
     setup_stack = queue.LifoQueue()
     use_stack = queue.LifoQueue()
 
-    setup_stack.put(bin_test_root)
-    while not setup_stack.empty():
-        node = setup_stack.get()
-        if node.has_children():
-            setup_stack.put(node.left_son)
-            setup_stack.put(node.right_son)
-            use_stack.put(node.left_son)
-            use_stack.put(node.right_son)
+    for son in bin_gold_subroot:
+        gold_bin_list.extend(son.get_node_list())
 
-    direct_term_excess = {}
+    for son in bin_test_subroot:
+        setup_stack.put(son)
+        use_stack.put(son)
+        while not setup_stack.empty():
+            node = setup_stack.get()
+            if node.has_children():
+                setup_stack.put(node.left_son)
+                setup_stack.put(node.right_son)
+                use_stack.put(node.left_son)
+                use_stack.put(node.right_son)
 
-    while not use_stack.empty():
-        node = use_stack.get()
-        data = node.data
-        if DEBUG:
-            print("{} sum weight {}".format(
-                data.get_id(),
-                sum_weight
-            ))
+        direct_term_excess = {}
 
-        if node.has_children():
-            num_excess_node = direct_term_excess[node.left_son]
-            num_excess_node += direct_term_excess[node.right_son]
-            excess_weight = get_excess_weight(num_excess_node, node, direct_term_excess)
+        while not use_stack.empty():
+            node = use_stack.get()
+            data = node.data
+            # if data.get_id()
+            if DEBUG:
+                print("{} sum weight {}".format(
+                    data.get_id(),
+                    sum_weight
+                ))
 
-            if not node in g_matches.keys() and \
-                    len(get_nearby_node_list(node, gold_bin_list, check_previous_use=True, g_matches=g_matches)) == 0 and \
-                    not is_continuation(node, gold_bin_list, add_to_list=False):
-                g_excess_nodes[node] = excess_weight
-                if not node in g_spur_set:
-                    sum_weight += excess_weight
+            if node.has_children():
+                num_excess_node = direct_term_excess[node.left_son]
+                num_excess_node += direct_term_excess[node.right_son]
+                excess_weight = get_excess_weight(num_excess_node, node, direct_term_excess)
+
+                if not node in g_matches.keys() and \
+                        len(get_nearby_node_list(node, gold_bin_list, check_previous_use=True, g_matches=g_matches)) == 0 and \
+                        not is_continuation(node, gold_bin_list, add_to_list=False):
+                    g_excess_nodes[node] = excess_weight
+                    if not node in g_spur_set:
+                        sum_weight += excess_weight
+                else:
+                    num_excess_node = 0
+                    excess_weight = 0
             else:
                 num_excess_node = 0
                 excess_weight = 0
-        else:
-            num_excess_node = 0
-            excess_weight = 0
 
-            if not node in g_spur_set and node not in g_matches.keys() and node.parent not in g_matches.keys():
-                nearby_nodes = get_nearby_node_list(node, gold_bin_list, check_previous_use=True, g_matches = g_matches)
-                if len(nearby_nodes) > 0:
-                    remove_nearest_node(node, nearby_nodes, gold_bin_list)
-                else:
-                    num_excess_node = 1
-                    excess_weight = 1
-                    g_excess_nodes[node] = 1
-                    sum_weight += excess_weight
+                if node not in g_spur_set and node not in g_matches.keys() and node.parent not in g_matches.keys():
+                    nearby_nodes = get_nearby_node_list(node, gold_bin_list, check_previous_use=True, g_matches = g_matches)
+                    if len(nearby_nodes) > 0:
+                        remove_nearest_node(node, nearby_nodes, gold_bin_list)
+                    else:
+                        num_excess_node = 1
+                        excess_weight = 1
+                        g_excess_nodes[node] = 1
+                        sum_weight += excess_weight
 
-        direct_term_excess[node] = num_excess_node
+            direct_term_excess[node] = num_excess_node
     return sum_weight
 
 
-def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
+def score_trees(bin_gold_root, bin_test_root, bin_gold_subroots, bin_test_subroots, DEBUG=False):
     global g_weight_dict
     global g_weight_sum
     global g_score_sum
@@ -569,14 +575,28 @@ def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
     number_of_nodes = 0
     weight = 0
 
-    bin_gold_list = bin_gold_root.get_node_list()
-    bin_test_list = bin_test_root.get_node_list()
+    bin_test_list = []
+    bin_gold_list = []
 
-    # Root is certainly matched
-    g_matches[bin_gold_root] = bin_test_root
-    g_matches[bin_test_root] = bin_gold_root
-    g_score_sum += g_weight_dict[bin_gold_root]
-    g_weight_sum += g_weight_dict[bin_gold_root]
+    # Root is certainly matched, note that here is a address use
+    bin_gold_root.data.parent_trajectory = bin_gold_root.data.get_center()
+    bin_gold_root.data.left_trajectory = bin_gold_root.data.get_center()
+    bin_gold_root.data.right_trajectory = bin_gold_root.data.get_center()
+    if bin_test_root is not None:
+        bin_test_root.data.parent_trajectory = bin_test_root.data.get_center()
+        bin_test_root.data.left_trajectory = bin_test_root.data.get_center()
+        bin_test_root.data.right_trajectory = bin_test_root.data.get_center()
+
+        g_matches[bin_gold_root] = bin_test_root
+        g_matches[bin_test_root] = bin_gold_root
+
+        for son in bin_test_subroots:
+            son.parent = bin_test_root
+            bin_test_list.extend(son.get_node_list())
+
+    for son in bin_gold_subroots:
+        son.parent = bin_gold_root
+        bin_gold_list.extend(son.get_node_list())
 
     # Increment quantity (non-continuations)
     g_quantity_score_sum += 1
@@ -584,53 +604,52 @@ def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
     number_of_nodes -= len(g_spur_set)
     number_of_nodes += len(bin_gold_list)
 
-    stack.put(bin_gold_root.left_son)
-    stack.put(bin_gold_root.right_son)
+    for gold_subroot in bin_gold_subroots:
+        stack.put(gold_subroot)
 
-    while not stack.empty():
-        gold_node = stack.get()
-        gold_data = gold_node.data
-
-        if gold_node.has_children():
-            stack.put(gold_node.left_son)
-            stack.put(gold_node.right_son)
-
-        if gold_node in g_spur_set:
-            pass
-        else:
-            weight = g_weight_dict[gold_node]
-            g_weight_sum += weight
-
+        while not stack.empty():
+            gold_node = stack.get()
+            gold_data = gold_node.data
             if DEBUG:
-                print(gold_node.to_str())
+                print(gold_node.data.get_id())
+                if gold_node.data.get_id() in [4,5,6,7]:
+                    print("line:616")
 
-            match = get_closest_match(gold_node = gold_node,
-                                      bin_gold_list = bin_gold_list,
-                                      bin_test_list = bin_test_list)
+            if gold_node.has_children():
+                stack.put(gold_node.left_son)
+                stack.put(gold_node.right_son)
 
-            # another match method (temporarily undo)
-            # if match is None and gold_node.is_leaf() and g_terminal_threshold > 0:
-            #     match = get_extended_termination_match(gold_node = gold_node,
-            #                                            bin_gold_list = bin_gold_list,
-            #                                            bin_test_list = bin_test_list)
-
-            if match is not None:
-                g_matches[gold_node] = match
-                g_matches[match] = gold_node
-                g_score_sum += weight
-
-                # Increment quantity (non-continuations)
-                g_quantity_score_sum += 1
+            if gold_node in g_spur_set:
+                pass
             else:
-                g_miss.add(gold_node)
+                weight = g_weight_dict[gold_node]
+                g_weight_sum += weight
 
+                match = get_closest_match(gold_node=gold_node,
+                                          bin_gold_list=bin_gold_list,
+                                          bin_test_list=bin_test_list)
+
+                # another match method (temporarily undo)
+                # if match is None and gold_node.is_leaf() and g_terminal_threshold > 0:
+                #     match = get_extended_termination_match(gold_node = gold_node,
+                #                                            bin_gold_list = bin_gold_list,
+                #                                            bin_test_list = bin_test_list)
+
+                if match is not None:
+                    g_matches[gold_node] = match
+                    g_matches[match] = gold_node
+                    g_score_sum += weight
+
+                    # Increment quantity (non-continuations)
+                    g_quantity_score_sum += 1
+                else:
+                    g_miss.add(gold_node)
+        if DEBUG:
+            gold_subroot.print_tree()
+            print("--END--\n")
+            if gold_subroot in g_matches.keys() is not None:
+                g_matches[gold_subroot].print_tree()
     t_remove = []
-
-    if DEBUG:
-        print("Miss list = ")
-        for miss in g_miss:
-            print(miss.data.get_id())
-        print("--END--")
 
     for miss_node in g_miss:
         if miss_node.left_son is not None or miss_node.right_son is not None:
@@ -644,12 +663,6 @@ def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
     for node in t_remove:
         g_miss.remove(node)
 
-    if DEBUG:
-        print("Miss list = ")
-        for miss in g_miss:
-            print(miss.data.get_id())
-        print("--END--")
-
     if g_weight_sum > 0:
         g_direct_match_score = g_quantity_score_sum / number_of_nodes
         g_quantity_score = g_score_sum / g_weight_sum
@@ -658,20 +671,9 @@ def score_trees(bin_gold_root, bin_test_root,DEBUG=False):
             remove_spurs(bin_test_root)
 
         if g_count_excess_nodes:
-            g_weight_sum += weight_excess(bin_test_root, bin_gold_root)
-            if DEBUG:
-                print("g_weight_sum = {}".format(
-                    g_weight_sum
-                ))
+            g_weight_sum += weight_excess(bin_gold_subroots, bin_test_subroots)
 
         g_final_score = g_score_sum / g_weight_sum
-        if DEBUG:
-            print("g_score_sum = {}".format(
-                g_score_sum
-            ))
-            print("g_final_score = {}".format(
-                g_final_score
-            ))
 
 
 def switch_initialize(config):
@@ -709,23 +711,23 @@ def color_tree_only():
         if len(g_miss) > 0:
             for node in g_miss:
                 # 3 means this node is missed
-                node.data._type = 3
+                node.data._type = 2
         if len(g_excess_nodes) > 0:
             for node in g_excess_nodes.keys():
                 # 4 means this node is excessive
-                node.data._type = 4
+                node.data._type = 3
 
     if g_list_continuations:
         if len(g_continuation) > 0:
             for node in g_continuation:
                 # 5 means this node is a continuation
-                node.data._type = 5
+                node.data._type = 4
 
     if g_list_distant_matches:
         if len(g_distance_match) > 0:
             for node in g_distance_match:
                 # 6 means this node is a distant match
-                node.data._type = 6
+                node.data._type = 5
 
 
 def print_result(swc_tree, out_path):
@@ -750,7 +752,7 @@ def print_result(swc_tree, out_path):
                     node.data.get_id(), node.data._pos, g_weight_dict[node]
                 ))
                 # 3 means this node is missed
-                node.data._type = 3
+                node.data._type = 2
             print("--END--")
         else:
             print("---Nodes that are missed:None---")
@@ -764,7 +766,7 @@ def print_result(swc_tree, out_path):
                     node.data.get_id(), node.data._pos, g_excess_nodes[node]
                 ))
                 # 4 means this node is excessive
-                node.data._type = 4
+                node.data._type = 3
         else:
             print("---extra Nodes in test reconstruction: None---")
 
@@ -777,7 +779,7 @@ def print_result(swc_tree, out_path):
                     node.data.get_id(), node.data._pos, g_weight_dict[node]
                 ))
                 # 5 means this node is a continuation
-                node.data._type = 5
+                node.data._type = 4
         else:
             print("---continuation Nodes None---")
 
@@ -790,42 +792,117 @@ def print_result(swc_tree, out_path):
                     node.data.get_id(), node.data._pos, g_weight_dict[node]
                 ))
                 # 6 means this node is a distant match
-                node.data._type = 6
+                node.data._type = 5
         else:
             print("Distant Matches: none")
     if os.path.isfile(out_path) and out_path[-4:] == ".swc":
         swc_save(swc_tree=swc_tree, out_path=out_path)
 
 
-def diadem_metric(swc_gold_tree, swc_test_tree, config):
+def diadem_init():
+    global g_weight_sum
+    global g_score_sum
+    global g_quantity_score_sum
+    global g_quantity_score
+    global g_direct_match_score
+    global g_final_score
+    global g_miss
+    global g_spur_set
+    global g_matches
+    global g_weight_dict
+    global g_excess_nodes
+    global g_distance_match
+    global g_continuation
+
+    g_weight_sum = 0
+    g_score_sum = 0
+    g_quantity_score_sum = 0
+    g_quantity_score = 0
+    g_direct_match_score = 0
+    g_final_score = -1
+
+    g_miss = set()
+    g_spur_set = set()
+    g_matches = {}
+    g_weight_dict = {}
+    g_excess_nodes = {}
+    g_distance_match = []
+    g_continuation = []
+
+
+def adjust_root(swc_gold_tree, swc_test_tree, t_match):
+    swc_gold_list = [node for node in PreOrderIter(swc_gold_tree.root())]
+    swc_test_list = [node for node in PreOrderIter(swc_test_tree.root())]
+
+    gold_vis_list = np.zeros(shape=(len(swc_gold_list) + 10,))
+    test_vis_list = np.zeros(shape=(len(swc_test_list) + 10,))
+
+    for node in swc_gold_list:
+        nearby_nodes = get_nearby_swc_node_list(gold_node=node, test_swc_list=swc_test_list,
+                                                threshold=node.radius() / 2)
+        for t_node in nearby_nodes:
+            if not gold_vis_list[node.get_id()] and not test_vis_list[t_node.get_id()]:
+                t_match[node] = t_node
+                swc_gold_tree.change_root(node.get_id())
+                swc_test_tree.change_root(t_node.get_id())
+
+                for sub_node in PreOrderIter(node):
+                    gold_vis_list[sub_node.get_id()] = 1
+                for sub_node in PreOrderIter(t_node):
+                    test_vis_list[sub_node.get_id()] = 1
+                break
+
+
+def diadem_metric(swc_gold_tree, swc_test_tree, config, DEBUG=False):
     global g_spur_set
     global g_weight_dict
     swc_gold_tree.type_clear(0)
     swc_test_tree.type_clear(1)
 
+    diadem_init()
     t_matches = {}
     switch_initialize(config)
-    # print(swc_to_list(swc_test_tree))
-    if g_find_proper_root:
-        swc_test_tree.change_root(swc_gold_tree, t_matches)
+    adjust_root(swc_gold_tree, swc_test_tree, t_matches)
+    # swc_test_tree.change_root(swc_gold_tree, t_matches)
 
-    # print(swc_to_list(swc_test_tree))
     if g_align_tree_by_root:
         swc_test_tree.align_roots(swc_gold_tree, t_matches)
 
-    bin_gold_root = convert_to_binarytree(swc_gold_tree)
-    bin_test_root = convert_to_binarytree(swc_test_tree)
+    # root here is 100% -1
+    for sub_gold_root in swc_gold_tree.root().children:
+        if sub_gold_root in t_matches.keys():
+            sub_test_root = t_matches[sub_gold_root]
+            bin_test_root, bin_test_list = convert_to_binarytrees(sub_test_root)
+        else:
+            bin_test_root, bin_test_list = None, []
 
-    if g_remove_spur > 0:
-        g_spur_set = remove_spurs(bin_gold_root, 1.0)
+        bin_gold_root, bin_gold_list = convert_to_binarytrees(sub_gold_root)
 
-    generate_node_weights(bin_gold_root, g_spur_set)
-    score_trees(bin_gold_root, bin_test_root, DEBUG=False)
+        if g_remove_spur > 0:
+            g_spur_set = remove_spurs(bin_gold_root, 1.0)
+
+        generate_node_weights(bin_gold_root, bin_gold_list, g_spur_set)
+        score_trees(bin_gold_root,
+                    bin_test_root,
+                    bin_gold_list,
+                    bin_test_list,
+                    DEBUG=DEBUG)
+
+        # debug
+        if DEBUG:
+            for key in g_matches.keys():
+                print('match1 = {}, match2 = {}'.format(
+                    key.data.get_id(), g_matches[key].data.get_id()
+                ))
+    if DEBUG:
+        for k in g_weight_dict.keys():
+            print("id = {} wt = {}".format(k.data.get_id(), g_weight_dict[k]))
+
     if 'detail_path' in config.keys():
         print_result(swc_tree=swc_gold_tree, out_path=config["detail_path"])
     else:
         color_tree_only()
-    return 0
+    return g_final_score
 
 
 def web_diadem_metric(gold_swc, test_swc, config):
@@ -856,13 +933,16 @@ def web_diadem_metric(gold_swc, test_swc, config):
 if __name__ == "__main__":
     testTree = SwcTree()
     goldTree = SwcTree()
-    goldTree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc")
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\ExampleTest.swc")
+    goldTree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\diadem\diadem11.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\diadem\diadem11.swc")
 
-    # goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\\gold\\ExampleGoldStandard.swc")
+    # goldTree.load("D:\gitProject\mine\PyMets\\test\data_example\\gold\\ExampleGoldStandard.swc")
     # testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
     get_default_threshold(goldTree)
 
     diadem_metric(swc_test_tree=testTree,
                   swc_gold_tree=goldTree,
-                  config=read_json("D:\gitProject\mine\PyMets\config\diadem_metric.json"))
+                  config=read_json("D:\gitProject\mine\PyMets\config\diadem_metric.json"),
+                  DEBUG=True)
+    swc_save(goldTree, "D:\gitProject\mine\PyMets\output\gold_tree_out.swc")
+

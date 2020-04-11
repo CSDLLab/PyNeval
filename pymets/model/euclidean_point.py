@@ -36,16 +36,17 @@ class EuclideanPoint(object):
         self._pos[2] += point_a.get_z()
 
     def get_foot_point(self, line):
-        if len(line.coords) != 2:
-            raise Exception("[Error: ]in function get_foot_point. read line error")
+        p = self._pos
+        a = line.coords[0]
+        b = line.coords[1]
+        a_p = [a[0]-p[0], a[1]-p[1], a[2]-p[2]]
+        b_a = [b[0]-a[0], b[1]-a[1], b[2]-a[2]]
 
-        p = np.array(self._pos)
-        a = np.array(line.coords[0])
-        b = np.array(line.coords[1])
-
-        k = -((a - p).dot(b - a)) / (((b - a) ** 2).sum())
-        foot = k * (b - a) + a
-        return EuclideanPoint(foot.tolist())
+        k_up = -(a_p[0]*b_a[0]+a_p[1]*b_a[1]+a_p[2]*b_a[2])
+        k_down = b_a[0]**2+b_a[1]**2+b_a[2]**2
+        k = k_up/k_down
+        foot = [k*b_a[0]+a[0], k*b_a[1]+a[1], k*b_a[2]+a[2]]
+        return EuclideanPoint(foot)
 
     def get_closest_point(self, line):
         foot = self.get_foot_point(line)

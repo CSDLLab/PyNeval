@@ -7,6 +7,7 @@ from pymets.io.read_json import read_json
 from pymets.io.save_swc import save_as_swc, swc_to_list
 from pymets.io.read_swc import adjust_swcfile
 from pymets.io.read_config import read_float_config, read_path_config
+from test.test_model.length_metric.cprofile_test import do_cprofile
 
 import time
 import os, platform
@@ -18,10 +19,10 @@ def length_metric_2(gold_swc_tree=None, test_swc_tree=None,
 
     test_swc_tree.get_lca_preprocess()
     match_edges, un_match_edges = get_match_edges(gold_swc_tree, test_swc_tree,  # tree data
-                                                  vertical_tree, # a empty tree helps
+                                                  vertical_tree,  # a empty tree helps
                                                   rad_threshold, len_threshold, detail_path, DEBUG=False)  # configs
-    if detail_path is not None:
-        save_as_swc(object=un_match_edges, file_path=detail_path)
+    # if detail_path is not None:
+    #     save_as_swc(object=un_match_edges, file_path=detail_path)
     match_length = 0.0
     for line_tuple in match_edges:
         match_length += line_tuple[0].parent_distance()
@@ -33,7 +34,7 @@ def length_metric_2(gold_swc_tree=None, test_swc_tree=None,
     if DEBUG:
         print("match_length a = {}, gold_total_length = {}, test_total_length = {}"
               .format(match_length, gold_total_length, test_total_length))
-    return match_length/gold_total_length, match_length/test_total_length
+    return match_length/gold_total_length, match_length/test_total_length, vertical_tree
 
 
 def length_metric_1(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
@@ -46,8 +47,9 @@ def length_metric_1(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
     return 1 - test_total_length/gold_total_length
 
 
+@do_cprofile("./mkm_run.prof")
 def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
-    # remove old point mark
+    # remove old pot mark
     gold_swc_tree.type_clear(5)
     test_swc_tree.type_clear(4)
 
@@ -66,14 +68,14 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
         return ratio
     elif config["method"] == 2:
         # check every edge in test, if it is overlap with any edge in gold three
-        recall, precision = length_metric_2(gold_swc_tree=test_swc_tree,
-                                            test_swc_tree=gold_swc_tree,
-                                            rad_threshold=rad_threshold,
-                                            len_threshold=len_threshold,
-                                            detail_path=detail_path,
-                                            DEBUG=False)
+        recall, precision, vertical_tree = length_metric_2(gold_swc_tree=test_swc_tree,
+                                                           test_swc_tree=gold_swc_tree,
+                                                           rad_threshold=rad_threshold,
+                                                           len_threshold=len_threshold,
+                                                           detail_path=detail_path,
+                                                           DEBUG=False)
         print("Recall = {}, Precision = {}".format(recall, precision))
-        return recall, precision
+        return recall, precision, vertical_tree
     else:
         raise Exception("[Error: ] Read config info method {}. length metric only have 1 and 2 two methods".format(
             config["method"]
@@ -94,10 +96,10 @@ def web_length_metric(gold_swc, test_swc, method, rad_threshold, len_threshold):
         'rad_threshold': rad_threshold
     }
 
-    recall, precision = length_metric(gold_swc_tree=gold_tree,
-                                      test_swc_tree=test_tree,
-                                      abs_dir="",
-                                      config=config)
+    recall, precision, vertical_tree = length_metric(gold_swc_tree=gold_tree,
+                                                     test_swc_tree=test_tree,
+                                                     abs_dir="",
+                                                     config=config)
     # gold_tree.radius_limit(10)
     # test_tree.radius_limit(10)
 
@@ -105,7 +107,8 @@ def web_length_metric(gold_swc, test_swc, method, rad_threshold, len_threshold):
         'recall': recall,
         'precision': precision,
         'gold_swc': swc_to_list(gold_tree),
-        'test_swc': swc_to_list(test_tree)
+        'test_swc': swc_to_list(test_tree),
+        'vertical_swc': swc_to_list(vertical_tree)
     }
     return result
 
@@ -114,8 +117,8 @@ if __name__ == "__main__":
     goldtree = SwcTree()
 
     testTree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\conner.swc")
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\conner.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\34_23_10_gold.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\34_23_10_test.swc")
 
     start = time.time()
     length_metric(gold_swc_tree=goldtree,

@@ -35,8 +35,8 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
 
     idx3d = get_edge_rtree(test_swc_tree)
     id_edge_dict = get_idedge_dict(test_swc_tree)
-    gold_node_list = [node for node in PreOrderIter(gold_swc_tree.root())]
-    test_node_list = [node for node in PreOrderIter(test_swc_tree.root())]
+    gold_node_list = gold_swc_tree.get_node_list()
+    test_node_list = test_swc_tree.get_node_list()
 
     vis_list = np.zeros(len(test_node_list) + 5, dtype='int8')
 
@@ -87,8 +87,8 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                 # adjust vertical tree
                 swc_foot_a = swc_get_foot(node, line_tuple_a)
                 swc_foot_b = swc_get_foot(node.parent, line_tuple_b)
-                tmp_node = SwcNode(center=node._pos, radius=node.radius(), ntype=node._type)
-                tmp_node_p = SwcNode(center=node.parent._pos, radius=node.parent.radius(), ntype=node.parent._type)
+                tmp_node = SwcNode(center=node._pos, radius=node.radius()/2, ntype=node._type)
+                tmp_node_p = SwcNode(center=node.parent._pos, radius=node.parent.radius()/2, ntype=node.parent._type)
 
                 vertical_tree.add_child(vertical_tree.root(), tmp_node)
                 vertical_tree.add_child(vertical_tree.root(), tmp_node_p)
@@ -102,7 +102,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
 
         if not done:
             node._type = 6
-            node.parent._type = 6
+            # node.parent._type = 6
             unmatch_edge.add(tuple([node, node.parent]))
     # debugging
     swc_save(gold_swc_tree, "D:\gitProject\mine\PyMets\output\gold_tree_out.swc")
@@ -119,7 +119,7 @@ def get_edge_rtree(swc_tree=None):
     :return: rtree
     level: 1
     """
-    swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
+    swc_tree_list = swc_tree.get_node_list()
     p = index.Property()
     p.dimension = 3
     idx3d = index.Index(properties=p)
@@ -155,7 +155,7 @@ def get_idedge_dict(swc_tree=None):
     level:1
     '''
     id_edge_dict = {}
-    swc_tree_list = [node for node in PreOrderIter(swc_tree.root())]
+    swc_tree_list = swc_tree.get_node_list()
     for node in swc_tree_list:
         if node.is_virtual() or node.parent.is_virtual():
             continue
@@ -177,9 +177,9 @@ def cal_len_threshold(len_threshold, length):
 # find the closest edge base on rtree
 def get_nearby_edges(idx3d, point, id_edge_dict, threshold, not_self=False, DEBUG=False):
     '''
-    :param idx3d:
-    :param point:
-    :param id_edge_dict:
+    :param idx3d: an rtree
+    :param point: point to get nearby edges
+    :param id_edge_dict:map between id and line tuple(edge)
     :param threshold:
     :param not_self: exclude self,used in overlap detect
     :param DEBUG:
