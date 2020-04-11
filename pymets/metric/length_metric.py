@@ -15,7 +15,7 @@ import os, platform
 
 def length_metric_2(gold_swc_tree=None, test_swc_tree=None,
                     rad_threshold=-1.0, len_threshold=0.2, detail_path=None, DEBUG=True):
-    vertical_tree = SwcTree()
+    vertical_tree = []
 
     test_swc_tree.get_lca_preprocess()
     match_edges, un_match_edges = get_match_edges(gold_swc_tree, test_swc_tree,  # tree data
@@ -108,7 +108,7 @@ def web_length_metric(gold_swc, test_swc, method, rad_threshold, len_threshold):
         'precision': precision,
         'gold_swc': swc_to_list(gold_tree),
         'test_swc': swc_to_list(test_tree),
-        'vertical_swc': swc_to_list(vertical_tree)
+        'vertical_swc': vertical_tree
     }
     return result
 
@@ -117,16 +117,16 @@ if __name__ == "__main__":
     goldtree = SwcTree()
 
     testTree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\34_23_10_gold.swc")
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\34_23_10_test.swc")
+    goldtree.load("/home/benniehan/00_program/PyMets/test/data_example/gold/34_23_10_gold.swc")
+    testTree.load("/home/benniehan/00_program/PyMets/test/data_example/test/34_23_10_test.swc")
 
     start = time.time()
     length_metric(gold_swc_tree=goldtree,
                   test_swc_tree=testTree,
-                  abs_dir="D:\gitProject\mine\PyMets",
-                  config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
+                  abs_dir="/home/benniehan/00_program/PyMets",
+                  config=read_json("/home/benniehan/00_program/PyMets/config/length_metric.json"))
     length_metric(gold_swc_tree=testTree,
                   test_swc_tree=goldtree,
-                  abs_dir="D:\gitProject\mine\PyMets",
-                  config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
+                  abs_dir="/home/benniehan/00_program/PyMets",
+                  config=read_json("/home/benniehan/00_program/PyMets/config/length_metric.json"))
     print("time cost = {}".format(time.time() - start))

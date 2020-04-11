@@ -257,7 +257,11 @@ class SwcNode(NodeMixin):
         if adjusting_radius:
             self._radius *= math.sqrt(sx * sy)
 
-    def to_swc_str(self):
+    def to_swc_str(self, pid=None):
+        if pid is not None:
+            return '%d %d %g %g %g %g %d\n' % (
+                self._id, self._type, self.get_x(), self.get_y(), self.get_z(), self._radius, pid)
+
         return '%d %d %g %g %g %g %d\n' % (
             self._id, self._type, self.get_x(), self.get_y(), self.get_z(), self._radius, self.parent.get_id())
 
@@ -397,8 +401,8 @@ class SwcTree:
             return self._size
 
         count = 0
-        niter = iterators.PreOrderIter(self._root)
-        for tn in niter:
+        node_list = self.get_node_list()
+        for tn in node_list:
             if regular:
                 if tn.is_regular():
                     count += 1
@@ -426,9 +430,9 @@ class SwcTree:
         if self._total_length is not None and force_update == False:
             return self._total_length
 
-        niter = iterators.PreOrderIter(self._root)
+        node_list = self.get_node_list()
         result = 0
-        for tn in niter:
+        for tn in node_list:
             result += tn.parent_distance()
 
         return result
@@ -438,7 +442,8 @@ class SwcTree:
 
     def get_depth_array(self, node_num):
         self.depth_array = [0] * (node_num + 10)
-        for node in PreOrderIter(self.root()):
+        node_list = self.get_node_list()
+        for node in node_list:
             self.depth_array[node.get_id()] = node.depth()
 
     # initialize LCA data structure in swc_tree
@@ -591,18 +596,20 @@ class SwcTree:
 
     def type_clear(self, x):
         stack = queue.LifoQueue()
+        node_list = self.get_node_list()
         for node in self.root().children:
             node._type = 1
             stack.put(node)
 
         while not stack.empty():
             rt = stack.get()
-            for node in PreOrderIter(rt):
+            for node in node_list:
                 node._type = x
             rt._type = 1
 
     def radius_limit(self, x):
-        for node in PreOrderIter(self.root()):
+        node_list = self.get_node_list()
+        for node in node_list:
             node._radius /= x
 
     def next_id(self):

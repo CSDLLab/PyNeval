@@ -21,7 +21,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
     """
     :param gold_swc_tree: Swc_Tree
     :param test_swc_tree: Swc_Tree
-    :param vertical_tree: Swc_Tree, initially empty tree, store vertical edge between two trees
+    :param vertical_tree: swc format string list, initially empty tree, store vertical edge between two trees
     :param rad_threshold: float, radius threshold
     :param len_threshold: float, length threshold
     :param detail_path: string, path for extra detail
@@ -32,7 +32,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
     match_edge = set()
     unmatch_edge = set()
     edge_use_dict = {}
-
+    vertical_id = 1
     idx3d = get_edge_rtree(test_swc_tree)
     id_edge_dict = get_idedge_dict(test_swc_tree)
     gold_node_list = gold_swc_tree.get_node_list()
@@ -84,16 +84,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                     # print(node.get_id(), "error3")
                     continue
                 match_edge.add(tuple([node, node.parent]))
-                # adjust vertical tree
-                swc_foot_a = swc_get_foot(node, line_tuple_a)
-                swc_foot_b = swc_get_foot(node.parent, line_tuple_b)
-                tmp_node = SwcNode(center=node._pos, radius=node.radius()/2, ntype=node._type)
-                tmp_node_p = SwcNode(center=node.parent._pos, radius=node.parent.radius()/2, ntype=node.parent._type)
-
-                vertical_tree.add_child(vertical_tree.root(), tmp_node)
-                vertical_tree.add_child(vertical_tree.root(), tmp_node_p)
-                vertical_tree.add_child(tmp_node, swc_foot_a)
-                vertical_tree.add_child(tmp_node_p, swc_foot_b)
+                adjust_vertical_tree(node, line_tuple_a, line_tuple_b, vertical_tree, vertical_id)
 
                 # node._type = 3
                 # node.parent._type = 3
@@ -105,10 +96,33 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
             # node.parent._type = 6
             unmatch_edge.add(tuple([node, node.parent]))
     # debugging
-    swc_save(gold_swc_tree, "D:\gitProject\mine\PyMets\output\gold_tree_out.swc")
-    swc_save(vertical_tree, "D:\gitProject\mine\PyMets\output\\vertical_tree.swc")
+    swc_save(gold_swc_tree, "output/gold_tree_out.swc")
 
     return match_edge, unmatch_edge
+
+
+def adjust_vertical_tree(node, line_tuple_a, line_tuple_b, vertical_tree, vertical_id):
+    # adjust vertical tree
+    swc_foot_a = swc_get_foot(node, line_tuple_a)
+    swc_foot_b = swc_get_foot(node.parent, line_tuple_b)
+    tmp_node = SwcNode(center=node._pos, radius=node.radius() / 2, ntype=node._type)
+    tmp_node_p = SwcNode(center=node.parent._pos, radius=node.parent.radius() / 2, ntype=node.parent._type)
+
+    tmp_node.set_id(vertical_id)
+    vertical_id += 1
+    vertical_tree.append(tmp_node.to_swc_str(-1))
+
+    tmp_node_p.set_id(vertical_id)
+    vertical_id += 1
+    vertical_tree.append(tmp_node_p.to_swc_str(-1))
+
+    swc_foot_a.set_id(vertical_id)
+    vertical_id += 1
+    vertical_tree.append(swc_foot_a.to_swc_str(tmp_node.get_id()))
+
+    swc_foot_b.set_id(vertical_id)
+    vertical_id += 1
+    vertical_tree.append(swc_foot_b.to_swc_str(tmp_node_p.get_id()))
 
 
 # private

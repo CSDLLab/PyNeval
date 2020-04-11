@@ -61,9 +61,9 @@ class EuclideanPoint(object):
                 return EuclideanPoint(center=line.coords[1])
 
     def on_line(self, line):
-        p = np.array(self._pos)
-        a = np.array(line.coords[0])
-        b = np.array(line.coords[1])
+        p = self._pos
+        a = line.coords[0]
+        b = line.coords[1]
 
         if min(a[0], b[0]) <= p[0] <= max(a[0], b[0]) and \
                 min(a[1], b[1]) <= p[1] <= max(a[1], b[1]) and \

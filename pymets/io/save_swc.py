@@ -49,7 +49,7 @@ def print_swc(object):
 def swc_save(swc_tree, out_path):
     if not is_path_valid(out_path):
         return False
-    swc_node_list = [node for node in PreOrderIter(swc_tree.root())]
+    swc_node_list = swc_tree.get_node_list()
 
     with open(out_path, 'w') as f:
         f.truncate()
