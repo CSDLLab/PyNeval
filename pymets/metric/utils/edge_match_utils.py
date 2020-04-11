@@ -37,6 +37,10 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
     id_edge_dict = get_idedge_dict(test_swc_tree)
     gold_node_list = gold_swc_tree.get_node_list()
     test_node_list = test_swc_tree.get_node_list()
+    id_rootdis_dict = {}
+
+    for node in test_node_list:
+        id_rootdis_dict[node.get_id()] = node.root_length
 
     vis_list = np.zeros(len(test_node_list) + 5, dtype='int8')
 
@@ -64,7 +68,8 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                                line_tuple_a, \
                                line_tuple_b, \
                                Line(e_node_1=node.get_center(),
-                                    e_node_2=node.parent.get_center()))
+                                    e_node_2=node.parent.get_center()),
+                               id_rootdis_dict)
                 gold_length = node.parent_distance()
 
                 if test_length == DINF:
@@ -220,11 +225,12 @@ def get_nearby_edges(idx3d, point, id_edge_dict, threshold, not_self=False, DEBU
 
 
 # get the distance of two matched closest edges
-def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_line):
+def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_line, id_rootdis_dict):
     '''
     level: 1
     '''
     point_a, point_b = test_line.get_points()
+
     gold_line_a = Line(e_node_1=gold_line_tuple_a[0].get_center(),
                        e_node_2=gold_line_tuple_a[1].get_center())
     gold_line_b = Line(e_node_1=gold_line_tuple_b[0].get_center(),
@@ -241,29 +247,44 @@ def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_lin
     lca_id = gold_swc_tree.get_lca(gold_line_tuple_a[0].get_id(), gold_line_tuple_b[0].get_id())
     if lca_id is None:
         return DINF
+    lca_length2 = id_rootdis_dict[gold_line_tuple_a[0].get_id()] + \
+                  id_rootdis_dict[gold_line_tuple_b[0].get_id()] - \
+                  id_rootdis_dict[lca_id]*2
 
     # get nodes on the route, make sure no extra node
     route_list_a = get_route_node(gold_line_tuple_a[0], lca_id)
     route_list_b = get_route_node(gold_line_tuple_b[0], lca_id)
 
     lca_length = 0.0
-    if gold_line_tuple_a[1] in route_list_a:
+    # if (gold_line_tuple_a[1] in route_list_a) != (gold_line_tuple_a[0].get_id() != lca_id):
+    #     print(gold_line_tuple_a[1] in route_list_a, gold_line_tuple_a[0].get_id() != lca_id)
+    if gold_line_tuple_a[0].get_id() != lca_id:
         route_list_a.remove(gold_line_tuple_a[0])
+        lca_length2 -= gold_line_tuple_a[0].parent_distance()
         lca_length += foot_a.distance(gold_line_tuple_a[1].get_center())
+        lca_length2 += foot_a.distance(gold_line_tuple_a[1].get_center())
     else:
         lca_length += foot_a.distance(gold_line_tuple_a[0].get_center())
-
-    if gold_line_tuple_b[1] in route_list_b:
+        lca_length2 += foot_a.distance(gold_line_tuple_a[0].get_center())
+    # if (gold_line_tuple_b[1] in route_list_b) != (gold_line_tuple_b[0].get_id() != lca_id):
+    #     print(gold_line_tuple_b[1] in route_list_b, gold_line_tuple_b[0].get_id() != lca_id)
+    if gold_line_tuple_b[0].get_id() != lca_id:
         route_list_b.remove(gold_line_tuple_b[0])
+        lca_length2 -= gold_line_tuple_b[0].parent_distance()
         lca_length += foot_b.distance(gold_line_tuple_b[1].get_center())
+        lca_length2 += foot_b.distance(gold_line_tuple_b[1].get_center())
     else:
         lca_length += foot_b.distance(gold_line_tuple_b[0].get_center())
+        lca_length2 += foot_b.distance(gold_line_tuple_b[0].get_center())
+
 
     route_list = route_list_a + route_list_b
     for node in route_list:
         if node.get_id() == lca_id:
             continue
         lca_length += node.parent_distance()
+    if lca_length-lca_length2 > 0.0000001:
+        print(lca_length, lca_length2)
     return lca_length
 
 

@@ -117,8 +117,8 @@ if __name__ == "__main__":
     goldtree = SwcTree()
 
     testTree = SwcTree()
-    goldtree.load("/home/benniehan/00_program/PyMets/test/data_example/gold/34_23_10_gold.swc")
-    testTree.load("/home/benniehan/00_program/PyMets/test/data_example/test/34_23_10_test.swc")
+    goldtree.load("/home/benniehan/00_program/PyMets/test/data_example/gold/30_18_10_gold.swc")
+    testTree.load("/home/benniehan/00_program/PyMets/test/data_example/test/30_18_10_test.swc")
 
     start = time.time()
     length_metric(gold_swc_tree=goldtree,

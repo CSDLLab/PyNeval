@@ -135,6 +135,7 @@ class SwcNode(NodeMixin):
                  left_trajectory=None,
                  right_trajectory=None,
 
+                 route_length=0.0,
                  path_length=0.0,
                  xy_path_length=0.0,
                  z_path_lenth=0.0):
@@ -151,6 +152,7 @@ class SwcNode(NodeMixin):
         self.left_trajectory = left_trajectory
         self.right_trajectory = right_trajectory
 
+        self.root_length = route_length
         self.path_length = path_length
         self.xy_path_length = xy_path_length
         self.z_path_length = z_path_lenth
@@ -384,6 +386,7 @@ class SwcTree:
                     if parentNode:
                         tn.parent = parentNode[0]
                         tn._depth = tn.parent._depth + 1
+                        tn.root_length = tn.parent.root_length + tn.parent_distance()
 
     def save(self, path):
         with open(path, 'w') as fp:
