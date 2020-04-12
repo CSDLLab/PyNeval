@@ -7,7 +7,7 @@ from pymets.io.read_json import read_json
 from pymets.io.save_swc import save_as_swc, swc_to_list
 from pymets.io.read_swc import adjust_swcfile
 from pymets.io.read_config import read_float_config, read_path_config
-from test.test_model.length_metric.cprofile_test import do_cprofile
+# from test.test_model.length_metric.cprofile_test import do_cprofile
 
 import time
 import os, platform
@@ -48,7 +48,7 @@ def length_metric_1(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
     return 1 - test_total_length/gold_total_length
 
 
-@do_cprofile("./mkm_run.prof")
+# @do_cprofile("./mkm_run.prof")
 def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
     # remove old pot mark
     gold_swc_tree.type_clear(5)
