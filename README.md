@@ -26,8 +26,12 @@ http://diademchallenge.org/metric.html
 3.3 install setuptools if your doesn't have it<br>
 `conda install setuptools`<br>
 3.4 run setup.py<br>
-`python setup.py install`
-
+`python setup.py install`<br>
+For users in mainland china, I recommand you to install packages in requirement.txt one by one using aliyun source<br>
+`pip install rtree -i https://mirrors.aliyun.com/pypi/simple trusted-host =  mirrors.aliyun.com`<br>
+`pip install anythree -i https://mirrors.aliyun.com/pypi/simple trusted-host =  mirrors.aliyun.com`<br>
+`pip install numpy -i https://mirrors.aliyun.com/pypi/simple trusted-host =  mirrors.aliyun.com`<br>
+when you are done, run setup again.<br>
 4. prepare the json config file, the explanation and sample json of different metrics are in `/doc/config`. You can ignore it and program will use default config files<br>
 
 5. run command line:
