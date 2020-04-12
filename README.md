@@ -23,6 +23,8 @@ http://diademchallenge.org/metric.html
 `conda activate pymets_env`<br>
 3.2 install libspatialindex<br>
 `conda install -c conda-forge libspatialindex=1.9.3`<br>
+3.3 install setuptools if your doesn't have it
+`conda install setuptools`
 3.3 run setup.py<br>
 `python setup.py install`
 
