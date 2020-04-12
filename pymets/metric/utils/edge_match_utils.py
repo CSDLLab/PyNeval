@@ -89,7 +89,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                     # print(node.get_id(), "error3")
                     continue
                 match_edge.add(tuple([node, node.parent]))
-                adjust_vertical_tree(node, line_tuple_a, line_tuple_b, vertical_tree, vertical_id)
+                vertical_id = adjust_vertical_tree(node, line_tuple_a, line_tuple_b, vertical_tree, vertical_id)
 
                 # node._type = 3
                 # node.parent._type = 3
@@ -128,7 +128,7 @@ def adjust_vertical_tree(node, line_tuple_a, line_tuple_b, vertical_tree, vertic
     swc_foot_b.set_id(vertical_id)
     vertical_id += 1
     vertical_tree.append(swc_foot_b.to_swc_str(tmp_node_p.get_id()))
-
+    return vertical_id
 
 # private
 # construct rtree
@@ -245,12 +245,17 @@ def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_lin
         return foot_a.distance(foot_b)
 
     lca_id = gold_swc_tree.get_lca(gold_line_tuple_a[0].get_id(), gold_line_tuple_b[0].get_id())
-    if lca_id is None:
+    if lca_id is None or lca_id < 1:
         return DINF
-    lca_length2 = id_rootdis_dict[gold_line_tuple_a[0].get_id()] + \
-                  id_rootdis_dict[gold_line_tuple_b[0].get_id()] - \
-                  id_rootdis_dict[lca_id]*2
-
+    try:
+        lca_length2 = id_rootdis_dict[gold_line_tuple_a[0].get_id()] + \
+                      id_rootdis_dict[gold_line_tuple_b[0].get_id()] - \
+                      id_rootdis_dict[lca_id]*2
+    except:
+        print(id_rootdis_dict)
+        raise Exception("[error: lca_id={}]".format(
+            lca_id
+        ))
     # get nodes on the route, make sure no extra node
     route_list_a = get_route_node(gold_line_tuple_a[0], lca_id)
     route_list_b = get_route_node(gold_line_tuple_b[0], lca_id)
@@ -283,8 +288,8 @@ def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_lin
         if node.get_id() == lca_id:
             continue
         lca_length += node.parent_distance()
-    if lca_length-lca_length2 > 0.0000001:
-        print(lca_length, lca_length2)
+    # if lca_length-lca_length2 > 0.0000001:
+    #     print(lca_length, lca_length2)
     return lca_length
 
 

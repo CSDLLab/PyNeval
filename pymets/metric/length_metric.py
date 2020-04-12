@@ -34,6 +34,7 @@ def length_metric_2(gold_swc_tree=None, test_swc_tree=None,
     if DEBUG:
         print("match_length a = {}, gold_total_length = {}, test_total_length = {}"
               .format(match_length, gold_total_length, test_total_length))
+    print(gold_total_length, test_total_length)
     return match_length/gold_total_length, match_length/test_total_length, vertical_tree
 
 
@@ -75,7 +76,7 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
                                                            detail_path=detail_path,
                                                            DEBUG=False)
         print("Recall = {}, Precision = {}".format(recall, precision))
-        return recall, precision, vertical_tree
+        return recall, precision, "".join(vertical_tree)
     else:
         raise Exception("[Error: ] Read config info method {}. length metric only have 1 and 2 two methods".format(
             config["method"]
@@ -115,18 +116,19 @@ def web_length_metric(gold_swc, test_swc, method, rad_threshold, len_threshold):
 
 if __name__ == "__main__":
     goldtree = SwcTree()
-
     testTree = SwcTree()
-    goldtree.load("/home/benniehan/00_program/PyMets/test/data_example/gold/30_18_10_gold.swc")
-    testTree.load("/home/benniehan/00_program/PyMets/test/data_example/test/30_18_10_test.swc")
 
-    start = time.time()
-    length_metric(gold_swc_tree=goldtree,
-                  test_swc_tree=testTree,
-                  abs_dir="/home/benniehan/00_program/PyMets",
-                  config=read_json("/home/benniehan/00_program/PyMets/config/length_metric.json"))
-    length_metric(gold_swc_tree=testTree,
-                  test_swc_tree=goldtree,
-                  abs_dir="/home/benniehan/00_program/PyMets",
-                  config=read_json("/home/benniehan/00_program/PyMets/config/length_metric.json"))
-    print("time cost = {}".format(time.time() - start))
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\34_23_10_gold.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\34_23_10_test.swc")
+
+    recall1, precision1, vertical_tree = length_metric(gold_swc_tree=goldtree,
+                                                       test_swc_tree=testTree,
+                                                       abs_dir="D:\gitProject\mine\PyMets",
+                                                       config=read_json(
+                                                           "D:\gitProject\mine\PyMets\config\length_metric.json"))
+
+    recall2, precision2, vertical_tree = length_metric(gold_swc_tree=testTree,
+                                                       test_swc_tree=goldtree,
+                                                       abs_dir="D:\gitProject\mine\PyMets",
+                                                       config=read_json(
+                                                           "D:\gitProject\mine\PyMets\config\length_metric.json"))

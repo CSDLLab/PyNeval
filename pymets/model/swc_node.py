@@ -28,7 +28,7 @@ def get_nearby_swc_node_list(gold_node, test_swc_list, threshold):
 
 
 def Make_Virtual():
-    return SwcNode(nid=-1)
+    return SwcNode(nid=-1, center=EuclideanPoint(center=[0,0,0]))
 
 
 def compute_platform_area(r1, r2, h):
@@ -273,6 +273,12 @@ class SwcNode(NodeMixin):
     def __str__(self):
         return '%d (%d): %s, %g' % (self._id, self._type, str(self.get_center()._pos), self._radius)
 
+    def remove_child(self, swc_node):
+        if not isinstance(swc_node, SwcNode):
+            return False
+        children = list(self.children)
+        children.remove(swc_node)
+        self.children = tuple(children)
 
 class SwcTree:
     """A class for representing one or more SWC trees.

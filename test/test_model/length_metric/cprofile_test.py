@@ -11,7 +11,7 @@ def do_cprofile(filename):
     def wrapper(func):
         def profiled_func(*args, **kwargs):
             # Flag for do profiling or not.
-            DO_PROF = True
+            DO_PROF = False
             if DO_PROF:
                 profile = cProfile.Profile()
                 profile.enable()
