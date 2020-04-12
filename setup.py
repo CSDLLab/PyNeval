@@ -9,7 +9,7 @@ setup(name='pymets',
       packages=['pymets', 'test', 'test.test_model',
                 'test.test_model.diadem_metric', 'test.test_model.length_metric',
                 'pymets.io', 'pymets.metric', 'pymets.metric.utils', 'pymets.model'],
-      py_modules=['pymets_main'],
+      py_modules=['pymets'],
       install_requires=[
             'anytree>=2.7.2',
             'numpy>=1.17.3',
