@@ -64,7 +64,6 @@ def read_parameters():
 def pymets(DEBUG=True):
     # init path parameter
     abs_dir = os.path.abspath("")
-
     sys.path.append(abs_dir)
     sys.path.append(os.path.join(abs_dir, "src"))
     sys.path.append(os.path.join(abs_dir, "test"))
@@ -72,6 +71,7 @@ def pymets(DEBUG=True):
     # read parameter
     args = read_parameters()
 
+    # set config
     # gold/test files
     if args.test is None:
         test_swc_files = []

@@ -1,3 +1,5 @@
+import os
+
 from pymets.model.swc_node import SwcNode, SwcTree, Make_Virtual
 from pymets.model.euclidean_point import EuclideanPoint, Line
 from pymets.metric.utils.edge_match_utils import \
@@ -87,16 +89,16 @@ def down_sample(swc_tree=None, ang_threshold=175):
 
 def itp_ok(node=None, son=None, pa=None,
            rad_mul=1.50, center_dis=None):
-    f_line = Line(swc_node_1=son, swc_node_2=pa)
-    e_node = EuclideanPoint(node._pos)
+    f_line = Line(e_node_1=son.get_center(), e_node_2=pa.get_center())
+    e_node = node.get_center()
 
     foot = e_node.get_foot_point(f_line)
     if not foot.on_line(f_line):
         return False
     else:
         itp_dis = e_node.distance(foot)
-        e_son = EuclideanPoint(son._pos)
-        e_pa = EuclideanPoint(pa._pos)
+        e_son = son._pos
+        e_pa = pa._pos
         itp_rad = son.radius() + (pa.radius() - son.radius()) * e_son.distance(foot) / e_son.distance(e_pa)
         if center_dis is None:
             center_dis = node.radius()/2
@@ -158,8 +160,6 @@ def reconstruct_tree(swc_tree, is_activate, down_pa):
             tmp_node._type = node._type
             tmp_node._pos = copy.copy(node._pos)
             tmp_node._radius = node._radius
-            print(down_pa[node].get_id())
-            print(id_node_map[-1])
             pa = id_node_map[down_pa[node].get_id()]
             tmp_node.parent = pa
             id_node_map[node.get_id()] = tmp_node
@@ -189,6 +189,7 @@ def get_self_match_edges_e_fast(swc_tree=None,
     id_edge_dict = get_idedge_dict(swc_tree)
     # sort the tree according the tree size
     roots = swc_tree.root().children
+    id_rootdis_dict = {}
     node_list = []
     root_list = []
     for root in roots:
@@ -202,6 +203,9 @@ def get_self_match_edges_e_fast(swc_tree=None,
 
     if list_size == -1:
         list_size = len(node_list)
+
+    for node in node_list:
+        id_rootdis_dict[node.get_id()] = node.root_length
 
     vis_list = np.zeros(list_size + 10)
     for node in node_list:
@@ -226,7 +230,9 @@ def get_self_match_edges_e_fast(swc_tree=None,
                 test_length = get_lca_length(swc_tree,
                                              line_tuple_a,
                                              line_tuple_b,
-                                             Line([node._pos, parent._pos]))
+                                             Line(e_node_1=node.get_center(),
+                                                  e_node_2=node.parent.get_center()),
+                                             id_rootdis_dict)
                 gold_length = node.distance(parent)
                 len_threshold1 = cal_len_threshold(len_threshold, gold_length)
 
@@ -239,19 +245,20 @@ def get_self_match_edges_e_fast(swc_tree=None,
                             node.get_id(), test_length, gold_length
                         ))
                     node._type = 3
-                    # node.parent._type = 3
+                    node.parent._type = 3
                     vis_list[node.get_id()] = 1
                     done = True
                     break
 
 
 def delete_overlap_node(swc_tree):
-    node_list = [node for node in PreOrderIter(swc_tree.root())]
+    node_list = swc_tree.get_node_list()
     for node in node_list:
         if node._type == 3:
             for son in node.children:
-                son.parent = node_list[0]
+                son.parent = swc_tree.root()
             node.parent.remove_child(node)
+    swc_tree.node_list = [node for node in PreOrderIter(swc_tree.root())]
 
 
 def overlap_detect(swc_tree, out_path, loc_config=None):
@@ -283,19 +290,25 @@ def overlap_clean(swc_tree, out_path, loc_config=None):
                                 len_threshold=length_threshold,
                                 list_size=swc_tree.node_count(),
                                 mode="not_self", DEBUG=False)
-    color_origin_tree(swc_tree, swc_tree)
-    # delete_overlap_node(swc_tree)
+    color_origin_tree(new_swc_tree, swc_tree)
+    delete_overlap_node(new_swc_tree)
     swc_save(new_swc_tree, out_path)
 
 
 if __name__ == '__main__':
-    tree = SwcTree()
-    tree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\2_18_gold.swc")
+    file_path = "D:\gitProject\mine\PyMets\\test\data_example\gold\swc_data_2"
+    out_path = "D:\gitProject\mine\PyMets\output\swc_data_2"
 
-    config = read_json("D:\gitProject\mine\PyMets\config\overlap_detect.json")
-    overlap_clean(tree,
-                  "../output/2_18_gold.swc",
-                  config)
+    files = os.listdir(file_path)
+    for file in files:
+        tree = SwcTree()
+        tree.clear()
+        tree.load(os.path.join(file_path, file))
+
+        config = read_json("D:\gitProject\mine\PyMets\config\overlap_detect.json")
+        overlap_clean(tree,
+                      os.path.join(out_path, "clean_"+file),
+                      config)
 
     # node = SwcNode(center=[101, 100.1, 100], radius=0.6)
     # son = SwcNode(center=[100, 100, 100], radius=0.5)

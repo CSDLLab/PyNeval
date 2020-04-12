@@ -3,8 +3,11 @@ import random
 import math
 from pymets.model.euclidean_point import EuclideanPoint,Line
 
+
 def rand(k):
     return random.uniform(0, k)
+
+
 class TestPointMethods(unittest.TestCase):
 
     def test_point_to_line(self):
@@ -34,7 +37,6 @@ class TestPointMethods(unittest.TestCase):
             ans2 = p.get_foot_point(line)
             for i in range(0,3):
                 self.assertTrue(math.fabs(ans1._pos[i] - ans2._pos[i]) < 0.0000001)
-
 
 
 if __name__ == "__main__":

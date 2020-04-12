@@ -13,18 +13,14 @@ _3D = "3d"
 _2D = "2d"
 
 
-def swc_dis_cmp(tuple1, tuple2):
-    return tuple1[1] < tuple2[1]
-
-
-def get_nearby_node_list(gold_node, test_swc_list, threshold):
+def get_nearby_swc_node_list(gold_node, test_swc_list, threshold):
     tmp_list = []
     for node in test_swc_list:
         if node.is_virtual() or gold_node.is_virtual():
             continue
         if node.distance(gold_node) < threshold:
             tmp_list.append(tuple([node, node.distance(gold_node)]))
-    tmp_list.sort(key=cmp_to_key(swc_dis_cmp))
+    tmp_list.sort(key=lambda x: x[1])
     res_list = []
     for tu in tmp_list:
         res_list.append(tu[0])
@@ -32,7 +28,7 @@ def get_nearby_node_list(gold_node, test_swc_list, threshold):
 
 
 def Make_Virtual():
-    return SwcNode(nid=-1)
+    return SwcNode(nid=-1, center=EuclideanPoint(center=[0,0,0]))
 
 
 def compute_platform_area(r1, r2, h):
@@ -108,11 +104,9 @@ class SwcNode(NodeMixin):
         Attributes:
         id: id of the node,
         type: leaf = 1,continuation = 2, bifurcation = 3,
-        parent: pa node id,
+        parent: pa node,
         son=[]: son list,
-        x: x coordinate,
-        y: y coordinate,
-        z: z coordinate,
+        center: Euclidean point describe node center
         radius: radius of the node
         surface_area: surface area of the cylinder, radius is current radius, length is the distance to its parent
         volume: volume of the cylinder. radious is the same as above
@@ -129,8 +123,8 @@ class SwcNode(NodeMixin):
     def __init__(self,
                  nid=-1,
                  ntype=0,
-                 radius=1,
-                 center=[0, 0, 0],
+                 radius=1.0,
+                 center=None,
                  parent=None,
                  depth=0,
 
@@ -141,6 +135,7 @@ class SwcNode(NodeMixin):
                  left_trajectory=None,
                  right_trajectory=None,
 
+                 route_length=0.0,
                  path_length=0.0,
                  xy_path_length=0.0,
                  z_path_lenth=0.0):
@@ -157,6 +152,7 @@ class SwcNode(NodeMixin):
         self.left_trajectory = left_trajectory
         self.right_trajectory = right_trajectory
 
+        self.root_length = route_length
         self.path_length = path_length
         self.xy_path_length = xy_path_length
         self.z_path_length = z_path_lenth
@@ -174,22 +170,31 @@ class SwcNode(NodeMixin):
         self.surface_area += swc_node.surface_area
 
     def get_x(self):
-        return self._pos[0]
+        return self._pos.get_x()
 
     def get_y(self):
-        return self._pos[1]
+        return self._pos.get_y()
 
     def get_z(self):
-        return self._pos[2]
+        return self._pos.get_z()
 
     def set_x(self, x):
-        self._pos[0] = x
+        self._pos[0].set_x(x)
 
     def set_y(self, y):
-        self._pos[1] = y
+        self._pos[1].set_y(y)
 
     def set_z(self, z):
-        self._pos[2] = z
+        self._pos[2].set_z(z)
+
+    def get_center(self):
+        return self._pos
+
+    def set_center(self, center):
+        if not isinstance(center, EuclideanPoint):
+            raise Exception("[Error: ]not EuclideanPoint")
+        del self._pos
+        self._pos = center
 
     def is_virtual(self):
         """Returns True iff the node is virtual.
@@ -224,9 +229,9 @@ class SwcNode(NodeMixin):
         if type(tn) == type([]):
             tn = SwcNode(nid=1, center=tn)
         if tn and self.is_regular() and (isinstance(tn, EuclideanPoint) or tn.is_regular()):
-            dx = self._pos[0] - tn._pos[0]
-            dy = self._pos[1] - tn._pos[1]
-            dz = self._pos[2] - tn._pos[2]
+            dx = self.get_x() - tn.get_x()
+            dy = self.get_y() - tn.get_y()
+            dz = self.get_z() - tn.get_z()
             if mode == _2D:
                 dz = 0.0
             d2 = dx * dx + dy * dy + dz * dz
@@ -254,16 +259,26 @@ class SwcNode(NodeMixin):
         if adjusting_radius:
             self._radius *= math.sqrt(sx * sy)
 
-    def to_swc_str(self):
+    def to_swc_str(self, pid=None):
+        if pid is not None:
+            return '%d %d %g %g %g %g %d\n' % (
+                self._id, self._type, self.get_x(), self.get_y(), self.get_z(), self._radius, pid)
+
         return '%d %d %g %g %g %g %d\n' % (
-        self._id, self._type, self._pos[0], self._pos[1], self._pos[2], self._radius, self.parent.get_id())
+            self._id, self._type, self.get_x(), self.get_y(), self.get_z(), self._radius, self.parent.get_id())
 
     def get_parent_id(self):
         return -2 if self.is_root else self.parent.get_id()
 
     def __str__(self):
-        return '%d (%d): %s, %g' % (self._id, self._type, str(self._pos), self._radius)
+        return '%d (%d): %s, %g' % (self._id, self._type, str(self.get_center()._pos), self._radius)
 
+    def remove_child(self, swc_node):
+        if not isinstance(swc_node, SwcNode):
+            return False
+        children = list(self.children)
+        children.remove(swc_node)
+        self.children = tuple(children)
 
 class SwcTree:
     """A class for representing one or more SWC trees.
@@ -278,6 +293,7 @@ class SwcTree:
         self.depth_array = None
         self.LOG_NODE_NUM = None
         self.lca_parent = None
+        self.node_list = None
 
     def _print(self):
         print(RenderTree(self._root).by_attr("_id"))
@@ -327,7 +343,7 @@ class SwcTree:
                 if len(data) == 7:
                     nid = int(data[0])
                     ntype = int(data[1])
-                    pos = data[2:5]
+                    pos = EuclideanPoint(center=data[2:5])
                     radius = data[5]
                     parentId = data[6]
                     tn = SwcNode(nid=nid, ntype=ntype, radius=radius, center=pos)
@@ -358,7 +374,7 @@ class SwcTree:
                     if len(data) == 7:
                         nid = int(data[0])
                         ntype = int(data[1])
-                        pos = data[2:5]
+                        pos = EuclideanPoint(center=data[2:5])
                         radius = data[5]
                         parentId = data[6]
                         tn = SwcNode(nid=nid, ntype=ntype, radius=radius, center=pos)
@@ -376,6 +392,7 @@ class SwcTree:
                     if parentNode:
                         tn.parent = parentNode[0]
                         tn._depth = tn.parent._depth + 1
+                        tn.root_length = tn.parent.root_length + tn.parent_distance()
 
     def save(self, path):
         with open(path, 'w') as fp:
@@ -393,8 +410,8 @@ class SwcTree:
             return self._size
 
         count = 0
-        niter = iterators.PreOrderIter(self._root)
-        for tn in niter:
+        node_list = self.get_node_list()
+        for tn in node_list:
             if regular:
                 if tn.is_regular():
                     count += 1
@@ -422,9 +439,9 @@ class SwcTree:
         if self._total_length is not None and force_update == False:
             return self._total_length
 
-        niter = iterators.PreOrderIter(self._root)
+        node_list = self.get_node_list()
         result = 0
-        for tn in niter:
+        for tn in node_list:
             result += tn.parent_distance()
 
         return result
@@ -434,7 +451,8 @@ class SwcTree:
 
     def get_depth_array(self, node_num):
         self.depth_array = [0] * (node_num + 10)
-        for node in PreOrderIter(self.root()):
+        node_list = self.get_node_list()
+        for node in node_list:
             self.depth_array[node.get_id()] = node.depth()
 
     # initialize LCA data structure in swc_tree
@@ -444,7 +462,7 @@ class SwcTree:
         self.get_depth_array(node_num)
         self.LOG_NODE_NUM = math.ceil(math.log(node_num, 2)) + 1
         self.lca_parent = np.zeros(shape=(node_num + 10, self.LOG_NODE_NUM), dtype=int)
-        tree_node_list = [node for node in PreOrderIter(self.root())]
+        tree_node_list = self.get_node_list()
 
         for node in tree_node_list:
             if node.is_virtual():
@@ -480,15 +498,15 @@ class SwcTree:
     def align_roots(self, gold_tree, matches, DEBUG=False):
         offset = EuclideanPoint()
         stack = queue.LifoQueue()
-        swc_test_list = [node for node in PreOrderIter(self.root())]
+        swc_test_list = self.get_node_list()
 
         for root in gold_tree.root().children:
             gold_anchor = np.array(root._pos)
             if root in matches.keys():
                 test_anchor = np.array(matches[root]._pos)
             else:
-                nearby_nodes = get_nearby_node_list(gold_node=root, test_swc_list=swc_test_list,
-                                                    threshold=root.radius() / 2)
+                nearby_nodes = get_nearby_swc_node_list(gold_node=root, test_swc_list=swc_test_list,
+                                                        threshold=root.radius() / 2)
                 if len(nearby_nodes) == 0:
                     continue
                 test_anchor = nearby_nodes[0]._pos
@@ -511,10 +529,41 @@ class SwcTree:
                 for son in node.children:
                     stack.put(son)
 
-    def change_root(self, swc_gold_tree, matches):
+    def change_root(self, new_root_id):
+        stack = queue.LifoQueue()
+        swc_list = self.get_node_list()
+        vis_list = np.zeros(shape=(len(swc_list) + 10,))
+        pa_list = [None] * (len(swc_list))
+
+        for node in swc_list:
+            pa_list[node.get_id()] = node.parent
+
+        new_root = self.node_from_id(new_root_id)
+        stack.put(new_root)
+        pa_list[new_root_id] = self.root()
+        while not stack.empty():
+            cur_node = stack.get()
+            vis_list[cur_node.get_id()] = True
+            for son in cur_node.children:
+                if not vis_list[son.get_id()]:
+                    stack.put(son)
+                    pa_list[son.get_id()] = cur_node
+            if cur_node.parent is not None and \
+                    cur_node.parent.get_id() != -1 and \
+                    not vis_list[cur_node.parent.get_id()]:
+                stack.put(cur_node.parent)
+                pa_list[cur_node.parent.get_id()] = cur_node
+
+        for i in range(1, len(pa_list)):
+            swc_list[i].parent = self.root()
+        for i in range(1, len(pa_list)):
+            swc_list[i].parent = pa_list[swc_list[i].get_id()]
+
+
+    def change_root_n(self, swc_gold_tree, matches):
         # test_roots = self.root().children
         gold_roots = swc_gold_tree.root().children
-        swc_test_list = [node for node in PreOrderIter(self.root())]
+        swc_test_list = self.get_node_list()
         vis_list = np.zeros(shape=(len(swc_test_list) + 10,))
         pa_list = [None] * (len(swc_test_list))
         for node in swc_test_list:
@@ -555,11 +604,21 @@ class SwcTree:
             swc_test_list[i].parent = pa_list[swc_test_list[i].get_id()]
 
     def type_clear(self, x):
-        for node in PreOrderIter(self.root()):
-            node._type = x
+        stack = queue.LifoQueue()
+        node_list = self.get_node_list()
+        for node in self.root().children:
+            node._type = 1
+            stack.put(node)
+
+        while not stack.empty():
+            rt = stack.get()
+            for node in node_list:
+                node._type = x
+            rt._type = 1
 
     def radius_limit(self, x):
-        for node in PreOrderIter(self.root()):
+        node_list = self.get_node_list()
+        for node in node_list:
             node._radius /= x
 
     def next_id(self):
@@ -574,6 +633,11 @@ class SwcTree:
 
         self._size += 1
         return True
+
+    def get_node_list(self):
+        if self.node_list is None:
+            self.node_list = [node for node in PreOrderIter(self.root())]
+        return self.node_list
 
 
 if __name__ == '__main__':

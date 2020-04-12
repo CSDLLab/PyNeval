@@ -63,7 +63,7 @@ class BinaryNode(NodeMixin):
             return LEFT
         if self.parent.right_son == self:
             return RIGHT
-        raise Exception("[Error:  ] node {} is not its parent's son".format(self.data.id))
+        return LEFT
 
     def is_root(self):
         if self.parent == None:
@@ -76,13 +76,24 @@ class BinaryNode(NodeMixin):
         return False
 
     def to_str(self):
-        print("id = {}, pos = {}".format(self.data.get_id(), self.data._pos))
+        print("id = {} path_length= {} xy_path_length = {} z_path_length = {}".format(
+            self.data.get_id(), self.data.path_length, self.data.xy_path_length, self.data.z_path_length))
         if self.left_son is not None:
             print("left son: {}".format(self.left_son.data.get_id()))
-        if self.left_son is not None:
+        if self.right_son is not None:
             print("right son {}".format(self.right_son.data.get_id()))
         print("---------------------------")
 
+    def print_tree(self):
+        q = queue.LifoQueue()
+        q.put(self)
+        while not q.empty():
+            cur = q.get()
+            if cur is None:
+                continue
+            cur.to_str()
+            q.put(cur.left_son)
+            q.put(cur.right_son)
 
     def get_node_list(self):
         node_list = list()

@@ -5,6 +5,8 @@ import math
 class EuclideanPoint(object):
     def __init__(self,
                  center=[0, 0, 0]):
+        if not isinstance(center, list):
+            raise Exception("[Error: ]not a list")
         self._pos=center
 
     def get_x(self):
@@ -34,16 +36,17 @@ class EuclideanPoint(object):
         self._pos[2] += point_a.get_z()
 
     def get_foot_point(self, line):
-        if len(line.coords) != 2:
-            raise Exception("[Error: ]in function get_foot_point. read line error")
+        p = self._pos
+        a = line.coords[0]
+        b = line.coords[1]
+        a_p = [a[0]-p[0], a[1]-p[1], a[2]-p[2]]
+        b_a = [b[0]-a[0], b[1]-a[1], b[2]-a[2]]
 
-        p = np.array(self._pos)
-        a = np.array(line.coords[0])
-        b = np.array(line.coords[1])
-
-        k = -((a - p).dot(b - a)) / (((b - a) ** 2).sum())
-        foot = k * (b - a) + a
-        return EuclideanPoint(foot.tolist())
+        k_up = -(a_p[0]*b_a[0]+a_p[1]*b_a[1]+a_p[2]*b_a[2])
+        k_down = b_a[0]**2+b_a[1]**2+b_a[2]**2
+        k = k_up/k_down
+        foot = [k*b_a[0]+a[0], k*b_a[1]+a[1], k*b_a[2]+a[2]]
+        return EuclideanPoint(foot)
 
     def get_closest_point(self, line):
         foot = self.get_foot_point(line)
@@ -58,9 +61,9 @@ class EuclideanPoint(object):
                 return EuclideanPoint(center=line.coords[1])
 
     def on_line(self, line):
-        p = np.array(self._pos)
-        a = np.array(line.coords[0])
-        b = np.array(line.coords[1])
+        p = self._pos
+        a = line.coords[0]
+        b = line.coords[1]
 
         if min(a[0], b[0]) <= p[0] <= max(a[0], b[0]) and \
                 min(a[1], b[1]) <= p[1] <= max(a[1], b[1]) and \
@@ -108,15 +111,15 @@ class EuclideanPoint(object):
 class Line:
     def __init__(self,
                  coords=None,
-                 swc_node_1=None,
-                 swc_node_2=None,
+                 e_node_1=None,
+                 e_node_2=None,
                  is_segment=True):
         if coords is not None:
             self.coords = coords
         else:
             self.coords = [[],[]]
-            self.coords[0] = swc_node_1._pos
-            self.coords[1] = swc_node_2._pos
+            self.coords[0] = e_node_1._pos
+            self.coords[1] = e_node_2._pos
         self.is_segment = is_segment
 
     def to_str(self):
