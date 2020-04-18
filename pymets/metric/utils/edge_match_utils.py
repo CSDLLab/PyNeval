@@ -45,8 +45,6 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
     vis_list = np.zeros(len(test_node_list) + 5, dtype='int8')
 
     for node in gold_node_list:
-        if node.get_id() == 13:
-            print("line:49")
         if node.is_virtual() or node.parent.is_virtual():
             continue
 
@@ -103,8 +101,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
             node.parent._type = 6
             unmatch_edge.add(tuple([node, node.parent]))
     # debugging
-    swc_save(gold_swc_tree, "output/gold_tree_out_123.swc")
-
+    # swc_save(gold_swc_tree, "output/gold_tree_out_123.swc")
     return match_edge, unmatch_edge
 
 

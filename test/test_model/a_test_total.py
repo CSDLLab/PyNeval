@@ -21,10 +21,11 @@ class PymetsTotCase(unittest.TestCase):
                                                            test_swc_tree=goldtree,
                                                            abs_dir="D:\gitProject\mine\PyMets",
                                                            config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
-        self.assertEqual(recall1, 0.7175182998089098)
-        self.assertEqual(recall2, 0.8930890142399355)
-        self.assertEqual(precision1, 0.7322206039595575)
-        self.assertEqual(precision2, 0.8751566230316667)
+
+        self.assertEqual(recall1, 0.7030284661586385)
+        self.assertEqual(recall2, 0.8685749970409651)
+        self.assertEqual(precision1, 0.7174338664651955)
+        self.assertEqual(precision2, 0.8511348243456205)
 
     def test_len_2(self):
         goldtree = SwcTree()
@@ -42,10 +43,11 @@ class PymetsTotCase(unittest.TestCase):
                                                            test_swc_tree=goldtree,
                                                            abs_dir="D:\gitProject\mine\PyMets",
                                                            config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
-        self.assertEqual(recall1, 0.950375054330871)
-        self.assertEqual(recall2, 0.8810142908724438)
-        self.assertEqual(precision1, 0.8820152620869665)
-        self.assertEqual(precision2, 0.9492965037509923)
+
+        self.assertEqual(recall1, 0.6818040837428125)
+        self.assertEqual(recall2, 0.6971179817818407)
+        self.assertEqual(precision1, 0.6327624077188985)
+        self.assertEqual(precision2, 0.7511474781551107)
 
     def test_len_3(self):
         goldtree = SwcTree()
@@ -62,11 +64,12 @@ class PymetsTotCase(unittest.TestCase):
         recall2, precision2, vertical_tree = length_metric(gold_swc_tree=testTree,                                                    
                                                            test_swc_tree=goldtree,                                                    
                                                            abs_dir="D:\gitProject\mine\PyMets",                                       
-                                                           config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))   
-        self.assertEqual(recall1, 0.6166649355625093)
-        self.assertEqual(recall2, 0.5681883662381514)
-        self.assertEqual(precision1, 0.5383633455405351)
-        self.assertEqual(precision2, 0.6508278194568053)
+                                                           config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
+
+        self.assertEqual(recall1, 0.6092362772577844)
+        self.assertEqual(recall2, 0.5585330586568052)
+        self.assertEqual(precision1, 0.5318779478680355)
+        self.assertEqual(precision2, 0.6397682076225172)
 
     def test_len_4(self):
         goldtree = SwcTree()
@@ -83,7 +86,7 @@ class PymetsTotCase(unittest.TestCase):
         recall2, precision2, vertical_tree = length_metric(gold_swc_tree=testTree,                                                    
                                                            test_swc_tree=goldtree,                                                    
                                                            abs_dir="D:\gitProject\mine\PyMets",                                       
-                                                           config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))   
+                                                           config=read_json("D:\gitProject\mine\PyMets\config\length_metric.json"))
         self.assertEqual(recall1, 1.0)
         self.assertEqual(recall2, 0.0)
         self.assertEqual(precision1, 0.9385873563259137)
