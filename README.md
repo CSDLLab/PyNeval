@@ -34,16 +34,16 @@ For users in mainland china, I recommand you to install packages in requirement.
 when you are done, run setup again.<br>
 4. prepare the json config file, the explanation and sample json of different metrics are in `/doc/config`. You can ignore it and program will use default config files<br>
 
-5. run command line:<br><br>
-  for eazy to copy
+5. run command line:<br>
+  5.1 for eazy to copy<br>
   ```
   python ./pymets.py --test $(replace_this_with_your_PyMets_address)\test\data_example\test\ExampleTest.swc --gold $(replace_this_with_your_PyMets_address)\test\data_example\gold\ExampleGoldStandard.swc --metric matched_length
   ```
-  for better to understand
+  &emsp;&emsp;5.2 for better to understand
   ```
   python ./pymets.py 
   --test (replace_this_with_your_PyMets_address)\test\data_example\test\ExampleTest.swc 
   --gold (replace_this_with_your_PyMets_address)\test\data_example\gold\ExampleGoldStandard.swc 
   --metric matched_length
   ```
-  the explanation also can been seen in the `doc`<br> 
+  &emsp;the explanation also can been seen in the `doc`<br> 
