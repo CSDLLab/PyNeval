@@ -476,7 +476,7 @@ class SwcTree:
                     self.lca_parent[v][k + 1] = self.lca_parent[int(self.lca_parent[v][k])][k]
         return True
 
-    # input node id of two swc_node，calculate LCA
+    # input node id of two swc_node, calculate LCA
     def get_lca(self, u, v):
         lca_parent = self.lca_parent
         LOG_NODE_NUM = self.LOG_NODE_NUM
