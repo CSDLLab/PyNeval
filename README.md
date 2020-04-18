@@ -46,4 +46,4 @@ when you are done, run setup again.<br>
   --gold (replace_this_with_your_PyMets_address)\test\data_example\gold\ExampleGoldStandard.swc 
   --metric matched_length
   ```
-  &emsp;the explanation also can been seen in the `doc`<br> 
+  &emsp;&emsp;the explanation also can been seen in the `doc`<br> 
