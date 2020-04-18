@@ -37,7 +37,7 @@ when you are done, run setup again.<br>
 5. run command line:<br>
   5.1 for eazy to copy<br>
   ```
-  python ./pymets.py --test $(replace_this_with_your_PyMets_address)\test\data_example\test\ExampleTest.swc --gold $(replace_this_with_your_PyMets_address)\test\data_example\gold\ExampleGoldStandard.swc --metric matched_length
+  python ./pymets.py --test (replace_this_with_your_PyMets_address)\test\data_example\test\ExampleTest.swc --gold (replace_this_with_your_PyMets_address)\test\data_example\gold\ExampleGoldStandard.swc --metric matched_length
   ```
   &emsp;&emsp;5.2 for better to understand
   ```
