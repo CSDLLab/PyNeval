@@ -604,17 +604,10 @@ class SwcTree:
             swc_test_list[i].parent = pa_list[swc_test_list[i].get_id()]
 
     def type_clear(self, x):
-        stack = queue.LifoQueue()
         node_list = self.get_node_list()
-        for node in self.root().children:
-            node._type = 1
-            stack.put(node)
+        for node in node_list:
+            node._type = x
 
-        while not stack.empty():
-            rt = stack.get()
-            for node in node_list:
-                node._type = x
-            rt._type = 1
 
     def radius_limit(self, x):
         node_list = self.get_node_list()

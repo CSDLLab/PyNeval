@@ -45,6 +45,8 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
     vis_list = np.zeros(len(test_node_list) + 5, dtype='int8')
 
     for node in gold_node_list:
+        if node.get_id() == 13:
+            print("line:49")
         if node.is_virtual() or node.parent.is_virtual():
             continue
 
@@ -98,10 +100,10 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
 
         if not done:
             node._type = 6
-            # node.parent._type = 6
+            node.parent._type = 6
             unmatch_edge.add(tuple([node, node.parent]))
     # debugging
-    swc_save(gold_swc_tree, "output/gold_tree_out.swc")
+    swc_save(gold_swc_tree, "output/gold_tree_out_123.swc")
 
     return match_edge, unmatch_edge
 
@@ -322,9 +324,12 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
             if start > end:
                 start, end = end, start
             end -= FLOAT_ERROR
+            if vis_list[gold_line_tuple_a[0].get_id()] == 1:
+                return False
             if add_interval(edge_use_dict, gold_line_tuple_a[0], tuple([start, end])):
                 edge_use_dict[gold_line_tuple_a[0]].add(tuple([start, end]))
-            return True
+                return True
+            return False
 
     # not on the same edge, get lca first
     lca_id = gold_swc_tree.get_lca(gold_line_tuple_a[0].get_id(), gold_line_tuple_b[0].get_id())
@@ -370,7 +375,9 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
             return False
 
     if add_interval(edge_use_dict, gold_line_tuple_a[0], tuple([start_a, end_a])) and \
-       add_interval(edge_use_dict, gold_line_tuple_b[0], tuple([start_b, end_b])):
+       add_interval(edge_use_dict, gold_line_tuple_b[0], tuple([start_b, end_b])) and \
+        vis_list[gold_line_tuple_a[0].get_id()] == 0 and \
+        vis_list[gold_line_tuple_b[0].get_id()] == 0:
         edge_use_dict[gold_line_tuple_a[0]].add(tuple([start_a, end_a]))
         edge_use_dict[gold_line_tuple_b[0]].add(tuple([start_b, end_b]))
 

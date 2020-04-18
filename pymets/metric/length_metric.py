@@ -48,7 +48,7 @@ def length_metric_1(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
     return 1 - test_total_length/gold_total_length
 
 
-@do_cprofile("./mkm_run.prof")
+# @do_cprofile("./mkm_run.prof")
 def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
     # remove old pot mark
     gold_swc_tree.type_clear(5)
@@ -118,8 +118,8 @@ if __name__ == "__main__":
     goldtree = SwcTree()
     testTree = SwcTree()
 
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\34_23_10_gold.swc")
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\34_23_10_test.swc")
+    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\multy_useage\push.swc")
+    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\multy_useage\push.swc")
 
     recall1, precision1, vertical_tree = length_metric(gold_swc_tree=goldtree,
                                                        test_swc_tree=testTree,
@@ -127,8 +127,8 @@ if __name__ == "__main__":
                                                        config=read_json(
                                                            "D:\gitProject\mine\PyMets\config\length_metric.json"))
 
-    recall2, precision2, vertical_tree = length_metric(gold_swc_tree=testTree,
-                                                       test_swc_tree=goldtree,
-                                                       abs_dir="D:\gitProject\mine\PyMets",
-                                                       config=read_json(
-                                                           "D:\gitProject\mine\PyMets\config\length_metric.json"))
+    # recall2, precision2, vertical_tree = length_metric(gold_swc_tree=testTree,
+    #                                                    test_swc_tree=goldtree,
+    #                                                    abs_dir="D:\gitProject\mine\PyMets",
+    #                                                    config=read_json(
+    #                                                        "D:\gitProject\mine\PyMets\config\length_metric.json"))
