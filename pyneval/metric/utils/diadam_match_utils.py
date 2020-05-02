@@ -1,10 +1,10 @@
 import math
 import copy
 import queue
-from pymets.model.swc_node import SwcNode,SwcTree
-from pymets.model.binary_node import BinaryNode
-from pymets.model.euclidean_point import EuclideanPoint
-from pymets.metric.utils.bin_utils import calculate_trajectories_xy,calculate_trajectories_z
+from pyneval.model.swc_node import SwcNode,SwcTree
+from pyneval.model.binary_node import BinaryNode
+from pyneval.model.euclidean_point import EuclideanPoint
+from pyneval.metric.utils.bin_utils import calculate_trajectories_xy,calculate_trajectories_z
 
 _2D = "2d"
 

@@ -1,8 +1,8 @@
-from pymets.model.euclidean_point import EuclideanPoint,Line
-from pymets.metric.utils.config_utils import DINF
+from pyneval.model.euclidean_point import EuclideanPoint,Line
+from pyneval.metric.utils.config_utils import DINF
 import time
 from anytree import PreOrderIter
-from pymets.model.swc_node import SwcTree
+from pyneval.model.swc_node import SwcTree
 
 MIN_SIZE = 0.8
 
@@ -82,10 +82,10 @@ def length_metric_2_2(gold_swc_tree=None, test_swc_tree=None, dis_threshold=0.1,
 
 if __name__ == "__main__":
     goldtree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\30_18_10_gold.swc")
+    goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\30_18_10_gold.swc")
 
     testTree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\30_18_10_test.swc")
+    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\30_18_10_test.swc")
     start = time.time()
     print(length_metric_2_2(gold_swc_tree=goldtree,
                         test_swc_tree=testTree))

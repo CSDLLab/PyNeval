@@ -1,7 +1,7 @@
-from pymets.model.euclidean_point import EuclideanPoint,Line
-from pymets.metric.utils.config_utils import DINF
-from pymets.model.swc_node import get_lca, SwcNode
-from pymets.io.save_swc import swc_save
+from pyneval.model.euclidean_point import EuclideanPoint,Line
+from pyneval.metric.utils.config_utils import DINF
+from pyneval.model.swc_node import get_lca, SwcNode
+from pyneval.io.save_swc import swc_save
 
 import numpy as np
 import math, copy

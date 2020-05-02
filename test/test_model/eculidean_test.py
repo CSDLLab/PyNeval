@@ -1,7 +1,7 @@
 import unittest
 import random
 import math
-from pymets.model.euclidean_point import EuclideanPoint,Line
+from pyneval.model.euclidean_point import EuclideanPoint,Line
 
 
 def rand(k):

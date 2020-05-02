@@ -1,12 +1,12 @@
 from anytree import NodeMixin, iterators, RenderTree, PreOrderIter
-from pymets.model.euclidean_point import EuclideanPoint,Line
-from pymets.model.swc_node import SwcTree
-from pymets.metric.utils.edge_match_utils import get_match_edges
-from pymets.metric.utils.config_utils import get_default_threshold
-from pymets.io.read_json import read_json
-from pymets.io.save_swc import save_as_swc, swc_to_list
-from pymets.io.read_swc import adjust_swcfile
-from pymets.io.read_config import read_float_config, read_path_config
+from pyneval.model.euclidean_point import EuclideanPoint,Line
+from pyneval.model.swc_node import SwcTree
+from pyneval.metric.utils.edge_match_utils import get_match_edges
+from pyneval.metric.utils.config_utils import get_default_threshold
+from pyneval.io.read_json import read_json
+from pyneval.io.save_swc import save_as_swc, swc_to_list
+from pyneval.io.read_swc import adjust_swcfile
+from pyneval.io.read_config import read_float_config, read_path_config
 # from test.test_model.length_metric.cprofile_test import do_cprofile
 
 import time
@@ -118,17 +118,17 @@ if __name__ == "__main__":
     goldtree = SwcTree()
     testTree = SwcTree()
 
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\multy_useage\push.swc")
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\multy_useage\push.swc")
+    goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\multy_useage\push.swc")
+    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\multy_useage\push.swc")
 
     recall1, precision1, vertical_tree = length_metric(gold_swc_tree=goldtree,
                                                        test_swc_tree=testTree,
-                                                       abs_dir="D:\gitProject\mine\PyMets",
+                                                       abs_dir="D:\gitProject\mine\PyNeval",
                                                        config=read_json(
-                                                           "D:\gitProject\mine\PyMets\config\length_metric.json"))
+                                                           "D:\gitProject\mine\PyNeval\config\length_metric.json"))
 
     # recall2, precision2, vertical_tree = length_metric(gold_swc_tree=testTree,
     #                                                    test_swc_tree=goldtree,
-    #                                                    abs_dir="D:\gitProject\mine\PyMets",
+    #                                                    abs_dir="D:\gitProject\mine\PyNeval",
     #                                                    config=read_json(
-    #                                                        "D:\gitProject\mine\PyMets\config\length_metric.json"))
+    #                                                        "D:\gitProject\mine\PyNeval\config\length_metric.json"))

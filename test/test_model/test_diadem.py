@@ -1,12 +1,12 @@
 import unittest
-from pymets.model.swc_node import SwcTree
-from pymets.metric.diadem_metric import remove_spurs, generate_node_weights, g_weight_dict
-from pymets.metric.utils.bin_utils import convert_to_binarytree
+from pyneval.model.swc_node import SwcTree
+from pyneval.metric.diadem_metric import remove_spurs, generate_node_weights, g_weight_dict
+from pyneval.metric.utils.bin_utils import convert_to_binarytree
 
 
 def test_get_bintree():
     goldtree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
+    goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\ExampleTest.swc")
     bintree = convert_to_binarytree(goldtree)
     return bintree
 

@@ -1,8 +1,8 @@
 import unittest
 import numpy as np
-from pymets.metric.utils.edge_match_utils import get_idedge_dict, get_edge_rtree, get_nearby_edges
-from pymets.model.swc_node import SwcTree,SwcNode
-from pymets.model.euclidean_point import EuclideanPoint,Line
+from pyneval.metric.utils.edge_match_utils import get_idedge_dict, get_edge_rtree, get_nearby_edges
+from pyneval.model.swc_node import SwcTree,SwcNode
+from pyneval.model.euclidean_point import EuclideanPoint,Line
 from rtree import index
 
 
@@ -32,7 +32,7 @@ class TestStringMethods(unittest.TestCase):
 
     def test_rtree(self):
         swctree = SwcTree()
-        swctree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\30_18_10_test.swc")
+        swctree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\30_18_10_test.swc")
         rtree = get_edge_rtree(swctree)
         id_edge_dict = get_idedge_dict(swctree)
         point = SwcNode(center=[22.5822, 172.856, 300.413])

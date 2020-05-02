@@ -1,6 +1,6 @@
 from anytree import NodeMixin
-from pymets.model.euclidean_point import EuclideanPoint
-from pymets.model.binary_node import BinaryNode
+from pyneval.model.euclidean_point import EuclideanPoint
+from pyneval.model.binary_node import BinaryNode
 
 import copy
 import math

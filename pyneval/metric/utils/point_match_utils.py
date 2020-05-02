@@ -1,8 +1,8 @@
 import queue
 import kdtree
 from anytree import PreOrderIter
-from pymets.model.swc_node import SwcTree
-from pymets.metric.utils.config_utils import get_default_threshold
+from pyneval.model.swc_node import SwcTree
+from pyneval.metric.utils.config_utils import get_default_threshold
 
 
 # for length metric (unused)
@@ -97,10 +97,10 @@ def get_match_edges_p(gold_swc_tree=None, test_swc_tree=None, knn=3, DEBUG=False
 # def find
 if __name__ == "__main__":
     goldtree = SwcTree()
-    goldtree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\\ExampleGoldStandard.swc")
+    goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\ExampleGoldStandard.swc")
     get_default_threshold(goldtree)
 
     testTree = SwcTree()
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
+    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\ExampleTest.swc")
 
     get_match_edges_p(goldtree, testTree, 3, True)

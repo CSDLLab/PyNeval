@@ -1,17 +1,17 @@
 import argparse
 import sys,os,platform
-from pymets.io.read_swc import read_swc_trees
-from pymets.io.read_json import read_json
-from pymets.metric.diadem_metric import diadem_metric
-from pymets.metric.length_metric import length_metric
-from cli.overlap_detect import overlap_detect
+from pyneval.io.read_swc import read_swc_trees
+from pyneval.io.read_json import read_json
+from pyneval.metric.diadem_metric import diadem_metric
+from pyneval.metric.length_metric import length_metric
+from cli.overlap_detect import overlap_clean
 
 metric_list = [
     "diadem_metric",
     "overall_length",
     "matched_length",
-    "overlap_detect",
-    "DM","OL","ML","OD"
+    "overlap_clean",
+    "DM","OL","ML","OC"
 ]
 
 
@@ -61,7 +61,7 @@ def read_parameters():
 
 
 # command program
-def pymets(DEBUG=True):
+def pyneval(DEBUG=True):
     # init path parameter
     abs_dir = os.path.abspath("")
     sys.path.append(abs_dir)
@@ -104,15 +104,15 @@ def pymets(DEBUG=True):
                 config = os.path.join(abs_dir, "config\\diadem_metric.json")
             if metric in ["overall_length", "matched_length", "OL", "ML"]:
                 config = os.path.join(abs_dir, "config\\length_metric.json")
-            if metric in ["overlap_detect", "OD"]:
-                config = os.path.join(abs_dir, "config\\overlap_detect.json")
+            if metric in ["overlap_clean", "OD"]:
+                config = os.path.join(abs_dir, "config\\overlap_clean.json")
         elif platform.system() == "Linux":
             if metric == "diadem_metric" or metric == "DM":
                 config = os.path.join(abs_dir, "config/diadem_metric.json")
             if metric in ["overall_length", "matched_length", "OL", "ML"]:
                 config = os.path.join(abs_dir, "config/length_metric.json")
-            if metric in ["overlap_detect", "OD"]:
-                config = os.path.join(abs_dir, "config/overlap_detect.json")
+            if metric in ["overlap_clean", "OD"]:
+                config = os.path.join(abs_dir, "config/overlap_clean.json")
     if DEBUG:
         print("Config = {}".format(config))
 
@@ -136,7 +136,7 @@ def pymets(DEBUG=True):
         if metric == "diadem_metric" or metric == "DM":
             diadem_metric(swc_test_tree=test_swc_treeroot,
                           swc_gold_tree=gold_swc_treeroot,
-                          config=read_json("D:\gitProject\mine\PyMets\config\diadem_metric.json"))
+                          config=read_json("D:\gitProject\mine\PyNeval\config\diadem_metric.json"))
             if reverse:
                 diadem_metric(gold_swc_treeroot, test_swc_treeroot)
         if metric == "overall_length" or metric == "OL":
@@ -154,22 +154,22 @@ def pymets(DEBUG=True):
                 config["detail"] = config["detail"][:-4] + "_reverse.swc"
                 length_metric(test_swc_treeroot, gold_swc_treeroot,
                               abs_dir, config)
-    if metric == "overlap_detect" or metric == "OD":
+    if metric == "overlap_clean" or metric == "OC":
         # debug
         print("entry")
         print(config["radius_threshold"])
         print(config["length_threshold"])
-
-        overlap_detect(gold_swc_treeroot, output_dest, config)
+        print(output_dest)
+        overlap_clean(gold_swc_treeroot, output_dest, config)
 
 
 if __name__ == "__main__":
-    pymets()
+    pyneval()
 
-# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\30_18_10_gold.swc --metric matched_length --reverse true
+# python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\30_18_10_gold.swc --metric matched_length --reverse true
 
-# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\diadem\diadem1.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\diadem\diadem1.swc --metric diadem_metric
+# python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem1.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem1.swc --metric diadem_metric
 
-# python ./pymets.py --test D:\gitProject\mine\PyMets\test\data_example\test\34_23_10_test.swc --gold D:\gitProject\mine\PyMets\test\data_example\gold\34_23_10_gold.swc --metric diadem_metric
+# python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\34_23_10_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\34_23_10_gold.swc --metric diadem_metric
 
-# python ./pymets.py --gold D:\gitProject\mine\PyMets\test\data_example\gold\overlap\overlap_sample5.swc --metric overlap_detect --output D:\gitProject\mine\PyMets\output\overlap\overlap_output5.swc
+# python ./pyneval.py --gold D:\gitProject\mine\PyNeval\test\data_example\gold\overlap\overlap_sample5.swc --metric overlap_clean --output D:\gitProject\mine\PyNeval\output\overlap\overlap_output5.swc

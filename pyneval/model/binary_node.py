@@ -1,5 +1,5 @@
 from anytree import NodeMixin
-from pymets.model.euclidean_point import EuclideanPoint
+from pyneval.model.euclidean_point import EuclideanPoint
 import copy
 import math
 import queue

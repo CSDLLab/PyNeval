@@ -4,18 +4,18 @@ import time
 import math
 import numpy as np
 from anytree import PreOrderIter
-from pymets.metric.utils.config_utils import get_default_threshold
-from pymets.model.binary_node import RIGHT
-from pymets.model.swc_node import SwcTree, SwcNode, get_nearby_swc_node_list
-from pymets.model.euclidean_point import EuclideanPoint
-from pymets.metric.utils.diadam_match_utils import \
+from pyneval.metric.utils.config_utils import get_default_threshold
+from pyneval.model.binary_node import RIGHT
+from pyneval.model.swc_node import SwcTree, SwcNode, get_nearby_swc_node_list
+from pyneval.model.euclidean_point import EuclideanPoint
+from pyneval.metric.utils.diadam_match_utils import \
     get_match_path_length_difference, get_nearby_node_list, \
     get_end_node_XY_dis_diff, get_end_node_Z_dis_diff, get_trajectory_for_path, \
     path_length_matches,is_within_dis_match_threshold,LCA
-from pymets.metric.utils.bin_utils import convert_to_binarytrees
-from pymets.io.read_json import read_json
-from pymets.io.save_swc import swc_save, swc_to_list
-from pymets.io.read_swc import adjust_swcfile
+from pyneval.metric.utils.bin_utils import convert_to_binarytrees
+from pyneval.io.read_json import read_json
+from pyneval.io.save_swc import swc_save, swc_to_list
+from pyneval.io.read_swc import adjust_swcfile
 
 # thresholds
 g_terminal_threshold = 0
@@ -933,16 +933,16 @@ def web_diadem_metric(gold_swc, test_swc, config):
 if __name__ == "__main__":
     testTree = SwcTree()
     goldTree = SwcTree()
-    goldTree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\diadem\diadem11.swc")
-    testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\diadem\diadem11.swc")
+    goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\diadem\diadem11.swc")
+    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\diadem\diadem11.swc")
 
-    # goldTree.load("D:\gitProject\mine\PyMets\\test\data_example\\gold\\ExampleGoldStandard.swc")
-    # testTree.load("D:\gitProject\mine\PyMets\\test\data_example\\test\\ExampleTest.swc")
+    # goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\\ExampleGoldStandard.swc")
+    # testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\ExampleTest.swc")
     get_default_threshold(goldTree)
 
     diadem_metric(swc_test_tree=testTree,
                   swc_gold_tree=goldTree,
-                  config=read_json("D:\gitProject\mine\PyMets\config\diadem_metric.json"),
+                  config=read_json("D:\gitProject\mine\PyNeval\config\diadem_metric.json"),
                   DEBUG=True)
-    swc_save(goldTree, "D:\gitProject\mine\PyMets\output\gold_tree_out.swc")
+    swc_save(goldTree, "D:\gitProject\mine\PyNeval\output\gold_tree_out.swc")
 

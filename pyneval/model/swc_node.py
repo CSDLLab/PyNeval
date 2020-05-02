@@ -2,7 +2,7 @@
 # all right reserved
 
 from anytree import NodeMixin, iterators, RenderTree
-from pymets.model.euclidean_point import EuclideanPoint
+from pyneval.model.euclidean_point import EuclideanPoint
 from anytree import PreOrderIter
 from functools import cmp_to_key
 import math
@@ -636,6 +636,6 @@ class SwcTree:
 if __name__ == '__main__':
     print('testing ...')
     tree = SwcTree()
-    tree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\gold.swc")
+    tree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\gold.swc")
     tree.get_lca_preprocess()
     print(tree.get_lca(2, 6))

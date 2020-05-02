@@ -1,13 +1,13 @@
 import os
 
-from pymets.model.swc_node import SwcNode, SwcTree, Make_Virtual
-from pymets.model.euclidean_point import EuclideanPoint, Line
-from pymets.metric.utils.edge_match_utils import \
+from pyneval.model.swc_node import SwcNode, SwcTree, Make_Virtual
+from pyneval.model.euclidean_point import EuclideanPoint, Line
+from pyneval.metric.utils.edge_match_utils import \
     get_idedge_dict, get_edge_rtree, get_lca_length, get_nearby_edges, is_route_clean, get_route_node,\
     DINF, cal_rad_threshold, cal_len_threshold
 from anytree import PreOrderIter
-from pymets.io.save_swc import swc_save
-from pymets.io.read_json import read_json
+from pyneval.io.save_swc import swc_save
+from pyneval.io.read_json import read_json
 import math,queue
 import numpy as np
 import copy
@@ -277,7 +277,7 @@ def overlap_clean(swc_tree, out_path, loc_config=None):
     dis_threshold, length_threshold, ang_threshold = \
         loc_config["radius_threshold"], loc_config["length_threshold"], loc_config["ang_threshold"]
     # down_pa, is_active = down_sample(tree, 170)
-    down_pa, is_active = down_sample_itp(swc_tree=tree, tree_size=swc_tree.node_count(), stage=0)
+    down_pa, is_active = down_sample_itp(swc_tree=swc_tree, tree_size=swc_tree.node_count(), stage=0)
     new_swc_tree = reconstruct_tree(swc_tree, is_active, down_pa)
     down_pa, is_active = down_sample_itp(swc_tree=new_swc_tree, tree_size=swc_tree.node_count(), stage=1)
     new_swc_tree = reconstruct_tree(new_swc_tree, is_active, down_pa)
@@ -296,8 +296,8 @@ def overlap_clean(swc_tree, out_path, loc_config=None):
 
 
 if __name__ == '__main__':
-    file_path = "D:\gitProject\mine\PyMets\\test\data_example\gold\swc_data_2"
-    out_path = "D:\gitProject\mine\PyMets\output\swc_data_2"
+    file_path = "D:\gitProject\mine\PyNeval\\test\data_example\gold\swc_data_2"
+    out_path = "D:\gitProject\mine\PyNeval\output\swc_data_2"
 
     files = os.listdir(file_path)
     for file in files:
@@ -305,7 +305,7 @@ if __name__ == '__main__':
         tree.clear()
         tree.load(os.path.join(file_path, file))
 
-        config = read_json("D:\gitProject\mine\PyMets\config\overlap_detect.json")
+        config = read_json("D:\gitProject\mine\PyNeval\config\overlap_detect.json")
         overlap_clean(tree,
                       os.path.join(out_path, "clean_"+file),
                       config)

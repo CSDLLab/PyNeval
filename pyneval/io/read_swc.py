@@ -1,5 +1,5 @@
 import os
-from pymets.model.swc_node import SwcNode,SwcTree
+from pyneval.model.swc_node import SwcNode,SwcTree
 
 
 # if path is a fold

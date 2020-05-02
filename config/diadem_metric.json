@@ -1,6 +1,6 @@
 {
   "WEIGHT_MODE": "WEIGHT_DEGREE",
-  "detail_path": "D:\\gitProject\\mine\\PyMets\\output\\gold_tree_out.swc",
+  "detail_path": "D:\\gitProject\\mine\\PyNeval\\output\\gold_tree_out.swc",
   "remove_spur": false,
   "count_excess_nodes": true,
   "align_tree_by_root": false,

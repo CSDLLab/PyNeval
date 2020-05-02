@@ -6,8 +6,8 @@ import math
 import time
 import queue
 import copy
-from pymets.metric.utils.bin_utils import convert_to_binarytree,swctree_to_binarytree
-from pymets.model.swc_node import SwcNode, SwcTree
+from pyneval.metric.utils.bin_utils import convert_to_binarytree,swctree_to_binarytree
+from pyneval.model.swc_node import SwcNode, SwcTree
 
 
 # testfunction:
@@ -70,7 +70,7 @@ def test1():
 def test2():
     start = time.time()
     swc_tree = SwcTree()
-    swc_tree.load("D:\gitProject\mine\PyMets\\test\data_example\gold\ExampleGoldStandard.swc")
+    swc_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\ExampleGoldStandard.swc")
     bin_tree = convert_to_binarytree(swc_tree)
     test_print_bin_tree(bin_tree)
     print(time.time() - start)

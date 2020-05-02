@@ -1,7 +1,7 @@
 import unittest
-from pymets.metric.utils.edge_match_utils import get_nearby_edges, get_edge_rtree, get_idedge_dict
-from pymets.model.swc_node import SwcTree, SwcNode
-from pymets.model.euclidean_point import EuclideanPoint
+from pyneval.metric.utils.edge_match_utils import get_nearby_edges, get_edge_rtree, get_idedge_dict
+from pyneval.model.swc_node import SwcTree, SwcNode
+from pyneval.model.euclidean_point import EuclideanPoint
 
 
 class TestGetNearbyEdges(unittest.TestCase):
