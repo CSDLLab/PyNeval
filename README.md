@@ -1,8 +1,8 @@
-# pymets
+# pyNeval
 # This is a project still under construstion
 
 ## 1. introduction
-pymets is a metric tool to judge the reconstruction of neural cells. In other word, judge the difference between the ground truth data (gold) build by human and the test data(test) build by computer.  
+pyNeval is a metric tool to judge the reconstruction of neural cells. In other word, judge the difference between the ground truth data (gold) build by human and the test data(test) build by computer.  
 ## 2. metric method
 ### 2.1 length metric
 It compares two 3D trees base on 3D geometry structure. <br>
@@ -14,13 +14,13 @@ It is a metric introduced by Gillette, T. A., Brown. We merge it into our tool a
 http://diademchallenge.org/metric.html
 ## 3. How to use
 1. clone this project into your computer<br>
-`git clone https://github.com/bennieHan/PyMets.git`
-2. move into the root of this project, it's the place where pymets.py exist.<br>
+`git clone https://github.com/bennieHan/pyNeval.git`<br>
+2. move into the root of this project, it's the place where pyneval.py exist.<br>
 
 3. make sure your enviroment met "requirement"<br>
 3.1 make a virtual enviroment and activate it, for example:<br>
-`conda create -n pymets_env`<br>
-`conda activate pymets_env`<br>
+`conda create -n pyneval_env`<br>
+`conda activate pyneval_env`<br>
 3.2 install libspatialindex<br>
 `conda install -c conda-forge libspatialindex=1.9.3`<br>
 3.3 install setuptools if your doesn't have it<br>
@@ -37,13 +37,13 @@ when you are done, run setup again.<br>
 5. run command line:<br>
   5.1 for eazy to copy<br>
   ```
-  python ./pymets.py --test (replace_this_with_your_PyMets_address)\test\data_example\test\ExampleTest.swc --gold (replace_this_with_your_PyMets_address)\test\data_example\gold\ExampleGoldStandard.swc --metric matched_length
+  python ./pyneval.py --test test\data_example\test\ExampleTest.swc --gold test\data_example\gold\ExampleGoldStandard.swc --metric matched_length
   ```
   &emsp;&emsp;5.2 for better to understand
   ```
-  python ./pymets.py 
-  --test (replace_this_with_your_PyMets_address)\test\data_example\test\ExampleTest.swc 
-  --gold (replace_this_with_your_PyMets_address)\test\data_example\gold\ExampleGoldStandard.swc 
+  python ./pyneval.py 
+  --test test\data_example\test\ExampleTest.swc 
+  --gold test\data_example\gold\ExampleGoldStandard.swc 
   --metric matched_length
   ```
   &emsp;&emsp;the explanation also can been seen in the `doc`<br> 
