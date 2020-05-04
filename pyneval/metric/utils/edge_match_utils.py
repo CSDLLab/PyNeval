@@ -90,6 +90,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                     continue
                 match_edge.add(tuple([node, node.parent]))
                 vertical_id = adjust_vertical_tree(node, line_tuple_a, line_tuple_b, vertical_tree, vertical_id)
+                # print(node.get_id(), "done")
 
                 # node._type = 3
                 # node.parent._type = 3
@@ -98,10 +99,10 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
 
         if not done:
             node._type = 6
-            node.parent._type = 6
+            # node.parent._type = 6
             unmatch_edge.add(tuple([node, node.parent]))
     # debugging
-    # swc_save(gold_swc_tree, "output/gold_tree_out_123.swc")
+    swc_save(gold_swc_tree, "..\..\output\out_30_18_10.swc")
     return match_edge, unmatch_edge
 
 
@@ -324,7 +325,8 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
             if vis_list[gold_line_tuple_a[0].get_id()] == 1:
                 return False
             if add_interval(edge_use_dict, gold_line_tuple_a[0], tuple([start, end])):
-                edge_use_dict[gold_line_tuple_a[0]].add(tuple([start, end]))
+                if start < end:
+                    edge_use_dict[gold_line_tuple_a[0]].add(tuple([start, end]))
                 return True
             return False
 
@@ -375,8 +377,10 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
        add_interval(edge_use_dict, gold_line_tuple_b[0], tuple([start_b, end_b])) and \
         vis_list[gold_line_tuple_a[0].get_id()] == 0 and \
         vis_list[gold_line_tuple_b[0].get_id()] == 0:
-        edge_use_dict[gold_line_tuple_a[0]].add(tuple([start_a, end_a]))
-        edge_use_dict[gold_line_tuple_b[0]].add(tuple([start_b, end_b]))
+        if start_a < end_a:
+            edge_use_dict[gold_line_tuple_a[0]].add(tuple([start_a, end_a]))
+        if start_b < end_b:
+            edge_use_dict[gold_line_tuple_b[0]].add(tuple([start_b, end_b]))
 
         for node in route_list:
             if node.get_id() == lca_id:
