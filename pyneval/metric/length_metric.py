@@ -119,7 +119,7 @@ if __name__ == "__main__":
     testTree = SwcTree()
 
     goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\multy_useage\push.swc")
-    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\multy_useage\push.swc")
+    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\multy_useage\push.swc")
 
     recall1, precision1, vertical_tree = length_metric(gold_swc_tree=goldtree,
                                                        test_swc_tree=testTree,
