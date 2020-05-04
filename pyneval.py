@@ -136,7 +136,7 @@ def pyneval(DEBUG=True):
         if metric == "diadem_metric" or metric == "DM":
             diadem_metric(swc_test_tree=test_swc_treeroot,
                           swc_gold_tree=gold_swc_treeroot,
-                          config=read_json("D:\gitProject\mine\PyNeval\config\diadem_metric.json"))
+                          config=config)
             if reverse:
                 diadem_metric(gold_swc_treeroot, test_swc_treeroot)
         if metric == "overall_length" or metric == "OL":
