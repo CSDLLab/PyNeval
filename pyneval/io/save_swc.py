@@ -64,13 +64,3 @@ def swc_save(swc_tree, out_path):
                 raise Exception("[error {}]".format(
                     node.get_id()
                 ))
-
-
-def swc_to_list(swc_tree):
-    swc_node_list = [node for node in PreOrderIter(swc_tree.root())]
-    swc_str = []
-    for node in swc_node_list:
-        if node.is_virtual():
-            continue
-        swc_str.append(node.to_swc_str())
-    return "".join(swc_str)

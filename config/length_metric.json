@@ -1,6 +1,6 @@
 {
   "method": 2,
-  "rad_threshold": "-0.8",
+  "rad_threshold": "-1",
   "len_threshold": "5",
   "detail": "output\\length_metric_detail.swc"
 }
