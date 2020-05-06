@@ -30,14 +30,14 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
     level: 0
     """
     match_edge = set()
-    unmatch_edge = set()
     edge_use_dict = {}
+    id_rootdis_dict = {}
+    test_match_length = 0.0
     vertical_id = 1
     idx3d = get_edge_rtree(test_swc_tree)
     id_edge_dict = get_idedge_dict(test_swc_tree)
     gold_node_list = gold_swc_tree.get_node_list()
     test_node_list = test_swc_tree.get_node_list()
-    id_rootdis_dict = {}
 
     for node in test_node_list:
         id_rootdis_dict[node.get_id()] = node.root_length
@@ -90,20 +90,17 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                     continue
                 match_edge.add(tuple([node, node.parent]))
                 vertical_id = adjust_vertical_tree(node, line_tuple_a, line_tuple_b, vertical_tree, vertical_id)
-                # print(node.get_id(), "done")
-
-                # node._type = 3
-                # node.parent._type = 3
+                test_match_length += test_length
                 done = True
+                # print(node.get_id(), "done")
                 break
 
         if not done:
             node._type = 6
             # node.parent._type = 6
-            unmatch_edge.add(tuple([node, node.parent]))
     # debugging
     swc_save(gold_swc_tree, "..\..\output\out_30_18_10.swc")
-    return match_edge, unmatch_edge
+    return match_edge, test_match_length
 
 
 def adjust_vertical_tree(node, line_tuple_a, line_tuple_b, vertical_tree, vertical_id):

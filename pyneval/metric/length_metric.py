@@ -18,11 +18,10 @@ def length_metric_2(gold_swc_tree=None, test_swc_tree=None,
     vertical_tree = []
 
     test_swc_tree.get_lca_preprocess()
-    match_edges, un_match_edges = get_match_edges(gold_swc_tree, test_swc_tree,  # tree data
+    match_edges, test_match_length = get_match_edges(gold_swc_tree, test_swc_tree,  # tree data
                                                   vertical_tree,  # a empty tree helps
                                                   rad_threshold, len_threshold, detail_path, DEBUG=False)  # configs
-    # if detail_path is not None:
-    #     save_as_swc(object=un_match_edges, file_path=detail_path)
+
     match_length = 0.0
     for line_tuple in match_edges:
         match_length += line_tuple[0].parent_distance()
@@ -34,8 +33,8 @@ def length_metric_2(gold_swc_tree=None, test_swc_tree=None,
     if DEBUG:
         print("match_length a = {}, gold_total_length = {}, test_total_length = {}"
               .format(match_length, gold_total_length, test_total_length))
-    # print(gold_total_length, test_total_length)
-    return match_length/gold_total_length, match_length/test_total_length, vertical_tree
+    print(match_length, gold_total_length, test_match_length, test_total_length)
+    return min(match_length/gold_total_length, 1.0), min(test_match_length/test_total_length, 1.0), vertical_tree
 
 
 def length_metric_1(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
@@ -118,8 +117,8 @@ if __name__ == "__main__":
     goldtree = SwcTree()
     testTree = SwcTree()
 
-    goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\\2_18_gold.swc")
-    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\2_18_test.swc")
+    goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\branch.swc")
+    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\branch.swc")
 
     recall1, precision1, vertical_tree = length_metric(gold_swc_tree=goldtree,
                                                        test_swc_tree=testTree,
