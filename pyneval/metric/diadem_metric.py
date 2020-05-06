@@ -14,7 +14,7 @@ from pyneval.metric.utils.diadam_match_utils import \
     path_length_matches,is_within_dis_match_threshold,LCA
 from pyneval.metric.utils.bin_utils import convert_to_binarytrees
 from pyneval.io.read_json import read_json
-from pyneval.io.save_swc import swc_save, swc_to_list
+from pyneval.io.save_swc import swc_save
 from pyneval.io.read_swc import adjust_swcfile
 
 # thresholds
@@ -918,10 +918,10 @@ def web_diadem_metric(gold_swc, test_swc, config):
 
     # gold_tree.radius_limit(10)
     # test_tree.radius_limit(10)
-    print(swc_to_list(test_tree))
+    print(test_tree.to_str_list())
     result = {
-        'gold_swc': swc_to_list(gold_tree),
-        'test_swc': swc_to_list(test_tree),
+        'gold_swc': gold_tree.to_str_list(),
+        'test_swc': test_tree.to_str_list(),
         'weight_sum': g_weight_sum,
         'score_sum': g_score_sum,
         'final_score': g_final_score

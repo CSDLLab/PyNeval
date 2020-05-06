@@ -179,13 +179,13 @@ class SwcNode(NodeMixin):
         return self._pos.get_z()
 
     def set_x(self, x):
-        self._pos[0].set_x(x)
+        self._pos.set_x(x)
 
     def set_y(self, y):
-        self._pos[1].set_y(y)
+        self._pos.set_y(y)
 
     def set_z(self, z):
-        self._pos[2].set_z(z)
+        self._pos.set_z(z)
 
     def get_center(self):
         return self._pos
@@ -559,7 +559,6 @@ class SwcTree:
         for i in range(1, len(pa_list)):
             swc_list[i].parent = pa_list[swc_list[i].get_id()]
 
-
     def change_root_n(self, swc_gold_tree, matches):
         # test_roots = self.root().children
         gold_roots = swc_gold_tree.root().children
@@ -608,7 +607,6 @@ class SwcTree:
         for node in node_list:
             node._type = x
 
-
     def radius_limit(self, x):
         node_list = self.get_node_list()
         for node in node_list:
@@ -631,6 +629,21 @@ class SwcTree:
         if self.node_list is None:
             self.node_list = [node for node in PreOrderIter(self.root())]
         return self.node_list
+
+    def to_str_list(self):
+        swc_node_list = self.get_node_list()
+        swc_str = []
+        for node in swc_node_list:
+            if node.is_virtual():
+                continue
+            swc_str.append(node.to_swc_str())
+        return "".join(swc_str)
+
+    def get_copy(self):
+        new_tree = SwcTree()
+        swc_str = self.to_str_list().split("\n")
+        new_tree.load_list(swc_str)
+        return new_tree
 
 
 if __name__ == '__main__':

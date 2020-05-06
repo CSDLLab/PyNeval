@@ -22,10 +22,10 @@ class PymetsTotCase(unittest.TestCase):
                                                            abs_dir="D:\gitProject\mine\PyNeval",
                                                            config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
 
-        self.assertEqual(recall1, 0.7030284661586385)
-        self.assertEqual(recall2, 0.8685749970409651)
-        self.assertEqual(precision1, 0.7174338664651955)
-        self.assertEqual(precision2, 0.8511348243456205)
+        self.assertEqual(recall1, 0.7495748428771739)
+        self.assertEqual(recall2, 0.9117842920127944)
+        self.assertEqual(precision1, 0.7649340014193171)
+        self.assertEqual(precision2, 0.8934765171312024)
 
     def test_len_2(self):
         goldtree = SwcTree()
@@ -45,9 +45,9 @@ class PymetsTotCase(unittest.TestCase):
                                                            config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
 
         self.assertEqual(recall1, 0.950375054330871)
-        self.assertEqual(recall2, 0.8810142908724438)
+        self.assertEqual(recall2, 0.8840895243031932)
         self.assertEqual(precision1, 0.8820152620869665)
-        self.assertEqual(precision2, 0.9492965037509923)
+        self.assertEqual(precision2, 0.952610080357267)
 
     def test_len_3(self):
         goldtree = SwcTree()
@@ -66,10 +66,10 @@ class PymetsTotCase(unittest.TestCase):
                                                            abs_dir="D:\gitProject\mine\PyNeval",
                                                            config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
 
-        self.assertEqual(recall1, 0.6106312743663942)
-        self.assertEqual(recall2, 0.5605183853340827)
-        self.assertEqual(precision1, 0.533095813952355)
-        self.assertEqual(precision2, 0.6420422876795178)
+        self.assertEqual(recall1, 0.6604151348183881)
+        self.assertEqual(recall2, 0.6088934763597107)
+        self.assertEqual(precision1, 0.5765583235280136)
+        self.assertEqual(precision2, 0.6974532339061742)
 
     def test_len_4(self):
         goldtree = SwcTree()

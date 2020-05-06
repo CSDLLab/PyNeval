@@ -4,7 +4,7 @@ from pyneval.model.swc_node import SwcTree
 from pyneval.metric.utils.edge_match_utils import get_match_edges
 from pyneval.metric.utils.config_utils import get_default_threshold
 from pyneval.io.read_json import read_json
-from pyneval.io.save_swc import save_as_swc, swc_to_list
+from pyneval.io.save_swc import save_as_swc
 from pyneval.io.read_swc import adjust_swcfile
 from pyneval.io.read_config import read_float_config, read_path_config
 # from test.test_model.length_metric.cprofile_test import do_cprofile
@@ -34,7 +34,7 @@ def length_metric_2(gold_swc_tree=None, test_swc_tree=None,
     if DEBUG:
         print("match_length a = {}, gold_total_length = {}, test_total_length = {}"
               .format(match_length, gold_total_length, test_total_length))
-    print(gold_total_length, test_total_length)
+    # print(gold_total_length, test_total_length)
     return match_length/gold_total_length, match_length/test_total_length, vertical_tree
 
 
@@ -107,8 +107,8 @@ def web_length_metric(gold_swc, test_swc, method, rad_threshold, len_threshold):
     result = {
         'recall': recall,
         'precision': precision,
-        'gold_swc': swc_to_list(gold_tree),
-        'test_swc': swc_to_list(test_tree),
+        'gold_swc': gold_tree.to_str_list(),
+        'test_swc': test_tree.to_str_list(),
         'vertical_swc': vertical_tree
     }
     return result
@@ -118,8 +118,8 @@ if __name__ == "__main__":
     goldtree = SwcTree()
     testTree = SwcTree()
 
-    goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\multy_useage\push.swc")
-    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\multy_useage\push.swc")
+    goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\\2_18_gold.swc")
+    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\2_18_test.swc")
 
     recall1, precision1, vertical_tree = length_metric(gold_swc_tree=goldtree,
                                                        test_swc_tree=testTree,
