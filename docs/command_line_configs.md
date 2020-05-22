@@ -6,4 +6,5 @@
 | 评价指标选择 | --metric | -M | 是 | - | DM,overlap_length,matched_lengthBM,diadem_metric,netmets中的一个或者多个 |
 | 针对不同方法的参数对象 | --config | -C | 否 | 1.0 | config.json格式的配置文件 |
 | 数据相关参数 | --meta | -P | 否 | 0.0 | 正实数 |
+| 是否交换Gold/Test进行匹配 | --reverse | -R | 否 | True | True/False |
 | 是否显示调试信息 | --debug | -D | 否 | False | ALL/IO/METRIC 可选择相关模块的调试信息 |
