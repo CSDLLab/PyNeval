@@ -17,7 +17,6 @@ def length_metric_2(gold_swc_tree=None, test_swc_tree=None,
                     rad_threshold=-1.0, len_threshold=0.2, detail_path=None, DEBUG=True):
     vertical_tree = []
 
-    test_swc_tree.get_lca_preprocess()
     match_edges, test_match_length = get_match_edges(gold_swc_tree, test_swc_tree,  # tree data
                                                   vertical_tree,  # a empty tree helps
                                                   rad_threshold, len_threshold, detail_path, DEBUG=False)  # configs
@@ -29,12 +28,21 @@ def length_metric_2(gold_swc_tree=None, test_swc_tree=None,
     gold_total_length = round(gold_swc_tree.length(), 8)
     test_total_length = round(test_swc_tree.length(), 8)
     match_length = round(match_length, 8)
+    test_match_length = round(test_match_length, 8)
 
     if DEBUG:
         print("match_length a = {}, gold_total_length = {}, test_total_length = {}"
               .format(match_length, gold_total_length, test_total_length))
-    print(match_length, gold_total_length, test_match_length, test_total_length)
-    return min(match_length/gold_total_length, 1.0), min(test_match_length/test_total_length, 1.0), vertical_tree
+    if gold_total_length != 0:
+        recall = round(match_length/gold_total_length, 8)
+    else:
+        recall = 0
+
+    if test_total_length != 0:
+        precision = round(test_match_length/test_total_length, 8)
+    else:
+        precision = 0
+    return min(recall, 1.0), min(precision, 1.0), vertical_tree
 
 
 def length_metric_1(gold_swc_tree=None, test_swc_tree=None, DEBUG=False):
@@ -73,9 +81,9 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
                                                            rad_threshold=rad_threshold,
                                                            len_threshold=len_threshold,
                                                            detail_path=detail_path,
-                                                           DEBUG=False)
-        print("Recall = {}, Precision = {}".format(recall, precision))
-        return recall, precision, "".join(vertical_tree)
+                                                           DEBUG=True)
+        # print("Recall = {}, Precision = {}".format(recall, precision))
+        return tuple([recall, precision, "".join(vertical_tree)])
     else:
         raise Exception("[Error: ] Read config info method {}. length metric only have 1 and 2 two methods".format(
             config["method"]
@@ -83,7 +91,7 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
 
 
 # length metric interface connect to webmets
-def web_length_metric(gold_swc, test_swc, method, rad_threshold, len_threshold):
+def pyneval_length_metric(gold_swc, test_swc, method, rad_threshold, len_threshold):
     gold_tree = SwcTree()
     test_tree = SwcTree()
 
@@ -96,38 +104,37 @@ def web_length_metric(gold_swc, test_swc, method, rad_threshold, len_threshold):
         'rad_threshold': rad_threshold
     }
 
-    recall, precision, vertical_tree = length_metric(gold_swc_tree=gold_tree,
-                                                     test_swc_tree=test_tree,
-                                                     abs_dir="",
-                                                     config=config)
-    # gold_tree.radius_limit(10)
-    # test_tree.radius_limit(10)
+    lm_res = length_metric(gold_swc_tree=gold_tree,
+                           test_swc_tree=test_tree,
+                           abs_dir="",
+                           config=config)
 
     result = {
-        'recall': recall,
-        'precision': precision,
+        'recall': lm_res[0],
+        'precision': lm_res[1],
         'gold_swc': gold_tree.to_str_list(),
         'test_swc': test_tree.to_str_list(),
-        'vertical_swc': vertical_tree
+        'vertical_swc': lm_res[2]
     }
     return result
 
 
 if __name__ == "__main__":
-    goldtree = SwcTree()
+    goldTree = SwcTree()
     testTree = SwcTree()
 
-    goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\branch.swc")
-    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\branch.swc")
+    goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\34_23_10_gold.swc")
+    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\34_23_10_test.swc")
+    # print(len(goldTree.root().children))
 
-    recall1, precision1, vertical_tree = length_metric(gold_swc_tree=goldtree,
-                                                       test_swc_tree=testTree,
-                                                       abs_dir="D:\gitProject\mine\PyNeval",
-                                                       config=read_json(
-                                                           "D:\gitProject\mine\PyNeval\config\length_metric.json"))
+    lm_res = length_metric(gold_swc_tree=goldTree,
+                           test_swc_tree=testTree,
+                           abs_dir="D:\gitProject\mine\PyNeval",
+                           config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
 
-    # recall2, precision2, vertical_tree = length_metric(gold_swc_tree=testTree,
-    #                                                    test_swc_tree=goldtree,
-    #                                                    abs_dir="D:\gitProject\mine\PyNeval",
-    #                                                    config=read_json(
-    #                                                        "D:\gitProject\mine\PyNeval\config\length_metric.json"))
+    # lm_res2 = length_metric(gold_swc_tree=testTree,
+    #                         test_swc_tree=goldtree,
+    #                         abs_dir="D:\gitProject\mine\PyNeval",
+    #                         config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
+
+    print(lm_res[0], lm_res[1])

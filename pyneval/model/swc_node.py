@@ -442,6 +442,8 @@ class SwcTree:
         node_list = self.get_node_list()
         result = 0
         for tn in node_list:
+            if tn.is_virtual() or tn.parent.is_virtual():
+                continue
             result += tn.parent_distance()
 
         return result
@@ -530,10 +532,14 @@ class SwcTree:
                     stack.put(son)
 
     def change_root(self, new_root_id):
+        list_size = 0
         stack = queue.LifoQueue()
         swc_list = self.get_node_list()
-        vis_list = np.zeros(shape=(len(swc_list) + 10,))
-        pa_list = [None] * (len(swc_list))
+        for node in swc_list:
+            list_size = max(list_size, node.get_id())
+
+        vis_list = np.zeros(shape=(list_size + 10,))
+        pa_list = [None] * (list_size+10)
 
         for node in swc_list:
             pa_list[node.get_id()] = node.parent
@@ -554,9 +560,9 @@ class SwcTree:
                 stack.put(cur_node.parent)
                 pa_list[cur_node.parent.get_id()] = cur_node
 
-        for i in range(1, len(pa_list)):
+        for i in range(1, len(swc_list)):
             swc_list[i].parent = self.root()
-        for i in range(1, len(pa_list)):
+        for i in range(1, len(swc_list)):
             swc_list[i].parent = pa_list[swc_list[i].get_id()]
 
     def change_root_n(self, swc_gold_tree, matches):
@@ -606,6 +612,8 @@ class SwcTree:
         node_list = self.get_node_list()
         for node in node_list:
             node._type = x
+        for root in self.root().children:
+            root._type = 2
 
     def radius_limit(self, x):
         node_list = self.get_node_list()
@@ -625,8 +633,8 @@ class SwcTree:
         self._size += 1
         return True
 
-    def get_node_list(self):
-        if self.node_list is None:
+    def get_node_list(self, update=False):
+        if self.node_list is None or update:
             self.node_list = [node for node in PreOrderIter(self.root())]
         return self.node_list
 
