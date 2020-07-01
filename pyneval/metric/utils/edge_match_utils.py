@@ -29,6 +29,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
     :return: match_edge set contains tuple of two swc nodes
     level: 0
     """
+
     match_edge = set()
     edge_use_dict = {}
     id_rootdis_dict = {}
@@ -38,11 +39,13 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
     id_edge_dict = get_idedge_dict(test_swc_tree)
     gold_node_list = gold_swc_tree.get_node_list()
     test_node_list = test_swc_tree.get_node_list()
-
+    test_maxum = 0
     for node in test_node_list:
         id_rootdis_dict[node.get_id()] = node.root_length
+        test_maxum = max(test_maxum, node.get_id())
 
-    vis_list = np.zeros(len(test_node_list) + 5, dtype='int8')
+    vis_list = np.zeros(test_maxum+5, dtype='int8')
+    test_swc_tree.get_lca_preprocess(node_num=test_maxum+5)
 
     for node in gold_node_list:
         if node.is_virtual() or node.parent.is_virtual():
@@ -54,6 +57,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                                             threshold=rad_threshold1, not_self=False, DEBUG=False)
         line_tuple_b_set = get_nearby_edges(idx3d=idx3d, point=node.parent, id_edge_dict=id_edge_dict,
                                             threshold=rad_threshold2, not_self=False, DEBUG=False)
+
         done = False
         for line_tuple_a_dis in line_tuple_a_set:
             if done:
@@ -92,11 +96,11 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                 vertical_id = adjust_vertical_tree(node, line_tuple_a, line_tuple_b, vertical_tree, vertical_id)
                 test_match_length += test_length
                 done = True
-                # print(node.get_id(), "done")
                 break
 
         if not done:
             node._type = 6
+            # print("{} not done".format(node.get_id()))
             # node.parent._type = 6
     # debugging
     swc_save(gold_swc_tree, "..\..\output\out_30_18_10.swc")
@@ -126,6 +130,7 @@ def adjust_vertical_tree(node, line_tuple_a, line_tuple_b, vertical_tree, vertic
     vertical_id += 1
     vertical_tree.append(swc_foot_b.to_swc_str(tmp_node_p.get_id()))
     return vertical_id
+
 
 # private
 # construct rtree
@@ -188,6 +193,23 @@ def cal_rad_threshold(rad_threshold, dis1, dis2):
 
 def cal_len_threshold(len_threshold, length):
     return length * len_threshold
+
+
+def get_nearby_edges_slow(test_node_list, point, threshold, not_self=False, DEBUG=False):
+    nearby_edges = []
+    for node in test_node_list:
+        if node.is_virtual() or node.parent.is_virtual():
+            continue
+        e_point = point.get_center()
+
+        new_d = e_point.distance(Line(e_node_1=node.get_center(), e_node_2=node.parent.get_center()))
+        if not_self and new_d == 0:
+            continue
+        if new_d < threshold:
+            line_tuple = ([node, node.parent])
+            nearby_edges.append(tuple([line_tuple, new_d]))
+    nearby_edges.sort(key=lambda x: x[1])
+    return nearby_edges
 
 
 # find the closest edge base on rtree

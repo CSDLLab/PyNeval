@@ -61,6 +61,4 @@ def swc_save(swc_tree, out_path):
                     node.get_id(), node._type, node.get_x(), node.get_y(), node.get_z(), node.radius(), node.parent.get_id()
                 ))
             except:
-                raise Exception("[error {}]".format(
-                    node.get_id()
-                ))
+                continue

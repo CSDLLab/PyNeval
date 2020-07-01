@@ -624,7 +624,6 @@ def score_trees(bin_gold_root, bin_test_root, bin_gold_subroots, bin_test_subroo
             else:
                 weight = g_weight_dict[gold_node]
                 g_weight_sum += weight
-
                 match = get_closest_match(gold_node=gold_node,
                                           bin_gold_list=bin_gold_list,
                                           bin_test_list=bin_test_list)
@@ -862,7 +861,9 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config, DEBUG=False):
     diadem_init()
     t_matches = {}
     switch_initialize(config)
-    adjust_root(swc_gold_tree, swc_test_tree, t_matches)
+    if g_find_proper_root:
+        adjust_root(swc_gold_tree, swc_test_tree, t_matches)
+    # swc_save(swc_test_tree, "D:\gitProject\mine\PyNeval\\test\output\diadem_out.swc")
     # swc_test_tree.change_root(swc_gold_tree, t_matches)
 
     if g_align_tree_by_root:
@@ -899,32 +900,30 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config, DEBUG=False):
             print("id = {} wt = {}".format(k.data.get_id(), g_weight_dict[k]))
 
     if 'detail_path' in config.keys():
-        print_result(swc_tree=swc_gold_tree, out_path=config["detail_path"])
+        # print_result(swc_tree=swc_gold_tree, out_path=config["detail_path"])
+        pass
     else:
         color_tree_only()
-    return g_final_score
+    return tuple([g_weight_sum, g_score_sum, g_final_score])
 
 
-def web_diadem_metric(gold_swc, test_swc, config):
+def pyneval_diadem_metric(gold_swc, test_swc, config):
     gold_tree = SwcTree()
     test_tree = SwcTree()
 
     gold_tree.load_list(adjust_swcfile(gold_swc))
     test_tree.load_list(adjust_swcfile(test_swc))
 
-    diadem_metric(swc_gold_tree=gold_tree,
-                  swc_test_tree=test_tree,
-                  config=config)
+    diadem_res= diadem_metric(swc_gold_tree=gold_tree,
+                              swc_test_tree=test_tree,
+                              config=config)
 
-    # gold_tree.radius_limit(10)
-    # test_tree.radius_limit(10)
-    print(test_tree.to_str_list())
     result = {
         'gold_swc': gold_tree.to_str_list(),
         'test_swc': test_tree.to_str_list(),
-        'weight_sum': g_weight_sum,
-        'score_sum': g_score_sum,
-        'final_score': g_final_score
+        'weight_sum': diadem_res[0],
+        'score_sum': diadem_res[1],
+        'final_score': diadem_res[2]
     }
 
     return result
@@ -933,16 +932,18 @@ def web_diadem_metric(gold_swc, test_swc, config):
 if __name__ == "__main__":
     testTree = SwcTree()
     goldTree = SwcTree()
-    goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\diadem\diadem11.swc")
-    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\diadem\diadem11.swc")
-
+    goldTree.load("D:\workSpace\\real_neural\\6_27\wv\swc\\6656_gold.swc")
+    testTree.load("D:\workSpace\\real_neural\\6_27\wv\swc\\6656_test.swc")
+    # goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\diadem\\5632_4864_21760.swc")
+    # testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\diadem\\5632_4864_21760.swc")
     # goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\\ExampleGoldStandard.swc")
     # testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\ExampleTest.swc")
     get_default_threshold(goldTree)
 
-    diadem_metric(swc_test_tree=testTree,
+    ans = diadem_metric(swc_test_tree=testTree,
                   swc_gold_tree=goldTree,
                   config=read_json("D:\gitProject\mine\PyNeval\config\diadem_metric.json"),
-                  DEBUG=True)
+                  DEBUG=False)
+    print(ans[0], ans[1], ans[2])
     swc_save(goldTree, "D:\gitProject\mine\PyNeval\output\gold_tree_out.swc")
 

@@ -1,7 +1,9 @@
 import argparse
 import sys,os,platform
-from pyneval.io.read_swc import read_swc_trees
+from pyneval.io.read_swc import read_swc_trees, adjust_swcfile
 from pyneval.io.read_json import read_json
+from pyneval.io.save_swc import swc_save
+from pyneval.model.swc_node import SwcTree
 from pyneval.metric.diadem_metric import diadem_metric
 from pyneval.metric.length_metric import length_metric
 from cli.overlap_detect import overlap_clean
@@ -57,6 +59,12 @@ def read_parameters():
         help="output the answer when we switch the gold and test tree",
         required=False
     )
+    parser.add_argument(
+        "--debug",
+        "-D",
+        help="Print debug info or not",
+        required=False
+    )
     return parser.parse_args()
 
 
@@ -82,7 +90,7 @@ def pyneval(DEBUG=True):
     # reverse
     reverse = args.reverse
     if reverse is None:
-        reverse = False
+        reverse = True
 
     # metric
     metric = args.metric
@@ -134,26 +142,40 @@ def pyneval(DEBUG=True):
     gold_swc_treeroot = gold_swc_trees[0]
     for test_swc_treeroot in test_swc_trees:
         if metric == "diadem_metric" or metric == "DM":
-            diadem_metric(swc_test_tree=test_swc_treeroot,
-                          swc_gold_tree=gold_swc_treeroot,
-                          config=config)
+            ans = diadem_metric(swc_test_tree=test_swc_treeroot,
+                                swc_gold_tree=gold_swc_treeroot,
+                                config=config)
+            print("score = {}".format(ans[2]))
             if reverse:
-                diadem_metric(gold_swc_treeroot, test_swc_treeroot)
+                ans_rev = diadem_metric(swc_test_tree=gold_swc_treeroot, swc_gold_tree=test_swc_treeroot, config=config)
+                print("rev_score = {}".format(ans_rev[2]))
+
         if metric == "overall_length" or metric == "OL":
             config["method"] = 1
-            length_metric(gold_swc_treeroot, test_swc_treeroot,
-                          abs_dir, config)
+            lm_res = length_metric(gold_swc_treeroot, test_swc_treeroot,
+                                   abs_dir, config)
             if reverse:
-                length_metric(test_swc_treeroot, gold_swc_treeroot,
-                              abs_dir, config)
+                lm_res = length_metric(test_swc_treeroot, gold_swc_treeroot,
+                                       abs_dir, config)
+                print("Recall = {} Precision = {}".format(lm_res[0], lm_res[1]))
+
         if metric == "matched_length" or metric == "ML":
             config["method"] = 2
-            length_metric(gold_swc_treeroot, test_swc_treeroot,
+            lm_res = length_metric(gold_swc_treeroot, test_swc_treeroot,
                           abs_dir, config)
+            print("Recall = {} Precision = {}".format(lm_res[0], lm_res[1]))
+
+            if output_dest:
+                swc_save(test_swc_treeroot, output_dest)
             if reverse:
                 config["detail"] = config["detail"][:-4] + "_reverse.swc"
-                length_metric(test_swc_treeroot, gold_swc_treeroot,
-                              abs_dir, config)
+                lm_res = length_metric(test_swc_treeroot, gold_swc_treeroot,
+                                       abs_dir, config)
+                print("Recall = {} Precision = {}".format(lm_res[0], lm_res[1]))
+                if output_dest:
+                    swc_save(gold_swc_treeroot, output_dest[:-4]+"_reverse.swc")
+
+
     if metric == "overlap_clean" or metric == "OC":
         # debug
         print("entry")
@@ -166,10 +188,10 @@ def pyneval(DEBUG=True):
 if __name__ == "__main__":
     pyneval()
 
-# python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\30_18_10_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\30_18_10_gold.swc --metric matched_length --reverse true
+# python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --metric matched_length --reverse true
 
 # python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem1.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem1.swc --metric diadem_metric
 
-# python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\34_23_10_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\34_23_10_gold.swc --metric diadem_metric
+# python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem7.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem7.swc --metric diadem_metric
 
 # python ./pyneval.py --gold D:\gitProject\mine\PyNeval\test\data_example\gold\overlap\overlap_sample5.swc --metric overlap_clean --output D:\gitProject\mine\PyNeval\output\overlap\overlap_output5.swc

@@ -82,6 +82,19 @@ class DiademTotTest(unittest.TestCase):
         print(score)
         self.assertEqual(score, 0.5)
 
+    def test_6(self):
+        testTree = SwcTree()
+        goldTree = SwcTree()
+        goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\ExampleGoldStandard.swc")
+        testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\ExampleTest.swc")
+
+        get_default_threshold(goldTree)
+
+        score = diadem_metric(swc_test_tree=testTree,
+                              swc_gold_tree=goldTree,
+                              config=read_json("D:\gitProject\mine\PyNeval\config\diadem_metric.json"))
+        print(score)
+
 
 if __name__ == '__main__':
     unittest.main()
