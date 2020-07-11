@@ -124,7 +124,7 @@ class SwcNode(NodeMixin):
                  nid=-1,
                  ntype=0,
                  radius=1.0,
-                 center=None,
+                 center=EuclideanPoint(center=[0,0,0]),
                  parent=None,
                  depth=0,
 
@@ -186,6 +186,9 @@ class SwcNode(NodeMixin):
 
     def set_z(self, z):
         self._pos.set_z(z)
+
+    def set_r(self, r):
+        self._radius = r
 
     def get_center(self):
         return self._pos
@@ -273,12 +276,6 @@ class SwcNode(NodeMixin):
     def __str__(self):
         return '%d (%d): %s, %g' % (self._id, self._type, str(self.get_center()._pos), self._radius)
 
-    def remove_child(self, swc_node):
-        if not isinstance(swc_node, SwcNode):
-            return False
-        children = list(self.children)
-        children.remove(swc_node)
-        self.children = tuple(children)
 
 class SwcTree:
     """A class for representing one or more SWC trees.
@@ -290,6 +287,7 @@ class SwcTree:
         self._size = None
         self._total_length = None
 
+        self.id_set = set()
         self.depth_array = None
         self.LOG_NODE_NUM = None
         self.lca_parent = None
@@ -346,6 +344,9 @@ class SwcTree:
                     pos = EuclideanPoint(center=data[2:5])
                     radius = data[5]
                     parentId = data[6]
+                    if nid in self.id_set:
+                        raise Exception("[Error: SwcTree.load]Same id {}".format(nid))
+                    self.id_set.add(nid)
                     tn = SwcNode(nid=nid, ntype=ntype, radius=radius, center=pos)
                     nodeDict[nid] = (tn, parentId)
 
@@ -377,6 +378,9 @@ class SwcTree:
                         pos = EuclideanPoint(center=data[2:5])
                         radius = data[5]
                         parentId = data[6]
+                        if nid in self.id_set:
+                            raise Exception("[Error: SwcTree.load]Same id {}".format(nid))
+                        self.id_set.add(nid)
                         tn = SwcNode(nid=nid, ntype=ntype, radius=radius, center=pos)
                         nodeDict[nid] = (tn, parentId)
             fp.close()
@@ -405,20 +409,9 @@ class SwcTree:
     def has_regular_node(self):
         return len(self.regular_root()) > 0
 
-    def node_count(self, regular=True):
-        if self._size is not None:
-            return self._size
-
-        count = 0
-        node_list = self.get_node_list()
-        for tn in node_list:
-            if regular:
-                if tn.is_regular():
-                    count += 1
-            else:
-                count += 1
-        self._size = count
-        return count
+    def size(self):
+        self._size = len(self.id_set)
+        return self._size
 
     def parent_distance(self, nid):
         d = 0
@@ -460,7 +453,7 @@ class SwcTree:
     # initialize LCA data structure in swc_tree
     def get_lca_preprocess(self, node_num=-1):
         if node_num == -1:
-            node_num = self.node_count()
+            node_num = self.size()
         self.get_depth_array(node_num)
         self.LOG_NODE_NUM = math.ceil(math.log(node_num, 2)) + 1
         self.lca_parent = np.zeros(shape=(node_num + 10, self.LOG_NODE_NUM), dtype=int)
@@ -565,49 +558,6 @@ class SwcTree:
         for i in range(1, len(swc_list)):
             swc_list[i].parent = pa_list[swc_list[i].get_id()]
 
-    def change_root_n(self, swc_gold_tree, matches):
-        # test_roots = self.root().children
-        gold_roots = swc_gold_tree.root().children
-        swc_test_list = self.get_node_list()
-        vis_list = np.zeros(shape=(len(swc_test_list) + 10,))
-        pa_list = [None] * (len(swc_test_list))
-        for node in swc_test_list:
-            pa_list[node.get_id()] = node.parent
-
-        for root in gold_roots:
-            down = False
-            for r_node in PreOrderIter(root):
-                if down:
-                    break
-                nearby_nodes = get_nearby_node_list(gold_node=r_node, test_swc_list=swc_test_list,
-                                                    threshold=root.radius() / 2)
-                for node in nearby_nodes:
-                    if vis_list[node.get_id()]:
-                        continue
-                    # reconstruct the tree with another root
-                    stack = queue.LifoQueue()
-                    stack.put(node)
-                    pa_list[node.get_id()] = self.root()
-                    while not stack.empty():
-                        cur_node = stack.get()
-                        vis_list[cur_node.get_id()] = True
-                        for son in cur_node.children:
-                            if not vis_list[son.get_id()]:
-                                stack.put(son)
-                                pa_list[son.get_id()] = cur_node
-                        if cur_node.parent is not None and \
-                                cur_node.parent.get_id() != -1 and \
-                                not vis_list[cur_node.parent.get_id()]:
-                            stack.put(cur_node.parent)
-                            pa_list[cur_node.parent.get_id()] = cur_node
-                    matches[r_node] = node
-                    down = True
-                    break
-        for i in range(1, len(pa_list)):
-            swc_test_list[i].parent = self.root()
-        for i in range(1, len(pa_list)):
-            swc_test_list[i].parent = pa_list[swc_test_list[i].get_id()]
-
     def type_clear(self, x):
         node_list = self.get_node_list()
         for node in node_list:
@@ -621,17 +571,27 @@ class SwcTree:
             node._radius /= x
 
     def next_id(self):
-        return self.node_count() + 1
+        return max(self.id_set) + 1
 
     def add_child(self, swc_node, swc_son_node):
         if not isinstance(swc_son_node, SwcNode) or not isinstance(swc_node, SwcNode):
             return False
-        swc_son_node.set_id(self.next_id())
-        swc_son_node.children = tuple([])
+        nid = self.next_id()
+
+        swc_son_node.set_id(nid)
         swc_son_node.parent = swc_node
 
-        self._size += 1
+        self.id_set.add(nid)
         return True
+
+    def remove_child(self, swc_node, swc_son_node):
+        if not isinstance(swc_node, SwcNode) or not isinstance(swc_son_node, SwcNode):
+            return False
+        children = list(swc_node.children)
+        children.remove(swc_son_node)
+        swc_node.children = tuple(children)
+
+        self.id_set.remove(swc_son_node.get_id())
 
     def get_node_list(self, update=False):
         if self.node_list is None or update:

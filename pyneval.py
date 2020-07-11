@@ -3,9 +3,11 @@ import sys,os,platform
 from pyneval.io.read_swc import read_swc_trees, adjust_swcfile
 from pyneval.io.read_json import read_json
 from pyneval.io.save_swc import swc_save
+from pyneval.io.read_tiff import read_tiffs
 from pyneval.model.swc_node import SwcTree
 from pyneval.metric.diadem_metric import diadem_metric
 from pyneval.metric.length_metric import length_metric
+from pyneval.metric.volume_metric import volume_metric
 from cli.overlap_detect import overlap_clean
 
 metric_list = [
@@ -13,7 +15,8 @@ metric_list = [
     "overall_length",
     "matched_length",
     "overlap_clean",
-    "DM","OL","ML","OC"
+    "volume_metric",
+    "DM", "OL", "ML", "OC", "VM"
 ]
 
 
@@ -114,6 +117,8 @@ def pyneval(DEBUG=True):
                 config = os.path.join(abs_dir, "config\\length_metric.json")
             if metric in ["overlap_clean", "OD"]:
                 config = os.path.join(abs_dir, "config\\overlap_clean.json")
+            if metric in ['volume_metric', 'VM']:
+                config = os.path.join(abs_dir, "config\\volume_metric.json")
         elif platform.system() == "Linux":
             if metric == "diadem_metric" or metric == "DM":
                 config = os.path.join(abs_dir, "config/diadem_metric.json")
@@ -121,13 +126,20 @@ def pyneval(DEBUG=True):
                 config = os.path.join(abs_dir, "config/length_metric.json")
             if metric in ["overlap_clean", "OD"]:
                 config = os.path.join(abs_dir, "config/overlap_clean.json")
+            if metric in ['volume_metric', 'VM']:
+                config = os.path.join(abs_dir, "config/volume_metric.json")
     if DEBUG:
         print("Config = {}".format(config))
 
+    test_swc_trees, test_tiffs = [], []
     # read test trees, gold trees and configs
-    test_swc_trees = []
-    for test_swc_file in test_swc_files:
-        test_swc_trees += read_swc_trees(test_swc_file)
+    if metric in ['volume_metric', 'VM']:
+        for file in test_swc_files:
+            test_tiffs += read_tiffs(file)
+    else:
+        for file in test_swc_files:
+            test_swc_trees += read_swc_trees(file)
+    print(test_tiffs)
     gold_swc_trees = read_swc_trees(gold_swc_file)
     config = read_json(config)
 
@@ -140,6 +152,11 @@ def pyneval(DEBUG=True):
 
     # entries to different metrics
     gold_swc_treeroot = gold_swc_trees[0]
+    for test_tiff in test_tiffs:
+        if metric == "volume_metric" or metric == "VM":
+            recall = volume_metric(tiff_test=test_tiff, swc_gold=gold_swc_treeroot, config=config)
+            print(recall)
+
     for test_swc_treeroot in test_swc_trees:
         if metric == "diadem_metric" or metric == "DM":
             ans = diadem_metric(swc_test_tree=test_swc_treeroot,
@@ -175,7 +192,6 @@ def pyneval(DEBUG=True):
                 if output_dest:
                     swc_save(gold_swc_treeroot, output_dest[:-4]+"_reverse.swc")
 
-
     if metric == "overlap_clean" or metric == "OC":
         # debug
         print("entry")
@@ -195,3 +211,5 @@ if __name__ == "__main__":
 # python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem7.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem7.swc --metric diadem_metric
 
 # python ./pyneval.py --gold D:\gitProject\mine\PyNeval\test\data_example\gold\overlap\overlap_sample5.swc --metric overlap_clean --output D:\gitProject\mine\PyNeval\output\overlap\overlap_output5.swc
+
+# python ./pyneval.py --gold D:\gitProject\mine\PyNeval\test\data_example\gold\vol_metric\6656_gold.swc --test D:\gitProject\mine\PyNeval\test\data_example\test\vol_metric\6656_2304_22016.pro.tif --metric volume_metric --output D:\gitProject\mine\PyNeval\output\volume_metric\volume_out.swc

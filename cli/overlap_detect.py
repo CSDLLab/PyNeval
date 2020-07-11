@@ -54,7 +54,7 @@ def down_sample(swc_tree=None, ang_threshold=175):
     stack = queue.LifoQueue()
     stack.put(swc_tree.root())
     down_pa = {}
-    is_active = [True]*(swc_tree.node_count() + 5)
+    is_active = [True]*(swc_tree.size() + 5)
 
     for node in PreOrderIter(swc_tree.root()):
         if node.parent is None or node is None:
@@ -277,18 +277,18 @@ def overlap_clean(swc_tree, out_path, file_name, loc_config=None):
     dis_threshold, length_threshold, ang_threshold = \
         loc_config["radius_threshold"], loc_config["length_threshold"], loc_config["ang_threshold"]
     # down_pa, is_active = down_sample(tree, 170)
-    down_pa, is_active = down_sample_itp(swc_tree=swc_tree, tree_size=swc_tree.node_count(), stage=0)
+    down_pa, is_active = down_sample_itp(swc_tree=swc_tree, tree_size=swc_tree.size(), stage=0)
     new_swc_tree = reconstruct_tree(swc_tree, is_active, down_pa)
-    down_pa, is_active = down_sample_itp(swc_tree=new_swc_tree, tree_size=swc_tree.node_count(), stage=1)
+    down_pa, is_active = down_sample_itp(swc_tree=new_swc_tree, tree_size=swc_tree.size(), stage=1)
     new_swc_tree = reconstruct_tree(new_swc_tree, is_active, down_pa)
 
-    new_swc_tree.get_lca_preprocess(swc_tree.node_count())
-    swc_tree.get_lca_preprocess(swc_tree.node_count())
+    new_swc_tree.get_lca_preprocess(swc_tree.size())
+    swc_tree.get_lca_preprocess(swc_tree.size())
 
     get_self_match_edges_e_fast(swc_tree=new_swc_tree,
                                 rad_threshold=dis_threshold,
                                 len_threshold=length_threshold,
-                                list_size=swc_tree.node_count(),
+                                list_size=swc_tree.size(),
                                 mode="not_self", DEBUG=False)
     color_origin_tree(new_swc_tree, swc_tree)
     swc_save(new_swc_tree, os.path.join(out_path, os.path.join('marked_data', file_name)))

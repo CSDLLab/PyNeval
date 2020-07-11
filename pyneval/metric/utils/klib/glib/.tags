@@ -1,0 +1,13 @@
+os	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^import os$/;"	namespace	line:6
+collections	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^import collections$/;"	namespace	line:7
+Image	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^from PIL import Image$/;"	namespace	line:8
+ImageDraw	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^from PIL import ImageDraw$/;"	namespace	line:9
+np	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^import numpy as np$/;"	namespace	line:10
+tifffile	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^import tifffile$/;"	namespace	line:11
+sliding_window_2d	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^from pyimagesearch.helpers import sliding_window_2d$/;"	namespace	line:13
+plotMyFigure	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^from PlotTools import plotMyFigure$/;"	namespace	line:14
+joinPath	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^from Utils import joinPath$/;"	namespace	line:15
+label_d_class	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^from LabelDefinition import label_d_class$/;"	namespace	line:16
+PredictImageWithSlidingWindow	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^def PredictImageWithSlidingWindow(image_path, window_width, window_height,  session, op, images_placeholder):$/;"	function	line:18
+predImgsInDir	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^def predImgsInDir(in_dir,$/;"	function	line:78
+evalModel	/Volumes/616a@10.214.36.22 NeuTube/TrainModel/MyLib/EvaluateModel.py	/^def evalModel(img_dirs,$/;"	function	line:120
