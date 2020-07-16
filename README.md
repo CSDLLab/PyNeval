@@ -6,12 +6,15 @@ pyNeval is a metric tool to judge the reconstruction of neural cells. In other w
 ## 2. metric method
 ### 2.1 length metric
 It compares two 3D trees base on 3D geometry structure. <br>
-LM simple calculates the ratio between the length of gold tree and test tree. <br>
 LM overlap calculates the ratio between the length of the overlap part of gold and test trees, and the total length of the gold tree.<br>
 LM FP-pernalize lists the wrong matched edge in the test trees. In other words, it shows the edges appear in the test tree but not in the gold tree. FP means false positive.
 ### 2.2 diadem metirc
 It is a metric introduced by Gillette, T. A., Brown. We merge it into our tool as a important part. Detail of this metric can been seen in:<br>
 http://diademchallenge.org/metric.html
+### 2.3 volume metric
+This metric is designed for the comparison between Tiff file and Swc model. It calculates the ratio between the number of nodes whose center intensity larger than threshold and the number of all nodes. It is considered as Recall of Swc file compare to Tiff file.(Swc is gold standard and Tiff is test). <br>
+### 2.4 branch_leaf_metric
+This metric firstly select all the branch nodes or leaf nodes in two different swc models, and seperate them into two sets according to which model they belong to. Then we try to find a weight minimum match for these two sets. This metric's output is the mean distance of the edge in the mininum match. The number of mismatched nodes in gold or test model is optional. 
 ## 3. How to use
 1. clone this project into your computer<br>
 `git clone https://github.com/bennieHan/pyNeval.git`<br>
