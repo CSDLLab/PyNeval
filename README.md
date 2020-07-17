@@ -1,4 +1,4 @@
-# pyNeval
+# PyNeval
 # This is a project still under construstion
 
 ## 1. introduction
@@ -15,7 +15,12 @@ http://diademchallenge.org/metric.html
 This metric is designed for the comparison between Tiff file and Swc model. It calculates the ratio between the number of nodes whose center intensity larger than threshold and the number of all nodes. It is considered as Recall of Swc file compare to Tiff file.(Swc is gold standard and Tiff is test). <br>
 ### 2.4 branch_leaf_metric
 This metric firstly select all the branch nodes or leaf nodes in two different swc models, and seperate them into two sets according to which model they belong to. Then we try to find a weight minimum match for these two sets. This metric's output is the mean distance of the edge in the mininum match. The number of mismatched nodes in gold or test model is optional. 
-## 3. How to use
+## 3. other functions
+### 3.1 self overlap detect
+Their are some self overlaps in the swc models. In other word, sometimes a thick fiber is wrongly represented as several thin fibers. It broughts extra work to some users. So we develop this method to show and delete needless edges. 
+### 3.2 up_sample/downsample
+Sometimes we are unsatified with the sample rate of the swc model. We need to delete or add some nodes between exist nodes to meet our requirement. So we design a program to adjust the sample rate of the tree.
+## 4. How to use
 1. clone this project into your computer<br>
 `git clone https://github.com/bennieHan/pyNeval.git`<br>
 2. move into the root of this project, it's the place where pyneval.py exist.<br>
