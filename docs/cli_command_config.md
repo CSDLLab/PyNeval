@@ -5,3 +5,4 @@
 | 处理结果输出路径 | --output | -O | 否 | - | 输出文件的路径（相对路径以pyneval所在文件夹为起点）。如果路径不存在，则创建相应文件夹。 |
 | 修改方法选择 | --method | -M | 是 | - | overlap_clean, up_sample, down_sample |
 | 针对不同方法的参数对象 | --config | -C | 否 | 1.0 | config.json格式的配置文件 |
+| 是否输出调试信息 | --debug | -D | 否 | 1.0 | True/False |
