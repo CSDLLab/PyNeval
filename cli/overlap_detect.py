@@ -5,13 +5,12 @@ from pyneval.model.euclidean_point import EuclideanPoint, Line
 from pyneval.metric.utils.edge_match_utils import \
     get_idedge_dict, get_edge_rtree, get_lca_length, get_nearby_edges, is_route_clean, get_route_node,\
     DINF, cal_rad_threshold, cal_len_threshold
+from cli.re_sample import down_sample_swc_tree_command_line
 from anytree import PreOrderIter
 from pyneval.io.save_swc import swc_save
 from pyneval.io.read_json import read_json
-import math,queue
+import math, queue
 import numpy as np
-import copy
-import time
 
 
 # make sure the match path does not contain a detected redundant edge
@@ -48,122 +47,6 @@ def get_ang(side_edge1, side_edge2, oppo_edge):
             side_edge1, side_edge2, oppo_edge
         ))
     return math.acos(c) * 180 / math.pi
-
-
-def down_sample(swc_tree=None, ang_threshold=175):
-    stack = queue.LifoQueue()
-    stack.put(swc_tree.root())
-    down_pa = {}
-    is_active = [True]*(swc_tree.size() + 5)
-
-    for node in PreOrderIter(swc_tree.root()):
-        if node.parent is None or node is None:
-            continue
-        down_pa[node] = node.parent
-
-    while not stack.empty():
-        node = stack.get()
-        for son in node.children:
-            stack.put(son)
-
-        # make sure it's not a root
-        if node.is_virtual() or down_pa[node].is_virtual():
-            continue
-        # make sure it's not continuation
-        if len(node.children) != 1:
-            continue
-
-        son, pa = node.children[0], down_pa[node]
-        son_dis, pa_dis, grand_dis = son.parent_distance(), node.distance(down_pa[node]), son.distance(pa)
-
-        # make sure we are deal with a situation with high sample rate
-        if son_dis > son.radius() + node.radius() or pa_dis > pa.radius() + node.radius():
-            continue
-        ang = get_ang(son_dis, pa_dis, grand_dis)
-        if ang > ang_threshold:
-            # node._type = 3
-            is_active[node.get_id()] = False
-            down_pa[son] = down_pa[node]
-    return down_pa, is_active
-
-
-def itp_ok(node=None, son=None, pa=None,
-           rad_mul=1.50, center_dis=None):
-    f_line = Line(e_node_1=son.get_center(), e_node_2=pa.get_center())
-    e_node = node.get_center()
-
-    foot = e_node.get_foot_point(f_line)
-    if not foot.on_line(f_line):
-        return False
-    else:
-        itp_dis = e_node.distance(foot)
-        e_son = son._pos
-        e_pa = pa._pos
-        itp_rad = son.radius() + (pa.radius() - son.radius()) * e_son.distance(foot) / e_son.distance(e_pa)
-        if center_dis is None:
-            center_dis = node.radius()/2
-        if node.radius() / itp_rad > rad_mul or itp_dis > center_dis:
-            return False
-
-    return True
-
-
-def down_sample_itp(swc_tree=None, tree_size=None, rad_mul=1.50, center_dis=None, stage=0):
-    stack = queue.LifoQueue()
-    stack.put(swc_tree.root())
-    down_pa = {}
-    is_active = [True]*(tree_size + 5)
-
-    for node in PreOrderIter(swc_tree.root()):
-        if node.parent is None or node is None:
-            continue
-        down_pa[node] = node.parent
-
-    while not stack.empty():
-        node = stack.get()
-        for son in node.children:
-            stack.put(son)
-
-        # 确保不是根节点
-        if node.is_virtual() or down_pa[node].is_virtual():
-            continue
-        # 确保是二度节点
-        if len(node.children) != 1:
-            continue
-
-        son, pa = node.children[0], down_pa[node]
-        son_dis, pa_dis, grand_dis = son.parent_distance(), node.distance(down_pa[node]), son.distance(pa)
-
-        # 确保针对采样率高的情况
-        if stage == 0 and (son_dis > son.radius() + node.radius() or pa_dis > pa.radius() + node.radius()):
-            continue
-        if stage == 1 and (son_dis > son.radius() + node.radius() and pa_dis > pa.radius() + node.radius()):
-            continue
-        if itp_ok(node=node, son=son, pa=pa, rad_mul=rad_mul, center_dis=center_dis):
-            is_active[node.get_id()] = False
-            down_pa[son] = down_pa[node]
-
-    return down_pa, is_active
-
-
-def reconstruct_tree(swc_tree, is_activate, down_pa):
-    new_swc_tree = SwcTree()
-    node_list = [node for node in PreOrderIter(swc_tree.root())]
-    id_node_map = {-1: new_swc_tree.root()}
-
-    for node in node_list:
-        if node.is_virtual():
-            continue
-        if is_activate[node.get_id()]:
-            tmp_node = SwcNode()
-            tmp_node._id = node.get_id()
-            tmp_node._type = node._type
-            tmp_node._pos = copy.copy(node._pos)
-            tmp_node._radius = node._radius
-            pa = id_node_map[down_pa[node].get_id()]
-            tmp_node.parent = pa
-            id_node_map[node.get_id()] = tmp_node
-    return new_swc_tree
 
 
 def color_origin_tree(new_swc_tree, swc_tree):
@@ -257,30 +140,16 @@ def delete_overlap_node(swc_tree):
         if node._type == 3:
             for son in node.children:
                 son.parent = swc_tree.root()
-            node.parent.remove_child(node)
+            swc_tree.remove_child(node.parent, node)
     swc_tree.node_list = [node for node in PreOrderIter(swc_tree.root())]
-
-
-def overlap_detect(swc_tree, out_path, loc_config=None):
-    swc_tree.get_lca_preprocess()
-
-    rad_threshold, len_threshold = loc_config["radius_threshold"], loc_config["length_threshold"]
-    down_pa, is_active = down_sample(tree, 170)
-
-    get_self_match_edges_e_fast(swc_tree=swc_tree,
-                                rad_threshold=rad_threshold, len_threshold=len_threshold,
-                                mode="all", DEBUG=False)
-    swc_save(swc_tree, out_path)
 
 
 def overlap_clean(swc_tree, out_path, file_name, loc_config=None):
     dis_threshold, length_threshold, ang_threshold = \
         loc_config["radius_threshold"], loc_config["length_threshold"], loc_config["ang_threshold"]
-    # down_pa, is_active = down_sample(tree, 170)
-    down_pa, is_active = down_sample_itp(swc_tree=swc_tree, tree_size=swc_tree.size(), stage=0)
-    new_swc_tree = reconstruct_tree(swc_tree, is_active, down_pa)
-    down_pa, is_active = down_sample_itp(swc_tree=new_swc_tree, tree_size=swc_tree.size(), stage=1)
-    new_swc_tree = reconstruct_tree(new_swc_tree, is_active, down_pa)
+
+    new_swc_tree = down_sample_swc_tree_command_line(swc_tree, loc_config)
+    new_swc_tree = down_sample_swc_tree_command_line(new_swc_tree, loc_config)
 
     new_swc_tree.get_lca_preprocess(swc_tree.size())
     swc_tree.get_lca_preprocess(swc_tree.size())
@@ -309,7 +178,3 @@ if __name__ == '__main__':
         config = read_json("D:\gitProject\mine\PyNeval\config\overlap_clean.json")
         overlap_clean(tree, out_path, file, config)
 
-    # node = SwcNode(center=[101, 100.1, 100], radius=0.6)
-    # son = SwcNode(center=[100, 100, 100], radius=0.5)
-    # pa = SwcNode(center=[102, 100, 100], radius=0.5)
-    # print(itp_ok(node=node, son=son, pa=pa))

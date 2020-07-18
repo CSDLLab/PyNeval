@@ -22,7 +22,7 @@ metric_list = [
 
 def read_parameters():
     parser = argparse.ArgumentParser(
-        description="pymet 1.0"
+        description="pyneval 1.0"
     )
 
     parser.add_argument(
