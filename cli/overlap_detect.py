@@ -145,6 +145,13 @@ def delete_overlap_node(swc_tree):
 
 
 def overlap_clean(swc_tree, out_path, file_name, loc_config=None):
+    '''
+    :param swc_tree: input swc tree
+    :param out_path: output fold path
+    :param file_name: name your file as you want
+    :param loc_config:  load config/overlap_clean.json
+    :return:
+    '''
     dis_threshold, length_threshold, ang_threshold = \
         loc_config["radius_threshold"], loc_config["length_threshold"], loc_config["ang_threshold"]
 

@@ -81,6 +81,13 @@ def down_sample_swc_tree_command_line(swc_tree, config=None):
 
 
 def down_sample_swc_tree(swc_tree, rad_mul=1.50, center_dis=None, stage=0):
+    '''
+    :param swc_tree: the tree need to delete node
+    :param rad_mul: defult=1.5
+    :param center_dis: defult=None
+    :param stage: 0: for 2 degree node, delete if one side is two close, 1: for 2 degree node, delete if two sides are two close
+    :return: swc_tree has changed in this function
+    '''
     down_pa, is_activate = down_sample(swc_tree=swc_tree, rad_mul=rad_mul, center_dis=center_dis, stage=stage)
     new_swc_tree = SwcTree()
     node_list = [node for node in PreOrderIter(swc_tree.root())]
@@ -140,8 +147,7 @@ def up_sample_swc_tree_command_line(swc_tree, config=None):
 def up_sample_swc_tree(swc_tree, thres_length=1.0):
     '''
     :param swc_tree: the tree need to add node(dense)
-    :param thres_l: control how many nodes to add
-    :param tiff_file: optional, adjust to fit tiff if exist
+    :param thres_length: control how many nodes to add
     :return: swc_tree has changed in this function
     '''
     up_sampled_swc_tree = swc_tree.get_copy()
