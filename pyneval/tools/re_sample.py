@@ -167,5 +167,7 @@ def up_sample_swc_tree(swc_tree, thres_length=1.0):
 
 if __name__ == "__main__":
     swc_tree = SwcTree()
-    swc_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\2_18_test.swc")
-    up_sample_swc_tree(swc_tree=swc_tree, thres_length=1.0)
+    swc_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\\2_18_gold.swc")
+    # up_sampled_swc_tree = up_sample_swc_tree(swc_tree=swc_tree, thres_length=1.0)
+    up_sampled_swc_tree = down_sample_swc_tree(swc_tree=swc_tree)
+    swc_save(up_sampled_swc_tree, "D:\\gitProject\\mine\\PyNeval\\output\\up_sample\\out.swc")

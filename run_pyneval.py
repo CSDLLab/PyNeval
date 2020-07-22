@@ -1,22 +1,19 @@
 import argparse
-import sys,os,platform
-from pyneval.io.read_swc import read_swc_trees, adjust_swcfile
+import sys, os, platform
+from pyneval.io.read_swc import read_swc_trees
 from pyneval.io.read_json import read_json
 from pyneval.io.save_swc import swc_save
 from pyneval.io.read_tiff import read_tiffs
-from pyneval.model.swc_node import SwcTree
 from pyneval.metric.diadem_metric import diadem_metric
 from pyneval.metric.length_metric import length_metric
 from pyneval.metric.volume_metric import volume_metric
-from cli.overlap_detect import overlap_clean
 
 metric_list = [
     "diadem_metric",
     "overall_length",
     "matched_length",
-    "overlap_clean",
     "volume_metric",
-    "DM", "OL", "ML", "OC", "VM"
+    "DM", "OL", "ML", "VM"
 ]
 
 
@@ -115,8 +112,6 @@ def pyneval(DEBUG=True):
                 config = os.path.join(abs_dir, "config\\diadem_metric.json")
             if metric in ["overall_length", "matched_length", "OL", "ML"]:
                 config = os.path.join(abs_dir, "config\\length_metric.json")
-            if metric in ["overlap_clean", "OD"]:
-                config = os.path.join(abs_dir, "config\\overlap_clean.json")
             if metric in ['volume_metric', 'VM']:
                 config = os.path.join(abs_dir, "config\\volume_metric.json")
         elif platform.system() == "Linux":
@@ -124,8 +119,6 @@ def pyneval(DEBUG=True):
                 config = os.path.join(abs_dir, "config/diadem_metric.json")
             if metric in ["overall_length", "matched_length", "OL", "ML"]:
                 config = os.path.join(abs_dir, "config/length_metric.json")
-            if metric in ["overlap_clean", "OD"]:
-                config = os.path.join(abs_dir, "config/overlap_clean.json")
             if metric in ['volume_metric', 'VM']:
                 config = os.path.join(abs_dir, "config/volume_metric.json")
     if DEBUG:
@@ -192,24 +185,14 @@ def pyneval(DEBUG=True):
                 if output_dest:
                     swc_save(gold_swc_treeroot, output_dest[:-4]+"_reverse.swc")
 
-    if metric == "overlap_clean" or metric == "OC":
-        # debug
-        print("entry")
-        print(config["radius_threshold"])
-        print(config["length_threshold"])
-        print(output_dest)
-        overlap_clean(gold_swc_treeroot, output_dest, config)
-
 
 if __name__ == "__main__":
     pyneval()
 
-# python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --metric matched_length --reverse true
+# python ./run_pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --metric matched_length --reverse true
 
-# python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem1.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem1.swc --metric diadem_metric
+# python ./run_pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem1.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem1.swc --metric diadem_metric
 
-# python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem7.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem7.swc --metric diadem_metric
+# python ./run_pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem7.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem7.swc --metric diadem_metric
 
-# python ./pyneval.py --gold D:\gitProject\mine\PyNeval\test\data_example\gold\overlap\overlap_sample5.swc --metric overlap_clean --output D:\gitProject\mine\PyNeval\output\overlap\overlap_output5.swc
-
-# python ./pyneval.py --gold D:\gitProject\mine\PyNeval\test\data_example\gold\vol_metric\6656_gold.swc --test D:\gitProject\mine\PyNeval\test\data_example\test\vol_metric\6656_2304_22016.pro.tif --metric volume_metric --output D:\gitProject\mine\PyNeval\output\volume_metric\volume_out.swc
+# python ./run_pyneval.py --gold D:\gitProject\mine\PyNeval\test\data_example\gold\vol_metric\6656_gold.swc --test D:\gitProject\mine\PyNeval\test\data_example\test\vol_metric\6656_2304_22016.pro.tif --metric volume_metric --output D:\gitProject\mine\PyNeval\output\volume_metric\volume_out.swc

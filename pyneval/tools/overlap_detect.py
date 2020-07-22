@@ -1,15 +1,15 @@
 import os
 
-from pyneval.model.swc_node import SwcNode, SwcTree, Make_Virtual
-from pyneval.model.euclidean_point import EuclideanPoint, Line
+from pyneval.model.swc_node import SwcTree
+from pyneval.model.euclidean_point import Line
 from pyneval.metric.utils.edge_match_utils import \
-    get_idedge_dict, get_edge_rtree, get_lca_length, get_nearby_edges, is_route_clean, get_route_node,\
-    DINF, cal_rad_threshold, cal_len_threshold
-from cli.re_sample import down_sample_swc_tree_command_line
+    get_idedge_dict, get_edge_rtree, get_lca_length, get_nearby_edges, get_route_node, \
+    cal_rad_threshold, cal_len_threshold
+from pyneval.tools.re_sample import down_sample_swc_tree_command_line
 from anytree import PreOrderIter
 from pyneval.io.save_swc import swc_save
 from pyneval.io.read_json import read_json
-import math, queue
+import math
 import numpy as np
 
 

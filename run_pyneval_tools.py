@@ -1,13 +1,11 @@
 import argparse
 import sys,os,platform
-from pyneval.io.read_swc import read_swc_trees, adjust_swcfile
+from pyneval.io.read_swc import read_swc_trees
 from pyneval.io.read_json import read_json
 from pyneval.io.save_swc import swc_save
-from pyneval.io.read_tiff import read_tiffs
-from pyneval.model.swc_node import SwcTree
-from cli.re_sample import up_sample_swc_tree_command_line, down_sample_swc_tree_command_line
+from pyneval.tools.re_sample import up_sample_swc_tree_command_line, down_sample_swc_tree_command_line
 
-from cli.overlap_detect import overlap_clean
+from pyneval.tools.overlap_detect import overlap_clean
 
 method_list = [
     "up_sample",
@@ -124,11 +122,17 @@ if __name__ == "__main__":
     cli()
 
 
-# python ./cli.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\swc_18254_1 --config D:\gitProject\mine\PyNeval\config\overlap_clean.json --method overlap_clean --output D:\\gitProject\\mine\\PyNeval\\output\\overlap_clean
+# python ./run_pyneval_tools.py
+# --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\swc_18254_1
+# --config D:\gitProject\mine\PyNeval\config\overlap_clean.json
+# --method overlap_clean
+# --output D:\\gitProject\\mine\\PyNeval\\output\\overlap_clean
 
-# python ./cli.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --config D:\gitProject\mine\PyNeval\config\down_sample.json --method down_sample --output D:\\gitProject\\mine\\PyNeval\\output\\down_sample
-#
-# python ./cli.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --config D:\gitProject\mine\PyNeval\config\up_sample.json --method up_sample --output D:\\gitProject\\mine\\PyNeval\\output\\up_sample
+# python ./run_pyneval_tools.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\swc_18254_1 --config D:\gitProject\mine\PyNeval\config\overlap_clean.json --method overlap_clean --output D:\\gitProject\\mine\\PyNeval\\output\\overlap_clean
+
+# python ./run_pyneval_tools.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --config D:\gitProject\mine\PyNeval\config\down_sample.json --method down_sample --output D:\\gitProject\\mine\\PyNeval\\output\\down_sample
+
+# python ./run_pyneval_tools.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --config D:\gitProject\mine\PyNeval\config\up_sample.json --method up_sample --output D:\\gitProject\\mine\\PyNeval\\output\\up_sample
 
 
 
