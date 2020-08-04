@@ -53,7 +53,7 @@ def read_parameters():
     return parser.parse_args()
 
 
-def cli():
+def pyneval_tools():
     # init path parameter
     abs_dir = os.path.abspath("")
     sys.path.append(abs_dir)
@@ -119,20 +119,20 @@ def cli():
 
 
 if __name__ == "__main__":
-    cli()
+    pyneval_tools()
 
 
-# python ./run_pyneval_tools.py
+# python ./pyneval_tools.py
 # --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\swc_18254_1
 # --config D:\gitProject\mine\PyNeval\config\overlap_clean.json
 # --method overlap_clean
 # --output D:\\gitProject\\mine\\PyNeval\\output\\overlap_clean
 
-# python ./run_pyneval_tools.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\swc_18254_1 --config D:\gitProject\mine\PyNeval\config\overlap_clean.json --method overlap_clean --output D:\\gitProject\\mine\\PyNeval\\output\\overlap_clean
+# python ./cli/pyneval_tools.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\swc_18254_1 --config D:\gitProject\mine\PyNeval\config\overlap_clean.json --method overlap_clean --output D:\\gitProject\\mine\\PyNeval\\output\\overlap_clean
 
-# python ./run_pyneval_tools.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --config D:\gitProject\mine\PyNeval\config\down_sample.json --method down_sample --output D:\\gitProject\\mine\\PyNeval\\output\\down_sample
+# python ./pyneval_tools.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --config D:\gitProject\mine\PyNeval\config\down_sample.json --method down_sample --output D:\\gitProject\\mine\\PyNeval\\output\\down_sample
 
-# python ./run_pyneval_tools.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --config D:\gitProject\mine\PyNeval\config\up_sample.json --method up_sample --output D:\\gitProject\\mine\\PyNeval\\output\\up_sample
+# python ./pyneval_tools.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --config D:\gitProject\mine\PyNeval\config\up_sample.json --method up_sample --output D:\\gitProject\\mine\\PyNeval\\output\\up_sample
 
 
 

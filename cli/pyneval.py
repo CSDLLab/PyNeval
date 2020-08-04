@@ -1,5 +1,7 @@
 import argparse
 import sys, os, platform
+sys.path = ['']+sys.path
+
 from pyneval.io.read_swc import read_swc_trees
 from pyneval.io.read_json import read_json
 from pyneval.io.save_swc import swc_save
@@ -121,8 +123,6 @@ def pyneval(DEBUG=True):
                 config = os.path.join(abs_dir, "config/length_metric.json")
             if metric in ['volume_metric', 'VM']:
                 config = os.path.join(abs_dir, "config/volume_metric.json")
-    if DEBUG:
-        print("Config = {}".format(config))
 
     test_swc_trees, test_tiffs = [], []
     # read test trees, gold trees and configs
@@ -132,7 +132,6 @@ def pyneval(DEBUG=True):
     else:
         for file in test_swc_files:
             test_swc_trees += read_swc_trees(file)
-    print(test_tiffs)
     gold_swc_trees = read_swc_trees(gold_swc_file)
     config = read_json(config)
 
@@ -189,10 +188,10 @@ def pyneval(DEBUG=True):
 if __name__ == "__main__":
     pyneval()
 
-# python ./run_pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --metric matched_length --reverse true
+# python ./cli/pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --metric matched_length --reverse true
 
-# python ./run_pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem1.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem1.swc --metric diadem_metric
+# python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem1.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem1.swc --metric diadem_metric
 
-# python ./run_pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem7.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem7.swc --metric diadem_metric
+# python ./pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem7.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem7.swc --metric diadem_metric
 
-# python ./run_pyneval.py --gold D:\gitProject\mine\PyNeval\test\data_example\gold\vol_metric\6656_gold.swc --test D:\gitProject\mine\PyNeval\test\data_example\test\vol_metric\6656_2304_22016.pro.tif --metric volume_metric --output D:\gitProject\mine\PyNeval\output\volume_metric\volume_out.swc
+# python ./pyneval.py --gold D:\gitProject\mine\PyNeval\test\data_example\gold\vol_metric\6656_gold.swc --test D:\gitProject\mine\PyNeval\test\data_example\test\vol_metric\6656_2304_22016.pro.tif --metric volume_metric --output D:\gitProject\mine\PyNeval\output\volume_metric\volume_out.swc
