@@ -49,7 +49,7 @@ when you are done, run setup again.<br>
   ```
   &emsp;&emsp;5.2 for better to understand
   ```
-  python ./pyneval.py 
+  pyneval
   --test test\data_example\test\ExampleTest.swc 
   --gold test\data_example\gold\ExampleGoldStandard.swc 
   --metric matched_length
