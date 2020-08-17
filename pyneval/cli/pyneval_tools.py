@@ -1,5 +1,7 @@
 import argparse
-import sys,os,platform
+import sys
+import os
+import platform
 from pyneval.io.read_swc import read_swc_trees
 from pyneval.io.read_json import read_json
 from pyneval.io.save_swc import swc_save
@@ -53,7 +55,7 @@ def read_parameters():
     return parser.parse_args()
 
 
-def pyneval_tools():
+def run():
     # init path parameter
     abs_dir = os.path.abspath("")
     sys.path.append(abs_dir)
@@ -119,7 +121,7 @@ def pyneval_tools():
 
 
 if __name__ == "__main__":
-    pyneval_tools()
+    sys.exit(run())
 
 
 # python ./pyneval_tools.py
@@ -128,11 +130,11 @@ if __name__ == "__main__":
 # --method overlap_clean
 # --output D:\\gitProject\\mine\\PyNeval\\output\\overlap_clean
 
-# python ./cli/pyneval_tools.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\swc_18254_1 --config D:\gitProject\mine\PyNeval\config\overlap_clean.json --method overlap_clean --output D:\\gitProject\\mine\\PyNeval\\output\\overlap_clean
+# pyneval_tools --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\swc_18254_1 --config D:\gitProject\mine\PyNeval\config\overlap_clean.json --method overlap_clean --output D:\\gitProject\\mine\\PyNeval\\output\\overlap_clean
 
-# python ./pyneval_tools.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --config D:\gitProject\mine\PyNeval\config\down_sample.json --method down_sample --output D:\\gitProject\\mine\\PyNeval\\output\\down_sample
+# pyneval_tools --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --config D:\gitProject\mine\PyNeval\config\down_sample.json --method down_sample --output D:\\gitProject\\mine\\PyNeval\\output\\down_sample
 
-# python ./pyneval_tools.py --swc_file D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --config D:\gitProject\mine\PyNeval\config\up_sample.json --method up_sample --output D:\\gitProject\\mine\\PyNeval\\output\\up_sample
+# pyneval_tools --swc_file D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --config D:\gitProject\mine\PyNeval\config\up_sample.json --method up_sample --output D:\\gitProject\\mine\\PyNeval\\output\\up_sample
 
 
 
