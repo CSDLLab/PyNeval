@@ -1,6 +1,6 @@
 import numpy as np
 import math
-
+from pyneval.metric.utils.config_utils import EPS
 
 class EuclideanPoint(object):
     '''
@@ -57,6 +57,8 @@ class EuclideanPoint(object):
 
         k_up = -(a_p[0]*b_a[0]+a_p[1]*b_a[1]+a_p[2]*b_a[2])
         k_down = b_a[0]**2+b_a[1]**2+b_a[2]**2
+        if k_down < EPS:
+            raise Exception("[Error: ] Line {} {} is just a point".format(a, b))
         k = k_up/k_down
         foot = [k*b_a[0]+a[0], k*b_a[1]+a[1], k*b_a[2]+a[2]]
         return EuclideanPoint(foot)
