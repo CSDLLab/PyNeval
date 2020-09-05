@@ -1,3 +1,5 @@
+import sys
+
 from anytree import NodeMixin, iterators, RenderTree, PreOrderIter
 from pyneval.model.euclidean_point import EuclideanPoint,Line
 from pyneval.model.swc_node import SwcTree
@@ -122,9 +124,9 @@ def pyneval_length_metric(gold_swc, test_swc, method, rad_threshold, len_thresho
 if __name__ == "__main__":
     goldTree = SwcTree()
     testTree = SwcTree()
-
-    goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\34_23_10_gold.swc")
-    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\34_23_10_test.swc")
+    sys.setrecursionlimit(10000000)
+    goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\194444.swc")
+    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\194444_new.swc")
     # print(len(goldTree.root().children))
 
     lm_res = length_metric(gold_swc_tree=goldTree,

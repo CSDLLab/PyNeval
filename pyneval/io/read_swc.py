@@ -1,5 +1,5 @@
 import os
-from pyneval.model.swc_node import SwcNode,SwcTree
+from pyneval.model.swc_node import SwcNode, SwcTree
 
 
 # if path is a fold
@@ -33,4 +33,6 @@ def read_from_str(swc_str):
 
 
 if __name__ == "__main__":
+    tree = SwcTree()
+    tree.load()
     pass

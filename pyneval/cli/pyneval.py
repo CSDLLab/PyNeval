@@ -77,6 +77,7 @@ def run(DEBUG=True):
     sys.path.append(abs_dir)
     sys.path.append(os.path.join(abs_dir, "src"))
     sys.path.append(os.path.join(abs_dir, "test"))
+    sys.setrecursionlimit(1000000)
 
     # read parameter
     args = read_parameters()
@@ -189,6 +190,10 @@ if __name__ == "__main__":
     sys.exit(run())
 
 # pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --metric matched_length --reverse true
+
+# pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\194444_new.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\194444.swc --metric matched_length --reverse true
+
+# python ./pyneval/cli/pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\194444_new.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\194444.swc --metric matched_length --reverse true
 
 # pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem1.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem1.swc --metric diadem_metric
 

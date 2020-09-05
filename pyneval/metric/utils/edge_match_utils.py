@@ -228,13 +228,21 @@ def get_nearby_edges(idx3d, point, id_edge_dict, threshold, not_self=False, DEBU
                  point.get_x() + threshold, point.get_y() + threshold, point.get_z() + threshold)
     hits = list(idx3d.intersection(point_box))
     nearby_edges = []
+
     for h in hits:
         line_tuple = id_edge_dict[h]
         if DEBUG:
-            print("\npoint = {}, line_a = {}, line_b = {}".format(
-                point.get_center()._pos, line_tuple[0].get_center()._pos, line_tuple[1].get_center()._pos)
+            print("\npoint = id{} poi{}, line_a = id{} poi{}, line_b = id{} poi{}".format(
+                point.get_id(), point.get_center()._pos,
+                line_tuple[0].get_id(), line_tuple[0].get_center()._pos,
+                line_tuple[1].get_id(), line_tuple[1].get_center()._pos)
             )
         e_point = point.get_center()
+
+        # if two sides of line_tuple is in the same position, ignore this line
+        if line_tuple[0].get_center().distance(line_tuple[1].get_center()) == 0:
+            continue
+
         new_d = e_point.distance(Line(e_node_1=line_tuple[0].get_center(), e_node_2=line_tuple[1].get_center()))
         if not_self and new_d == 0:
             continue

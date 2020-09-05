@@ -4,16 +4,30 @@
 from anytree import NodeMixin, iterators, RenderTree
 from pyneval.model.euclidean_point import EuclideanPoint
 from anytree import PreOrderIter
-from functools import cmp_to_key
+
 import math
 import queue
 import numpy as np
+import copy
 
 _3D = "3d"
 _2D = "2d"
 
 
+def Make_Virtual():
+    return SwcNode(nid=-1, center=EuclideanPoint(center=[0, 0, 0]))
+
+
 def get_nearby_swc_node_list(gold_node, test_swc_list, threshold):
+    '''
+    find all nodes in "test_swc_list" which are close enough to "gold_node"
+    sort them by distance
+
+    :param gold_node: swc_node
+    :param test_swc_list:
+    :param threshold:
+    :return:
+    '''
     tmp_list = []
     for node in test_swc_list:
         if node.is_virtual() or gold_node.is_virtual():
@@ -27,15 +41,12 @@ def get_nearby_swc_node_list(gold_node, test_swc_list, threshold):
     return res_list
 
 
-def Make_Virtual():
-    return SwcNode(nid=-1, center=EuclideanPoint(center=[0,0,0]))
-
-
+# not used old code
 def compute_platform_area(r1, r2, h):
     return (r1 + r2) * h * math.pi
 
 
-# to test
+# not used old code
 def compute_two_node_area(tn1, tn2, remain_dist):
     """Returns the surface area formed by two nodes
     """
@@ -55,7 +66,7 @@ def compute_two_node_area(tn1, tn2, remain_dist):
     return area
 
 
-# to test
+# not used old code
 def compute_surface_area(tn, range_radius):
     area = 0
 
@@ -157,17 +168,11 @@ class SwcNode(NodeMixin):
         self.xy_path_length = xy_path_length
         self.z_path_length = z_path_lenth
 
-    def add_length(self, swc_node):
-        self.path_length += swc_node.path_length
-        self.xy_path_length += swc_node.xy_path_length
-        self.z_path_length += swc_node.z_path_length
+    def set_id(self, id):
+        self._id = id
 
-    def add_data(self, swc_node):
-        self.path_length += swc_node.path_length
-        self.xy_path_length += swc_node.xy_path_length
-        self.z_path_length += swc_node.z_path_length
-        self.volume += swc_node.volume
-        self.surface_area += swc_node.surface_area
+    def get_id(self):
+        return self._id
 
     def get_x(self):
         return self._pos.get_x()
@@ -199,26 +204,36 @@ class SwcNode(NodeMixin):
         del self._pos
         self._pos = center
 
+    def depth(self):
+        return self._depth
+
+    def radius(self):
+        return self._radius
+
+    def get_parent_id(self):
+        return -2 if self.is_root else self.parent.get_id()
+
+    def add_length(self, swc_node):
+        self.path_length += swc_node.path_length
+        self.xy_path_length += swc_node.xy_path_length
+        self.z_path_length += swc_node.z_path_length
+
+    def add_data(self, swc_node):
+        self.path_length += swc_node.path_length
+        self.xy_path_length += swc_node.xy_path_length
+        self.z_path_length += swc_node.z_path_length
+        self.volume += swc_node.volume
+        self.surface_area += swc_node.surface_area
+
     def is_virtual(self):
         """Returns True iff the node is virtual.
         """
         return self._id < 0
 
-    def depth(self):
-        return self._depth
-
     def is_regular(self):
         """Returns True iff the node is NOT virtual.
         """
         return self._id >= 0
-
-    def set_id(self, id):
-        self._id = id
-
-    def get_id(self):
-        """Returns the ID of the node.
-        """
-        return self._id
 
     def distance(self, tn=None, mode=_3D):
         """ Returns the distance to another node.
@@ -227,19 +242,21 @@ class SwcNode(NodeMixin):
         Args:
           tn : the target node for distance measurement
         """
-        if tn is None:
+        # make sure itself is a regular node
+        if not self.is_regular():
             return 0.0
-        if type(tn) == type([]):
-            tn = SwcNode(nid=1, center=tn)
-        if tn and self.is_regular() and (isinstance(tn, EuclideanPoint) or tn.is_regular()):
-            dx = self.get_x() - tn.get_x()
-            dy = self.get_y() - tn.get_y()
-            dz = self.get_z() - tn.get_z()
-            if mode == _2D:
-                dz = 0.0
-            d2 = dx * dx + dy * dy + dz * dz
 
-            return math.sqrt(d2)
+        # make sure tn is a valid swc node
+        if isinstance(tn, SwcNode) and tn.is_regular():
+            if mode == _2D:
+                return self.get_center().distance_to_point_2d(tn.get_center())
+            return self.get_center().distance(tn.get_center())
+
+        # euc node is also acceptable
+        if isinstance(tn, EuclideanPoint):
+            if mode == _2D:
+                return self.get_center().distance_to_point_2d(tn)
+            return self.get_center().distance(tn)
 
         return 0.0
 
@@ -247,9 +264,6 @@ class SwcNode(NodeMixin):
         """ Returns the distance to it parent.
         """
         return self.distance(self.parent)
-
-    def radius(self):
-        return self._radius
 
     def scale(self, sx, sy, sz, adjusting_radius=True):
         """Transform a node by scaling
@@ -269,9 +283,6 @@ class SwcNode(NodeMixin):
 
         return '%d %d %g %g %g %g %d\n' % (
             self._id, self._type, self.get_x(), self.get_y(), self.get_z(), self._radius, self.parent.get_id())
-
-    def get_parent_id(self):
-        return -2 if self.is_root else self.parent.get_id()
 
     def __str__(self):
         return '%d (%d): %s, %g' % (self._id, self._type, str(self.get_center()._pos), self._radius)
@@ -293,21 +304,26 @@ class SwcTree:
         self.lca_parent = None
         self.node_list = None
 
-    def _print(self):
-        print(RenderTree(self._root).by_attr("_id"))
-
-    def clear(self):
-        self._root = Make_Virtual()
-
     def is_comment(self, line):
         return line.strip().startswith('#')
 
     def root(self):
         return self._root
 
+    def size(self):
+        self._size = len(self.id_set)
+        return self._size
+
     def regular_root(self):
         return self._root.children
 
+    def _print(self):
+        print(RenderTree(self._root).by_attr("_id"))
+
+    def clear(self):
+        self._root = Make_Virtual()
+
+    # warning: slow, don't use in loop
     def node_from_id(self, nid):
         niter = iterators.PreOrderIter(self._root)
         for tn in niter:
@@ -315,16 +331,19 @@ class SwcTree:
                 return tn
         return None
 
+    # warning: slow, don't use in loop
     def parent_id(self, nid):
         tn = self.node_from_id(nid)
         if tn:
             return tn.get_parent_id()
 
+    # warning: slow, don't use in loop
     def parent_node(self, nid):
         tn = self.node_from_id(nid)
         if tn:
             return tn.parent
 
+    # warning: slow, don't use in loop
     def child_list(self, nid):
         tn = self.node_from_id(nid)
         if tn:
@@ -398,20 +417,8 @@ class SwcTree:
                         tn._depth = tn.parent._depth + 1
                         tn.root_length = tn.parent.root_length + tn.parent_distance()
 
-    def save(self, path):
-        with open(path, 'w') as fp:
-            niter = iterators.PreOrderIter(self._root)
-            for tn in niter:
-                if tn.is_regular():
-                    fp.write('%s %d\n' % (tn.to_swc_str(), tn.get_parent_id()))
-            fp.close()
-
     def has_regular_node(self):
         return len(self.regular_root()) > 0
-
-    def size(self):
-        self._size = len(self.id_set)
-        return self._size
 
     def parent_distance(self, nid):
         d = 0
@@ -442,6 +449,7 @@ class SwcTree:
         return result
 
     def radius(self, nid):
+
         return self.node(nid).radius()
 
     def get_depth_array(self, node_num):
