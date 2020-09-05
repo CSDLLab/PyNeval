@@ -3,11 +3,15 @@ import math
 
 
 class EuclideanPoint(object):
+    '''
+    geometry node without volume
+    for point-line calculate
+    '''
     def __init__(self,
                  center=[0, 0, 0]):
         if not isinstance(center, list):
             raise Exception("[Error: ]not a list")
-        self._pos=center
+        self._pos = center
 
     def get_x(self):
         return self._pos[0]
@@ -28,12 +32,21 @@ class EuclideanPoint(object):
         self._pos[2] = z
 
     def to_str(self):
-        print("EuclideanPoint: {}".format(self._pos))
+        print("{} {} {}".format(self._pos[0], self._pos[1], self._pos[2]))
 
     def add_coord(self, point_a):
+        '''
+        :param point_a: another EuclideanPoint
+        :return: True if success
+        '''
+        if not isinstance(point_a, EuclideanPoint):
+            return False
+
         self._pos[0] += point_a.get_x()
         self._pos[1] += point_a.get_y()
         self._pos[2] += point_a.get_z()
+
+        return True
 
     def get_foot_point(self, line):
         p = self._pos
@@ -74,13 +87,24 @@ class EuclideanPoint(object):
     def distance_to_point(self, point):
         if isinstance(point, list) and len(point) == 3:
             point = EuclideanPoint(point)
-        if type(point) != type(EuclideanPoint()):
+        if not isinstance(point, EuclideanPoint):
             raise Exception("[Error:  ] expect point. got {}".format(point))
 
         sub = [self._pos[0] - point._pos[0],
                self._pos[1] - point._pos[1],
                self._pos[2] - point._pos[2]]
         return math.sqrt(sub[0]*sub[0] + sub[1]*sub[1] + sub[2]*sub[2])
+
+    def distance_to_point_2d(self, point):
+        if isinstance(point, list) and len(point) == 3:
+            point = EuclideanPoint(point)
+        if not isinstance(point, EuclideanPoint):
+            raise Exception("[Error:  ] expect point. got {}".format(point))
+
+        sub = [self._pos[0] - point._pos[0],
+               self._pos[1] - point._pos[1],
+               self._pos[2] - point._pos[2]]
+        return math.sqrt(sub[0]*sub[0] + sub[1]*sub[1])
 
     def distance_to_line(self, line):
         foot = self.get_foot_point(line)
@@ -94,21 +118,25 @@ class EuclideanPoint(object):
         else:
             dis1 = self.distance_to_point(line.coords[0])
             dis2 = self.distance_to_point(line.coords[1])
-            return min(dis1,dis2)
+            return min(dis1, dis2)
 
-    def distance(self, object):
-        if isinstance(object, EuclideanPoint):
-            return self.distance_to_point(object)
-        elif isinstance(object, Line):
-            if object.is_segment:
-                return self.distance_to_segment(object)
+    def distance(self, obj):
+        if isinstance(obj, EuclideanPoint):
+            return self.distance_to_point(obj)
+        elif isinstance(obj, Line):
+            if obj.is_segment:
+                return self.distance_to_segment(obj)
             else:
-                return self.distance_to_line(object)
+                return self.distance_to_line(obj)
         else:
-            raise Exception("[Error: ] unexpected object type {}".format(type(object)))
+            raise Exception("[Error: ] unexpected object type {}".format(type(obj)))
 
 
 class Line:
+    '''
+    consist of two EuclideanPoint
+    coords[0] and coords[1]
+    '''
     def __init__(self,
                  coords=None,
                  e_node_1=None,
@@ -123,38 +151,21 @@ class Line:
         self.is_segment = is_segment
 
     def to_str(self):
-        print("Line: {}, {}".format(self.coords[0],self.coords[1]))
+        print("[{} {} {}, {} {} {}]".format(
+            self.coords[0].get_x(), self.coords[0].get_y(), self.coords[0].get_z(),
+            self.coords[1].get_x(), self.coords[1].get_y(), self.coords[1].get_z()))
 
     def get_points(self):
         point_a = EuclideanPoint(self.coords[0])
         point_b = EuclideanPoint(self.coords[1])
         return point_a, point_b
 
-    def distance(self, object):
-        if type(object) == type(EuclideanPoint()):
-            return object.disdance(self)
-        elif type(object) == type(Line()):
-            raise Exception("[Error: ] distance between lines is not support temporarily")
+    def distance(self, obj):
+        if isinstance(obj, EuclideanPoint):
+            return obj.distance(self)
         else:
-            raise Exception("[Error: ] unexpected object type" + type(object))
+            raise Exception("[Error: ] unexpected object type" + type(obj))
 
 
 if __name__ == "__main__":
-    points = [
-        EuclideanPoint([0,0,0]),
-        EuclideanPoint([0,0,1]),
-        EuclideanPoint([0,1,0]),
-        EuclideanPoint([1,0,0]),
-        EuclideanPoint([1,2,3]),
-        EuclideanPoint([2, 2, 2])
-    ]
-    for i in range(0,len(points)):
-        for j in range(i+1, len(points)):
-            print(points[i].distance(points[j]))
-    print("----")
-    line_a = Line(coords=[[0,0,0],[1,1,1]],is_segment=False)
-    for point in points:
-        print(point.distance(line_a))
-
-
-
+    pass

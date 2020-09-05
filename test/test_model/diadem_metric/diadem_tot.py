@@ -19,8 +19,8 @@ class DiademTotTest(unittest.TestCase):
         score = diadem_metric(swc_test_tree=testTree,
                               swc_gold_tree=goldTree,
                               config=read_json("D:\gitProject\mine\PyNeval\config\diadem_metric.json"))
-        print(score)
-        self.assertEqual(score, 1.0)
+        print(score[2])
+        self.assertEqual(score[2], 1.0)
 
     def test_2(self):
         testTree = SwcTree()
@@ -35,8 +35,8 @@ class DiademTotTest(unittest.TestCase):
         score = diadem_metric(swc_test_tree=testTree,
                               swc_gold_tree=goldTree,
                               config=read_json("D:\gitProject\mine\PyNeval\config\diadem_metric.json"))
-        print(score)
-        self.assertEqual(score, 0.5)
+        print(score[2])
+        self.assertEqual(score[2], 0.5)
 
     def test_3(self):
         testTree = SwcTree()
@@ -51,8 +51,8 @@ class DiademTotTest(unittest.TestCase):
         score = diadem_metric(swc_test_tree=testTree,
                               swc_gold_tree=goldTree,
                               config=read_json("D:\gitProject\mine\PyNeval\config\diadem_metric.json"))
-        print(score)
-        self.assertEqual(score, 0.9564541213063764)
+        print(score[2])
+        self.assertEqual(score[2], 0.9564541213063764)
 
     def test_4(self):
         testTree = SwcTree()
@@ -65,8 +65,8 @@ class DiademTotTest(unittest.TestCase):
         score = diadem_metric(swc_test_tree=testTree,
                               swc_gold_tree=goldTree,
                               config=read_json("D:\gitProject\mine\PyNeval\config\diadem_metric.json"))
-        print(score)
-        self.assertEqual(score, 1.0)
+        print(score[2])
+        self.assertEqual(score[2], 1.0)
 
     def test_5(self):
         testTree = SwcTree()
@@ -79,8 +79,8 @@ class DiademTotTest(unittest.TestCase):
         score = diadem_metric(swc_test_tree=testTree,
                               swc_gold_tree=goldTree,
                               config=read_json("D:\gitProject\mine\PyNeval\config\diadem_metric.json"))
-        print(score)
-        self.assertEqual(score, 0.5)
+        print(score[2])
+        self.assertEqual(score[2], 0.5)
 
     def test_6(self):
         testTree = SwcTree()
