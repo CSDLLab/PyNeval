@@ -9,13 +9,15 @@ from pyneval.io.read_tiff import read_tiffs
 from pyneval.metric.diadem_metric import diadem_metric
 from pyneval.metric.length_metric import length_metric
 from pyneval.metric.volume_metric import volume_metric
+from pyneval.metric.branch_leaf_metric import branch_leaf_metric
 
 metric_list = [
     "diadem_metric",
     "overall_length",
     "matched_length",
     "volume_metric",
-    "DM", "OL", "ML", "VM"
+    "branch_metric",
+    "DM", "OL", "ML", "VM", "BM"
 ]
 
 
@@ -117,6 +119,8 @@ def run(DEBUG=True):
                 config = os.path.join(abs_dir, "config\\length_metric.json")
             if metric in ['volume_metric', 'VM']:
                 config = os.path.join(abs_dir, "config\\volume_metric.json")
+            if metric in ['branch_metric', "BM"]:
+                config = os.path.join(abs_dir, "config\\branch_metric.json")
         elif platform.system() == "Linux":
             if metric == "diadem_metric" or metric == "DM":
                 config = os.path.join(abs_dir, "config/diadem_metric.json")
@@ -124,6 +128,8 @@ def run(DEBUG=True):
                 config = os.path.join(abs_dir, "config/length_metric.json")
             if metric in ['volume_metric', 'VM']:
                 config = os.path.join(abs_dir, "config/volume_metric.json")
+            if metric in ['branch_metric', "BM"]:
+                config = os.path.join(abs_dir, "config/branch_metric.json")
 
     test_swc_trees, test_tiffs = [], []
     # read test trees, gold trees and configs
@@ -184,7 +190,18 @@ def run(DEBUG=True):
                 print("Recall = {} Precision = {}".format(lm_res[0], lm_res[1]))
                 if output_dest:
                     swc_save(gold_swc_treeroot, output_dest[:-4]+"_reverse.swc")
-
+        if metric == "branch_metric" or metric == "BM":
+            branch_result, leaf_result = branch_leaf_metric(gold_swc_tree=gold_swc_treeroot,
+                                                            test_swc_tree=test_swc_treeroot,
+                                                            config=config)
+            print("branch_result")
+            print("false_pos_num = {} true_neg_num = {} mean_dis = {} pt_cost = {}".format(
+                branch_result[0], branch_result[1], branch_result[2], branch_result[3],
+            ))
+            print("leaf_result")
+            print("false_pos_num = {} true_neg_num = {} mean_dis = {} pt_cost = {}".format(
+                leaf_result[0], leaf_result[1], leaf_result[2], leaf_result[3],
+            ))
 
 if __name__ == "__main__":
     sys.exit(run())
@@ -200,3 +217,5 @@ if __name__ == "__main__":
 # pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem7.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem7.swc --metric diadem_metric
 
 # pyneval --gold D:\gitProject\mine\PyNeval\test\data_example\gold\vol_metric\6656_gold.swc --test D:\gitProject\mine\PyNeval\test\data_example\test\vol_metric\6656_2304_22016.pro.tif --metric volume_metric --output D:\gitProject\mine\PyNeval\output\volume_metric\volume_out.swc
+
+# pyneval --gold D:\gitProject\mine\PyNeval\\test\data_example\gold\\194444.swc --test D:\gitProject\mine\PyNeval\\test\data_example\\test\\194444_new.swc --metric branch_metric
