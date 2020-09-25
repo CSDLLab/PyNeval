@@ -45,7 +45,7 @@ class KM:
                     if not self.visy[j] and delta > self.slack[j]:
                         delta = self.slack[j]
                 for i in range(self.nx):
-                    if self.visx[x]:
+                    if self.visx[i]:
                         self.lx[i] -= delta
                 for j in range(self.ny):
                     if self.visy[j]:
