@@ -42,7 +42,7 @@ def score(test_node_list, gold_node_list, threshold_dis):
         test_len, gold_len = gold_len, test_len
         test_node_list, gold_node_list = gold_node_list, test_node_list
 
-    dis_graph = np.zeros(shape=(max(test_len+1, gold_len+1), max(test_len+1, gold_len+1)))
+    dis_graph = np.zeros(shape=(test_len, gold_len))
 
     for i in range(test_len):
         for j in range(gold_len):
@@ -53,7 +53,6 @@ def score(test_node_list, gold_node_list, threshold_dis):
                 dis_graph[i][j] = -0x3f3f3f3f/2
 
     dis_graph = dis_graph.tolist()
-
     km = KM(maxn=max(test_len, gold_len)+10, nx=test_len, ny=gold_len, G=dis_graph)
     km.solve()
     false_pos_num, true_neg_num, true_pos_num = 0, 0, 0
@@ -99,6 +98,7 @@ def branch_leaf_metric(test_swc_tree, gold_swc_tree, config):
     leaf_result = score(test_node_list=test_leaf_swc_list,
                         gold_node_list=gold_leaf_swc_list,
                         threshold_dis=threshold_dis)
+
     branch_result = score(test_node_list=test_branch_swc_list,
                           gold_node_list=gold_branch_swc_list,
                           threshold_dis=threshold_dis)
@@ -111,9 +111,9 @@ if __name__ == "__main__":
     test_swc_tree = SwcTree()
     # gold_swc_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\branch_metric\\branch4.swc")
     # test_swc_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\branch_metric\\branch4.swc")
-    test_swc_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\194444_new.swc")
-    gold_swc_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\194444.swc")
-    config = read_json("D:\gitProject\\mine\\PyNeval\\config\\branch_metric.json")
+    test_swc_tree.load("D:\\02_project\\00_neural_tracing\\01_project\PyNeval\\test\data_example\\test\\194444_new.swc")
+    gold_swc_tree.load("D:\\02_project\\00_neural_tracing\\01_project\PyNeval\\test\data_example\gold\\194444.swc")
+    config = read_json("D:\\02_project\\00_neural_tracing\\01_project\PyNeval\config\\branch_metric.json")
     sys.setrecursionlimit(1000000)
 
     branch_result, leaf_result = \
