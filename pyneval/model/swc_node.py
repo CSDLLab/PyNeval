@@ -198,6 +198,9 @@ class SwcNode(NodeMixin):
     def get_center(self):
         return self._pos
 
+    def get_center_as_tuple(self):
+        return tuple([self.get_x(), self.get_y(), self.get_z()])
+
     def set_center(self, center):
         if not isinstance(center, EuclideanPoint):
             raise Exception("[Error: ]not EuclideanPoint")
@@ -278,10 +281,10 @@ class SwcNode(NodeMixin):
 
     def to_swc_str(self, pid=None):
         if pid is not None:
-            return '%d %d %g %g %g %g %d\n' % (
+            return '{} {} {} {} {} {} {}\n'.format(
                 self._id, self._type, self.get_x(), self.get_y(), self.get_z(), self._radius, pid)
 
-        return '%d %d %g %g %g %g %d\n' % (
+        return '{} {} {} {} {} {} {}\n'.format(
             self._id, self._type, self.get_x(), self.get_y(), self.get_z(), self._radius, self.parent.get_id())
 
     def __str__(self):
@@ -380,6 +383,7 @@ class SwcTree:
                 if parentNode:
                     tn.parent = parentNode[0]
                     tn._depth = tn.parent._depth + 1
+                    tn.root_length = tn.parent.root_length + tn.parent_distance()
 
     def load(self, path):
         self.clear()
