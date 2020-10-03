@@ -14,11 +14,16 @@ class BranchDetectTest(unittest.TestCase):
         config = read_json("..\\..\\..\\config\\branch_metric.json")
         sys.setrecursionlimit(1000000)
         config['threshold_dis'] = 5
+        config['mode'] = 1
+
         branch_result, leaf_result = \
             branch_leaf_metric(test_swc_tree=gold_swc_tree, gold_swc_tree=test_swc_tree, config=config)
-        self.assertEqual(63, branch_result[0])
-        self.assertEqual(70, branch_result[1])
-        self.assertEqual(1.6464514909060324, branch_result[2])
+        print(branch_result[0])
+        print(branch_result[1])
+        print(branch_result[2])
+        self.assertEqual(61, branch_result[0])
+        self.assertEqual(73, branch_result[1])
+        self.assertEqual(1.6772653444540893, branch_result[2])
 
     def test_branch2(self):
         gold_swc_tree = SwcTree()
@@ -30,10 +35,12 @@ class BranchDetectTest(unittest.TestCase):
         config['threshold_dis'] = 10
         branch_result, leaf_result = \
             branch_leaf_metric(test_swc_tree=gold_swc_tree, gold_swc_tree=test_swc_tree, config=config)
-
-        self.assertEqual(branch_result[0], 42)
-        self.assertEqual(branch_result[1], 49)
-        self.assertEqual(branch_result[2], 2.2915797279501797)
+        print(branch_result[0])
+        print(branch_result[1])
+        print(branch_result[2])
+        self.assertEqual(branch_result[0], 40)
+        self.assertEqual(branch_result[1], 52)
+        self.assertEqual(branch_result[2], 2.335216925858577)
 
 
 if __name__ == '__main__':

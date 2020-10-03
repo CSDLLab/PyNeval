@@ -39,6 +39,8 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
     id_edge_dict = get_idedge_dict(test_swc_tree)
     gold_node_list = gold_swc_tree.get_node_list()
     test_node_list = test_swc_tree.get_node_list()
+
+    # node num need to be larger than the max id
     test_maxum = 0
     for node in test_node_list:
         id_rootdis_dict[node.get_id()] = node.root_length
@@ -308,7 +310,6 @@ def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_lin
     else:
         lca_length += foot_b.distance(gold_line_tuple_b[0].get_center())
         lca_length2 += foot_b.distance(gold_line_tuple_b[0].get_center())
-
 
     route_list = route_list_a + route_list_b
     for node in route_list:
