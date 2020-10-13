@@ -194,23 +194,22 @@ def run(DEBUG=True):
             branch_result, leaf_result = branch_leaf_metric(gold_swc_tree=gold_swc_treeroot,
                                                             test_swc_tree=test_swc_treeroot,
                                                             config=config)
-            print("branch_result")
-            print("false_pos_num = {} true_neg_num = {} mean_dis = {} pt_cost = {}".format(
+            print("---------------Result---------------")
+            print("------------branch_result-----------")
+            print("false_pos_num = {}\ntrue_neg_num = {}\nmean_dis = {}\npt_cost = {}".format(
                 branch_result[0], branch_result[1], branch_result[2], branch_result[3],
             ))
-            print("leaf_result")
-            print("false_pos_num = {} true_neg_num = {} mean_dis = {} pt_cost = {}".format(
-                leaf_result[0], leaf_result[1], leaf_result[2], leaf_result[3],
-            ))
+            print("----------------End-----------------")
+
 
 if __name__ == "__main__":
     sys.exit(run())
 
 # pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --metric matched_length --reverse true
 
-# pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\194444_new.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\194444.swc --metric matched_length --reverse true
+# pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\194444.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\194444.swc --metric matched_length --reverse true
 
-# python ./pyneval/cli/pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\194444_new.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\194444.swc --metric matched_length --reverse true
+# python ./pyneval/cli/pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\194444.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\194444.swc --metric matched_length --reverse true
 
 # pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem1.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem1.swc --metric diadem_metric
 
@@ -218,4 +217,4 @@ if __name__ == "__main__":
 
 # pyneval --gold D:\gitProject\mine\PyNeval\test\data_example\gold\vol_metric\6656_gold.swc --test D:\gitProject\mine\PyNeval\test\data_example\test\vol_metric\6656_2304_22016.pro.tif --metric volume_metric --output D:\gitProject\mine\PyNeval\output\volume_metric\volume_out.swc
 
-# pyneval --gold D:\gitProject\mine\PyNeval\\test\data_example\gold\\194444.swc --test D:\gitProject\mine\PyNeval\\test\data_example\\test\\194444_new.swc --metric branch_metric
+# pyneval --gold E:\00_project\00_neural_reconstruction\01_project\PyNeval\data\branch_metric_data\gold\100108c3.swc --test E:\00_project\00_neural_reconstruction\01_project\PyNeval\data\branch_metric_data\test\100108c3.swc --metric branch_metric

@@ -9,7 +9,7 @@ class BranchDetectTest(unittest.TestCase):
     def test_branch1(self):
         gold_swc_tree = SwcTree()
         test_swc_tree = SwcTree()
-        test_swc_tree.load("..\\..\\..\\test\data_example\\test\\branch_detect\\194444_new.swc")
+        test_swc_tree.load("..\\..\\..\\test\data_example\\test\\branch_detect\\194444.swc")
         gold_swc_tree.load("..\\..\\..\\test\data_example\gold\\branch_detect\\194444.swc")
         config = read_json("..\\..\\..\\config\\branch_metric.json")
         sys.setrecursionlimit(1000000)
@@ -28,7 +28,7 @@ class BranchDetectTest(unittest.TestCase):
     def test_branch2(self):
         gold_swc_tree = SwcTree()
         test_swc_tree = SwcTree()
-        test_swc_tree.load("..\\..\\..\\test\data_example\\test\\branch_detect\\194444_new.swc")
+        test_swc_tree.load("..\\..\\..\\test\data_example\\test\\branch_detect\\194444.swc")
         gold_swc_tree.load("..\\..\\..\\test\data_example\gold\\branch_detect\\194444.swc")
         config = read_json("..\\..\\..\\config\\branch_metric.json")
         sys.setrecursionlimit(1000000)
