@@ -10,6 +10,7 @@ from pyneval.metric.diadem_metric import diadem_metric
 from pyneval.metric.length_metric import length_metric
 from pyneval.metric.volume_metric import volume_metric
 from pyneval.metric.branch_leaf_metric import branch_leaf_metric
+from pyneval.metric.link_metric import link_metric
 
 metric_list = [
     "diadem_metric",
@@ -17,7 +18,8 @@ metric_list = [
     "matched_length",
     "volume_metric",
     "branch_metric",
-    "DM", "OL", "ML", "VM", "BM"
+    "link_metric",
+    "DM", "OL", "ML", "VM", "BM", "LM"
 ]
 
 
@@ -121,6 +123,8 @@ def run(DEBUG=True):
                 config = os.path.join(abs_dir, "config\\volume_metric.json")
             if metric in ['branch_metric', "BM"]:
                 config = os.path.join(abs_dir, "config\\branch_metric.json")
+            if metric in ['link_metric', 'LM']:
+                config = os.path.join(abs_dir, "config\\link_metric.json")
         elif platform.system() == "Linux":
             if metric == "diadem_metric" or metric == "DM":
                 config = os.path.join(abs_dir, "config/diadem_metric.json")
@@ -130,6 +134,8 @@ def run(DEBUG=True):
                 config = os.path.join(abs_dir, "config/volume_metric.json")
             if metric in ['branch_metric', "BM"]:
                 config = os.path.join(abs_dir, "config/branch_metric.json")
+            if metric in ['link_metric', 'LM']:
+                config = os.path.join(abs_dir, "config/link_metric.json")
 
     test_swc_trees, test_tiffs = [], []
     # read test trees, gold trees and configs
@@ -196,10 +202,24 @@ def run(DEBUG=True):
                                                             config=config)
             print("---------------Result---------------")
             print("------------branch_result-----------")
-            print("false_pos_num = {}\ntrue_neg_num = {}\nmean_dis = {}\npt_cost = {}".format(
-                branch_result[0], branch_result[1], branch_result[2], branch_result[3],
-            ))
+            print("gole_branch_num = {}, test_branch_num = {}\n"
+                  "true_positive_number  = {}\n"
+                  "false_positive_number = {}\n"
+                  "true_negative_number  = {}\n"
+                  "matched_mean_distance = {}\n"
+                  "matched_sum_distance  = {}\n"
+                  "pt_score              = {}".format(branch_result[0], branch_result[1], branch_result[2],
+                                                      branch_result[3], branch_result[4], branch_result[5],
+                                                      branch_result[6], branch_result[7]))
             print("----------------End-----------------")
+        if metric == "link_metric" or metric == "LM":
+            edge_loss, tree_dis_loss = link_metric(test_swc_tree=test_swc_treeroot,
+                                                   gold_swc_tree=gold_swc_treeroot,
+                                                   config=config)
+            print("---------------Result---------------")
+            print("edge_loss     = {}\n"
+                  "tree_dis_loss = {}\n".format(edge_loss, tree_dis_loss))
+            print("---------------End---------------")
 
 
 if __name__ == "__main__":
@@ -217,4 +237,4 @@ if __name__ == "__main__":
 
 # pyneval --gold D:\gitProject\mine\PyNeval\test\data_example\gold\vol_metric\6656_gold.swc --test D:\gitProject\mine\PyNeval\test\data_example\test\vol_metric\6656_2304_22016.pro.tif --metric volume_metric --output D:\gitProject\mine\PyNeval\output\volume_metric\volume_out.swc
 
-# pyneval --gold E:\00_project\00_neural_reconstruction\01_project\PyNeval\data\branch_metric_data\gold\100108c3.swc --test E:\00_project\00_neural_reconstruction\01_project\PyNeval\data\branch_metric_data\test\100108c3.swc --metric branch_metric
+# pyneval --gold .\data\branch_metric_data\gold\194444.swc --test .\data\branch_metric_data\test\194444.swc --metric link_metric
