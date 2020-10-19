@@ -377,13 +377,19 @@ class SwcTree:
             parentId = value[1]
             if parentId == -1:
                 tn.parent = self._root
-                tn._depth = 0
             else:
                 parentNode = nodeDict.get(parentId)
                 if parentNode:
                     tn.parent = parentNode[0]
-                    tn._depth = tn.parent._depth + 1
-                    tn.root_length = tn.parent.root_length + tn.parent_distance()
+
+        for node in self.get_node_list():
+            if node.parent is None:
+                continue
+            if node.parent.get_id() == -1:
+                node._depth = 0
+            else:
+                node._depth = node.parent._depth + 1
+                node.root_length = node.parent.root_length + node.parent_distance()
 
     def load(self, path):
         self.clear()
@@ -408,18 +414,24 @@ class SwcTree:
                         nodeDict[nid] = (tn, parentId)
             fp.close()
 
-            for _, value in nodeDict.items():
-                tn = value[0]
-                parentId = value[1]
-                if parentId == -1:
-                    tn.parent = self._root
-                    tn._depth = 0
-                else:
-                    parentNode = nodeDict.get(parentId)
-                    if parentNode:
-                        tn.parent = parentNode[0]
-                        tn._depth = tn.parent._depth + 1
-                        tn.root_length = tn.parent.root_length + tn.parent_distance()
+        for _, value in nodeDict.items():
+            tn = value[0]
+            parentId = value[1]
+            if parentId == -1:
+                tn.parent = self._root
+            else:
+                parentNode = nodeDict.get(parentId)
+                if parentNode:
+                    tn.parent = parentNode[0]
+
+        for node in self.get_node_list():
+            if node.parent is None:
+                continue
+            if node.parent.get_id() == -1:
+                node._depth = 0
+            else:
+                node._depth = node.parent._depth + 1
+                node.root_length = node.parent.root_length + node.parent_distance()
 
     def has_regular_node(self):
         return len(self.regular_root()) > 0

@@ -1,9 +1,7 @@
 import copy
 import sys
-import numpy as np
-from pyneval.metric.utils.config_utils import DINF
 from pyneval.model.swc_node import SwcTree
-from pyneval.metric.utils.km_utils import KM
+from pyneval.metric.utils.km_utils import KM, get_dis_graph
 from pyneval.io.read_json import read_json
 
 
@@ -38,71 +36,6 @@ def get_leaf_swc_list(swc_tree):
     return leaf_list
 
 
-def get_simple_lca_length(std_tree, id_tree_dict, node1, node2):
-    if std_tree.depth_array is None:
-        raise Exception("[Error: ] std has not been lca initialized yet")
-
-    tmp_node1 = id_tree_dict[node1.get_center_as_tuple()]
-    tmp_node2 = id_tree_dict[node2.get_center_as_tuple()]
-
-    lca_id = std_tree.get_lca(tmp_node1.get_id(), tmp_node2.get_id())
-    if lca_id == -1:
-        return DINF
-
-    lca_node = id_tree_dict[lca_id]
-    return tmp_node1.root_length + tmp_node2.root_length - 2*lca_node.root_length
-
-
-def get_dis_graph(gold_tree, test_tree, test_node_list, gold_node_list, threshold_dis, mode=1):
-    """
-    We use KM algorithm to get the minimum full match between gold and test branch&leaf nodes
-    Since KM is used for calculating maximum match, we use the opposite value of distance
-    mode = 1: distance between nodes are calculated as euclidean distance
-    mode = 2: distance between nodes are calculated as distance on the gold tree
-    """
-    std_tree = gold_tree.get_copy()
-    id_tree_dict = {}
-
-    if mode == 2:
-        std_tree.get_lca_preprocess()
-        for node in std_tree.get_node_list():
-            # same id in gold_tree and test_tree may refer to different nodes
-            id_tree_dict[node.get_center_as_tuple()] = node
-            id_tree_dict[node.get_id()] = node
-
-    # KM works only when the length of the first dimensionality is SMALLER than the second one
-    # so we need to switch gold and test when gold list is SMALLER
-    switch = False
-    test_len = len(test_node_list)
-    gold_len = len(gold_node_list)
-
-    if gold_len < test_len:
-        switch = True
-        test_len, gold_len = gold_len, test_len
-        test_node_list, gold_node_list = gold_node_list, test_node_list
-        gold_tree, test_tree = test_tree, gold_tree
-
-    dis_graph = np.zeros(shape=(test_len, gold_len))
-
-    for i in range(test_len):
-        for j in range(gold_len):
-            if mode == 1:
-                dis = test_node_list[i].distance(gold_node_list[j])
-            else:
-                dis = get_simple_lca_length(std_tree=std_tree,
-                                            id_tree_dict=id_tree_dict,
-                                            node1=test_node_list[i],
-                                            node2=gold_node_list[j])
-
-            if dis < threshold_dis:
-                dis_graph[i][j] = -dis
-            else:
-                dis_graph[i][j] = -0x3f3f3f3f/2
-
-    dis_graph = dis_graph.tolist()
-    return dis_graph, switch, test_len, gold_len
-
-
 def get_result(test_len, gold_len, switch, km, threshold_dis):
     false_pos_num, true_neg_num, true_pos_num = 0, 0, 0
     # count numer of nodes which are matched, calculate FP, TN, TP
@@ -132,7 +65,7 @@ def get_result(test_len, gold_len, switch, km, threshold_dis):
     # print(true_neg_num)
     # print(mean_dis)
     # print(pt_cost)
-    return false_pos_num, true_neg_num, mean_dis, pt_cost
+    return true_pos_num, false_pos_num, true_neg_num, mean_dis, -km.get_max_dis(), pt_cost
 
 
 def score_point_distance(gold_tree, test_tree, test_node_list, gold_node_list, threshold_dis, mode):
@@ -148,12 +81,13 @@ def score_point_distance(gold_tree, test_tree, test_node_list, gold_node_list, t
     km = KM(maxn=max(test_len, gold_len)+10, nx=test_len, ny=gold_len, G=dis_graph)
     km.solve()
 
-    false_pos_num, true_neg_num, mean_dis, pt_cost = get_result(test_len=test_len,
-                                                                gold_len=gold_len,
-                                                                switch=switch,
-                                                                km=km,
-                                                                threshold_dis=threshold_dis)
-    return false_pos_num, true_neg_num, mean_dis, pt_cost
+    true_pos_num, false_pos_num, true_neg_num, \
+    mean_dis, tot_dis, pt_cost = get_result(test_len=test_len,
+                                            gold_len=gold_len,
+                                            switch=switch,
+                                            km=km,
+                                            threshold_dis=threshold_dis)
+    return gold_len, test_len, true_pos_num, false_pos_num, true_neg_num, mean_dis, tot_dis, pt_cost
 
 
 def branch_leaf_metric(test_swc_tree, gold_swc_tree, config):
@@ -170,10 +104,14 @@ def branch_leaf_metric(test_swc_tree, gold_swc_tree, config):
     # debug_out_list(test_leaf_swc_list, "test_leaf_swc_list")
     # debug_out_list(gold_leaf_swc_list, "gold_leaf_swc_list")
 
-    # result[0]:false_pos_num
-    # result[1]:true_neg_num
-    # result[2]:mean_dis
-    # result[3]:pt_cost
+    # result[0]:gold_len
+    # result[1]:test_len
+    # result[2]:true_pos_num
+    # result[3]:false_pos_num
+    # result[4]:true_neg_num
+    # result[5]:mean_dis
+    # result[6]:tot_dis
+    # result[7]:pt_cost
     leaf_result = score_point_distance(gold_tree=gold_swc_tree,
                                        test_tree=test_swc_tree,
                                        test_node_list=test_leaf_swc_list,
@@ -191,22 +129,28 @@ def branch_leaf_metric(test_swc_tree, gold_swc_tree, config):
 
 
 if __name__ == "__main__":
+    sys.setrecursionlimit(1000000)
     gold_swc_tree = SwcTree()
     test_swc_tree = SwcTree()
     # gold_swc_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\branch_metric\\branch4.swc")
     # test_swc_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\branch_metric\\branch4.swc")
-    test_swc_tree.load("..\\..\\data\\branch_metric_data\\test\\1_6_Ch2_1.swc")
-    gold_swc_tree.load("..\\..\\data\\branch_metric_data\\gold\\1_6_Ch2_1.swc")
+    test_swc_tree.load("..\\..\\data\\branch_metric_data\\test\\194444.swc")
+    gold_swc_tree.load("..\\..\\data\\branch_metric_data\\gold\\194444.swc")
+
     config = read_json("..\\..\\config\\branch_metric.json")
     config["mode"] = 2
-    sys.setrecursionlimit(1000000)
-
     branch_result, leaf_result = \
         branch_leaf_metric(test_swc_tree=gold_swc_tree, gold_swc_tree=test_swc_tree, config=config)
     print("---------------Result---------------")
-    print("false_positive_number = {}\n"
+    print("gole_branch_num = {}, test_branch_num = {}\n"
+          "true_positive_number  = {}\n"
+          "false_positive_number = {}\n"
           "true_negative_number  = {}\n"
+          
           "matched_mean_distance = {}\n"
-          "pt_score              = {}".format(branch_result[0], branch_result[1], branch_result[2], branch_result[3]))
+          "matched_sum_distance  = {}\n"
+          "pt_score              = {}".format(branch_result[0], branch_result[1], branch_result[2],
+                                              branch_result[3], branch_result[4], branch_result[5],
+                                              branch_result[6], branch_result[7]))
     print("----------------End-----------------")
 
