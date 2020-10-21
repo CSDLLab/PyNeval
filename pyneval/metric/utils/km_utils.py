@@ -2,41 +2,37 @@ import numpy as np
 from pyneval.metric.utils.config_utils import EPS, DINF
 
 
-def get_simple_lca_length(std_tree, id_tree_dict, node1, node2):
+def get_simple_lca_length(std_tree, test_gold_dict, node1, node2, switch):
     if std_tree.depth_array is None:
         raise Exception("[Error: ] std has not been lca initialized yet")
-
-    tmp_node1 = id_tree_dict[node1.get_center_as_tuple()]
-    tmp_node2 = id_tree_dict[node2.get_center_as_tuple()]
+    std_id_node_dict = std_tree.get_id_node_dict()
+    if switch:
+        tmp_node1 = node1
+        tmp_node2 = test_gold_dict[node2]
+    else:
+        tmp_node1 = test_gold_dict[node1]
+        tmp_node2 = node2
 
     lca_id = std_tree.get_lca(tmp_node1.get_id(), tmp_node2.get_id())
     if lca_id == -1:
         return DINF
-    lca_node = id_tree_dict[lca_id]
-    return tmp_node1.root_length + tmp_node2.root_length - 2*lca_node.root_length
+    lca_node = std_id_node_dict[lca_id]
+    return tmp_node1.root_length + tmp_node2.root_length - 2 * lca_node.root_length
 
 
 def get_dis_graph(gold_tree, test_tree, test_node_list, gold_node_list,
-                  threshold_dis, mode=1, gold_pos_node_dict=None):
+                  test_gold_dict, threshold_dis, mode=1):
     """
     We use KM algorithm to get the minimum full match between gold and test branch&leaf nodes
     Since KM is used for calculating maximum match, we use the opposite value of distance
     mode = 1: distance between nodes are calculated as euclidean distance
     mode = 2: distance between nodes are calculated as distance on the gold tree
     """
-    id_tree_dict = {}
     std_tree = gold_tree
 
     if mode == 2:
         if std_tree.depth_array is None:
             std_tree.get_lca_preprocess()
-        if gold_pos_node_dict is not None:
-            id_tree_dict = gold_pos_node_dict
-        else:
-            for node in std_tree.get_node_list():
-                # same id in gold_tree and test_tree may refer to different nodes
-                id_tree_dict[node.get_center_as_tuple()] = node
-                id_tree_dict[node.get_id()] = node
 
     # KM works only when the length of the first dimensionality is SMALLER than the second one
     # so we need to switch gold and test when gold list is SMALLER
@@ -58,9 +54,10 @@ def get_dis_graph(gold_tree, test_tree, test_node_list, gold_node_list,
                 dis = test_node_list[i].distance(gold_node_list[j])
             else:
                 dis = get_simple_lca_length(std_tree=std_tree,
-                                            id_tree_dict=id_tree_dict,
+                                            test_gold_dict=test_gold_dict,
                                             node1=test_node_list[i],
-                                            node2=gold_node_list[j])
+                                            node2=gold_node_list[j],
+                                            switch=switch)
 
             if dis <= threshold_dis:
                 dis_graph[i][j] = -dis
@@ -73,7 +70,7 @@ def get_dis_graph(gold_tree, test_tree, test_node_list, gold_node_list,
 
 class KM:
     def __init__(self, maxn, nx, ny, G):
-        self.maxn = 330
+        self.maxn = 1000
         self.ny = ny
         self.nx = nx
         self.G = G
@@ -141,6 +138,11 @@ class KM:
             if self.match[i] != -1 and self.G[self.match[i]][i] != -self.KM_INF/2:
                 ans += self.G[self.match[i]][i]
         return ans
+
+    def print_match(self):
+        for i in range(0, self.ny):
+            if self.match[i] != -1 and self.G[self.match[i]][i] != -self.KM_INF/2:
+                print("gold node: {} test node {}".format(self.match[i], i))
 
 
 if __name__ == "__main__":
