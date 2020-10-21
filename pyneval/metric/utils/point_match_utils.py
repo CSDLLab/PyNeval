@@ -24,24 +24,35 @@ def check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict):
     return None
 
 
-def convert_bin_to_kdtree(tree_node_list):
-    id_center_dict = {}
+def create_kdtree(node_list):
+    pos_node_dict = {}
     center_list = []
-    edge_set = set()
 
-    for node in tree_node_list:
+    for node in node_list:
         if node.is_virtual():
             continue
-        if tuple(node._pos) not in id_center_dict.keys():
-            id_center_dict[tuple(node._pos)] = []
-        id_center_dict[tuple(node._pos)].append(node)
-
-        edge_set.add(tuple([node, node.parent]))
-        edge_set.add(tuple([node.parent, node]))
-
-        center_list.append(node._pos)
+        pos_node_dict[node.get_center_as_tuple()] = node
+        center_list.append(list(node.get_center_as_tuple()))
     my_kdtree = kdtree.create(center_list)
-    return my_kdtree, id_center_dict, edge_set
+    return my_kdtree, pos_node_dict
+
+
+def get_gold_test_dicts(gold_node_list, test_node_list):
+    gold_kd, pos_gold_dict = create_kdtree(gold_node_list)
+    test_kd, pos_test_dict = create_kdtree(test_node_list)
+
+    gold_test_dict = {}
+    test_gold_dict = {}
+
+    for gold_node in gold_node_list:
+        test_pos = test_kd.search_knn(list(gold_node.get_center_as_tuple()), k=1)[0]
+        test_node = pos_test_dict[tuple(test_pos[0].data)]
+        gold_test_dict[gold_node] = test_node
+    for test_node in test_node_list:
+        gold_pos = gold_kd.search_knn(list(test_node.get_center_as_tuple()), k=1)[0]
+        gold_node = pos_gold_dict[tuple(gold_pos[0].data)]
+        test_gold_dict[test_node] = gold_node
+    return gold_test_dict, test_gold_dict
 
 
 def search_knn(kdtree, id_center_dict, gold_node, knn_num):

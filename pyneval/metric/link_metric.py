@@ -5,7 +5,7 @@ from pyneval.metric.utils.config_utils import DINF
 from pyneval.model.swc_node import SwcTree
 from pyneval.metric.utils.km_utils import KM, get_dis_graph
 from pyneval.io.read_json import read_json
-
+from pyneval.metric.utils.point_match_utils import get_gold_test_dicts
 
 def get_neighbors(node):
     neighbors = list(node.children)
@@ -39,22 +39,15 @@ def get_extra_pos_nodes(big_set, subset):
 def link_metric(gold_swc_tree, test_swc_tree, config):
     gold_list = gold_swc_tree.get_node_list()
     test_list = test_swc_tree.get_node_list()
-    test_pos_node_dict = {}
-    gold_pos_node_dict = {}
+    gold_test_dict, test_gold_dict = get_gold_test_dicts(gold_node_list=gold_swc_tree.get_node_list(),
+                                                         test_node_list=test_swc_tree.get_node_list())
 
     edge_loss, tree_dis_loss = 0.0, 0.0
-    for node in test_list:
-        test_pos_node_dict[node.get_center_as_tuple()] = node
-        test_pos_node_dict[node.get_id()] = node
-    for node in gold_list:
-        gold_pos_node_dict[node.get_center_as_tuple()] = node
-        gold_pos_node_dict[node.get_id()] = node
-
     for gold_node in gold_list:
         if gold_node.is_virtual():
             continue
 
-        test_node = test_pos_node_dict[gold_node.get_center_as_tuple()]
+        test_node = gold_test_dict[gold_node]
 
         # attention: nodes in test neighbors are labeled by TEST tree label
         test_neighbors = get_neighbors(test_node)
@@ -69,14 +62,14 @@ def link_metric(gold_swc_tree, test_swc_tree, config):
             edge_loss += gold_extra.distance(gold_node)
 
         for test_extra in nodes_test_extra:
-            map_test_extra = gold_pos_node_dict[test_extra.get_center_as_tuple()]
+            map_test_extra = test_gold_dict[test_extra]
             edge_loss += map_test_extra.distance(gold_node)
 
         # if two nodes are not connected, the dis will be set as DINF, so the threshold need to be set as DINF - 1
         dis_graph, switch, test_len, gold_len = \
             get_dis_graph(gold_tree=gold_swc_tree, test_tree=test_swc_tree,
                           gold_node_list=nodes_gold_extra, test_node_list=nodes_test_extra,
-                          threshold_dis=DINF-1, mode=2, gold_pos_node_dict=gold_pos_node_dict)
+                          test_gold_dict=test_gold_dict, threshold_dis=DINF-1, mode=2)
 
         km = KM(maxn=max(test_len, gold_len) + 10, nx=test_len, ny=gold_len, G=dis_graph)
         km.solve()
@@ -90,8 +83,8 @@ if __name__ == "__main__":
     start = time.time()
     gold_swc_tree = SwcTree()
     test_swc_tree = SwcTree()
-    test_swc_tree.load("..\\..\\data\\branch_metric_data\\test\\fake_data5.swc")
-    gold_swc_tree.load("..\\..\\data\\branch_metric_data\\gold\\fake_data5.swc")
+    test_swc_tree.load("..\\..\\data\\branch_metric_data\\test\\fake_data3.swc")
+    gold_swc_tree.load("..\\..\\data\\branch_metric_data\\gold\\fake_data3.swc")
     config = read_json("..\\..\\config\\branch_metric.json")
     edge_loss, tree_dis_loss = link_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
     print(edge_loss, tree_dis_loss)

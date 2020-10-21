@@ -199,7 +199,7 @@ class SwcNode(NodeMixin):
         return self._pos
 
     def get_center_as_tuple(self):
-        return tuple([self.get_x(), self.get_y(), self.get_z()])
+        return tuple([round(self.get_x(), 2), round(self.get_y(), 2), round(self.get_z(), 2)])
 
     def set_center(self, center):
         if not isinstance(center, EuclideanPoint):
@@ -279,6 +279,11 @@ class SwcNode(NodeMixin):
         if adjusting_radius:
             self._radius *= math.sqrt(sx * sy)
 
+    def is_isolated(self):
+        if (self.parent is None or self.parent.get_id() == -1) and len(self.children) == 0:
+            return True
+        return False
+
     def to_swc_str(self, pid=None):
         if pid is not None:
             return '{} {} {} {} {} {} {}\n'.format(
@@ -306,6 +311,7 @@ class SwcTree:
         self.LOG_NODE_NUM = None
         self.lca_parent = None
         self.node_list = None
+        self.id_node_dict = None
 
     def is_comment(self, line):
         return line.strip().startswith('#')
@@ -636,6 +642,14 @@ class SwcTree:
         swc_str = self.to_str_list().split("\n")
         new_tree.load_list(swc_str)
         return new_tree
+
+    def get_id_node_dict(self):
+        if self.id_node_dict is not None:
+            return self.id_node_dict
+        self.id_node_dict = {}
+        for node in self.get_node_list():
+            self.id_node_dict[node.get_id()] = node
+        return self.id_node_dict
 
 
 if __name__ == '__main__':

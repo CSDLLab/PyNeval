@@ -3,12 +3,14 @@ import sys
 from pyneval.model.swc_node import SwcTree
 from pyneval.metric.utils.km_utils import KM, get_dis_graph
 from pyneval.io.read_json import read_json
+from pyneval.metric.utils.point_match_utils import get_gold_test_dicts
 
 
 def debug_out_list(swc_list, _str):
     print("[debug_out_list ]" + _str + str(len(swc_list)))
-    # for node in swc_list:
-    #     print(node.get_id())
+    for node in swc_list:
+        print(node.get_id(), end=" ")
+    print("")
 
 
 def get_branch_swc_list(swc_tree):
@@ -68,13 +70,14 @@ def get_result(test_len, gold_len, switch, km, threshold_dis):
     return true_pos_num, false_pos_num, true_neg_num, mean_dis, -km.get_max_dis(), pt_cost
 
 
-def score_point_distance(gold_tree, test_tree, test_node_list, gold_node_list, threshold_dis, mode):
+def score_point_distance(gold_tree, test_tree, test_node_list, test_gold_dict, gold_node_list, threshold_dis, mode):
     # disgraph is a 2D ndarray store the distance of nodes in gold and test
     # test_node_list contains only branch or leaf nodes
     dis_graph, switch, test_len, gold_len = get_dis_graph(gold_tree=gold_tree,
                                                           test_tree=test_tree,
                                                           test_node_list=test_node_list,
                                                           gold_node_list=gold_node_list,
+                                                          test_gold_dict=test_gold_dict,
                                                           threshold_dis=threshold_dis,
                                                           mode=mode)
 
@@ -87,7 +90,12 @@ def score_point_distance(gold_tree, test_tree, test_node_list, gold_node_list, t
                                             switch=switch,
                                             km=km,
                                             threshold_dis=threshold_dis)
-    return gold_len, test_len, true_pos_num, false_pos_num, true_neg_num, mean_dis, tot_dis, pt_cost
+    # calculate the number of isolated nodes
+    iso_node_num = 0
+    for node in test_swc_tree.get_node_list():
+        if node.is_isolated():
+            iso_node_num += 1
+    return gold_len, test_len, true_pos_num, false_pos_num, true_neg_num, mean_dis, tot_dis, pt_cost, iso_node_num
 
 
 def branch_leaf_metric(test_swc_tree, gold_swc_tree, config):
@@ -97,7 +105,8 @@ def branch_leaf_metric(test_swc_tree, gold_swc_tree, config):
     gold_branch_swc_list = get_branch_swc_list(gold_swc_tree)
     test_leaf_swc_list = get_leaf_swc_list(test_swc_tree)
     gold_leaf_swc_list = get_leaf_swc_list(gold_swc_tree)
-
+    gold_test_dict, test_gold_dict = get_gold_test_dicts(gold_node_list=gold_swc_tree.get_node_list(),
+                                                         test_node_list=test_swc_tree.get_node_list())
     # debug output
     # debug_out_list(test_branch_swc_list, "test_branch_swc_list")
     # debug_out_list(gold_branch_swc_list, "gold_branch_swc_list")
@@ -116,12 +125,14 @@ def branch_leaf_metric(test_swc_tree, gold_swc_tree, config):
                                        test_tree=test_swc_tree,
                                        test_node_list=test_leaf_swc_list,
                                        gold_node_list=gold_leaf_swc_list,
+                                       test_gold_dict=test_gold_dict,
                                        threshold_dis=threshold_dis,
                                        mode=mode)
     branch_result = score_point_distance(gold_tree=gold_swc_tree,
                                          test_tree=test_swc_tree,
                                          test_node_list=test_branch_swc_list,
                                          gold_node_list=gold_branch_swc_list,
+                                         test_gold_dict=test_gold_dict,
                                          threshold_dis=threshold_dis,
                                          mode=mode)
 
@@ -134,23 +145,23 @@ if __name__ == "__main__":
     test_swc_tree = SwcTree()
     # gold_swc_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\branch_metric\\branch4.swc")
     # test_swc_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\branch_metric\\branch4.swc")
-    test_swc_tree.load("..\\..\\data\\branch_metric_data\\test\\194444.swc")
+    test_swc_tree.load("..\\..\\data\\branch_metric_data\\test\\194444_isolated_node.swc")
     gold_swc_tree.load("..\\..\\data\\branch_metric_data\\gold\\194444.swc")
 
     config = read_json("..\\..\\config\\branch_metric.json")
     config["mode"] = 2
     branch_result, leaf_result = \
-        branch_leaf_metric(test_swc_tree=gold_swc_tree, gold_swc_tree=test_swc_tree, config=config)
+        branch_leaf_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
     print("---------------Result---------------")
     print("gole_branch_num = {}, test_branch_num = {}\n"
           "true_positive_number  = {}\n"
           "false_positive_number = {}\n"
           "true_negative_number  = {}\n"
-          
           "matched_mean_distance = {}\n"
           "matched_sum_distance  = {}\n"
-          "pt_score              = {}".format(branch_result[0], branch_result[1], branch_result[2],
+          "pt_score              = {}\n"
+          "isolated node numbers = {}".format(branch_result[0], branch_result[1], branch_result[2],
                                               branch_result[3], branch_result[4], branch_result[5],
-                                              branch_result[6], branch_result[7]))
+                                              branch_result[6], branch_result[7], branch_result[8]))
     print("----------------End-----------------")
 
