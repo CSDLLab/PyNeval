@@ -39,17 +39,17 @@ def get_leaf_swc_list(swc_tree):
 
 
 def get_result(test_len, gold_len, switch, km, threshold_dis):
-    false_pos_num, true_neg_num, true_pos_num = 0, 0, 0
+    false_pos_num, false_neg_num, true_pos_num = 0, 0, 0
     # count numer of nodes which are matched, calculate FP, TN, TP
     for i in range(0, gold_len):
         if km.match[i] != -1 and km.G[km.match[i]][i] != -0x3f3f3f3f / 2:
             true_pos_num += 1
-    false_pos_num = gold_len - true_pos_num
-    true_neg_num = test_len - true_pos_num
+    false_neg_num = gold_len - true_pos_num
+    false_pos_num = test_len - true_pos_num
 
     # definition of swich is in function "get_dis_graph"
     if switch:
-        true_neg_num, false_pos_num = false_pos_num, true_neg_num
+        false_neg_num, false_pos_num = false_pos_num, false_neg_num
 
     if true_pos_num != 0:
         mean_dis = -km.get_max_dis() / true_pos_num
@@ -58,8 +58,8 @@ def get_result(test_len, gold_len, switch, km, threshold_dis):
     if mean_dis == -0.0:
         mean_dis = 0.0
 
-    pt_cost = -km.get_max_dis() + threshold_dis * (false_pos_num + true_neg_num) / (
-                false_pos_num + true_neg_num + true_pos_num)
+    pt_cost = -km.get_max_dis() + threshold_dis * (false_neg_num + false_pos_num) / (
+                false_neg_num + false_pos_num + true_pos_num)
 
     # debug:
     # print("output")
@@ -67,7 +67,7 @@ def get_result(test_len, gold_len, switch, km, threshold_dis):
     # print(true_neg_num)
     # print(mean_dis)
     # print(pt_cost)
-    return true_pos_num, false_pos_num, true_neg_num, mean_dis, -km.get_max_dis(), pt_cost
+    return true_pos_num, false_neg_num, false_pos_num, mean_dis, -km.get_max_dis(), pt_cost
 
 
 def score_point_distance(gold_tree, test_tree, test_node_list, test_gold_dict, gold_node_list, threshold_dis, mode):
@@ -84,7 +84,7 @@ def score_point_distance(gold_tree, test_tree, test_node_list, test_gold_dict, g
     km = KM(maxn=max(test_len, gold_len)+10, nx=test_len, ny=gold_len, G=dis_graph)
     km.solve()
 
-    true_pos_num, false_pos_num, true_neg_num, \
+    true_pos_num, false_neg_num, false_pos_num, \
     mean_dis, tot_dis, pt_cost = get_result(test_len=test_len,
                                             gold_len=gold_len,
                                             switch=switch,
@@ -92,10 +92,10 @@ def score_point_distance(gold_tree, test_tree, test_node_list, test_gold_dict, g
                                             threshold_dis=threshold_dis)
     # calculate the number of isolated nodes
     iso_node_num = 0
-    for node in test_swc_tree.get_node_list():
+    for node in test_tree.get_node_list():
         if node.is_isolated():
             iso_node_num += 1
-    return gold_len, test_len, true_pos_num, false_pos_num, true_neg_num, mean_dis, tot_dis, pt_cost, iso_node_num
+    return gold_len, test_len, true_pos_num, false_neg_num, false_pos_num, mean_dis, tot_dis, pt_cost, iso_node_num
 
 
 def branch_leaf_metric(test_swc_tree, gold_swc_tree, config):
@@ -155,12 +155,12 @@ if __name__ == "__main__":
     print("---------------Result---------------")
     print("gole_branch_num = {}, test_branch_num = {}\n"
           "true_positive_number  = {}\n"
-          "false_positive_number = {}\n"
-          "true_negative_number  = {}\n"
+          "false_negative_num    = {}\n"
+          "false_positive_num    = {}\n"
           "matched_mean_distance = {}\n"
           "matched_sum_distance  = {}\n"
           "pt_score              = {}\n"
-          "isolated node numbers = {}".format(branch_result[0], branch_result[1], branch_result[2],
+          "isolated node number  = {}".format(branch_result[0], branch_result[1], branch_result[2],
                                               branch_result[3], branch_result[4], branch_result[5],
                                               branch_result[6], branch_result[7], branch_result[8]))
     print("----------------End-----------------")
