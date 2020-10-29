@@ -12,6 +12,8 @@ def get_simple_lca_length(std_tree, test_gold_dict, node1, node2, switch):
     else:
         tmp_node1 = test_gold_dict[node1]
         tmp_node2 = node2
+    if tmp_node1 is None or tmp_node2 is None:
+        raise Exception("[Error: ]gold tree and test tree are not same. ")
 
     lca_id = std_tree.get_lca(tmp_node1.get_id(), tmp_node2.get_id())
     if lca_id == -1:

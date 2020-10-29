@@ -588,12 +588,12 @@ class SwcTree:
         for i in range(1, len(swc_list)):
             swc_list[i].parent = pa_list[swc_list[i].get_id()]
 
-    def type_clear(self, x):
+    def type_clear(self, col=0, rt_color=2):
         node_list = self.get_node_list()
         for node in node_list:
-            node._type = x
+            node._type = col
         for root in self.root().children:
-            root._type = 2
+            root._type = rt_color
 
     def radius_limit(self, x):
         node_list = self.get_node_list()
