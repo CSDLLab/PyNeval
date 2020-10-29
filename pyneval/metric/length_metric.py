@@ -134,9 +134,4 @@ if __name__ == "__main__":
                            abs_dir="D:\gitProject\mine\PyNeval",
                            config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
 
-    # lm_res2 = length_metric(gold_swc_tree=testTree,
-    #                         test_swc_tree=goldtree,
-    #                         abs_dir="D:\gitProject\mine\PyNeval",
-    #                         config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
-
     print(lm_res[0], lm_res[1])

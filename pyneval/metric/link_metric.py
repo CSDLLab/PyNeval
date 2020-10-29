@@ -5,7 +5,7 @@ from pyneval.metric.utils.config_utils import DINF
 from pyneval.model.swc_node import SwcTree
 from pyneval.metric.utils.km_utils import KM, get_dis_graph
 from pyneval.io.read_json import read_json
-from pyneval.metric.utils.point_match_utils import get_gold_test_dicts
+from pyneval.metric.utils.point_match_utils import get_swc2swc_dicts
 
 def get_neighbors(node):
     neighbors = list(node.children)
@@ -39,8 +39,11 @@ def get_extra_pos_nodes(big_set, subset):
 def link_metric(gold_swc_tree, test_swc_tree, config):
     gold_list = gold_swc_tree.get_node_list()
     test_list = test_swc_tree.get_node_list()
-    gold_test_dict, test_gold_dict = get_gold_test_dicts(gold_node_list=gold_swc_tree.get_node_list(),
-                                                         test_node_list=test_swc_tree.get_node_list())
+
+    gold_test_dict = get_swc2swc_dicts(src_node_list=gold_swc_tree.get_node_list(),
+                                       tar_node_list=test_swc_tree.get_node_list())
+    test_gold_dict = get_swc2swc_dicts(src_node_list=test_swc_tree.get_node_list(),
+                                       tar_node_list=gold_swc_tree.get_node_list())
 
     edge_loss, tree_dis_loss = 0.0, 0.0
     for gold_node in gold_list:
@@ -83,8 +86,8 @@ if __name__ == "__main__":
     start = time.time()
     gold_swc_tree = SwcTree()
     test_swc_tree = SwcTree()
-    test_swc_tree.load("..\\..\\data\\branch_metric_data\\test\\fake_data3.swc")
-    gold_swc_tree.load("..\\..\\data\\branch_metric_data\\gold\\fake_data3.swc")
+    test_swc_tree.load("..\\..\\data\\branch_metric_data\\test\\194444.swc")
+    gold_swc_tree.load("..\\..\\data\\branch_metric_data\\gold\\194444.swc")
     config = read_json("..\\..\\config\\branch_metric.json")
     edge_loss, tree_dis_loss = link_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
     print(edge_loss, tree_dis_loss)

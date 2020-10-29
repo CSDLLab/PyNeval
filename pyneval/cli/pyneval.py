@@ -93,6 +93,7 @@ def run(DEBUG=True):
     else:
         test_swc_files = [os.path.join(abs_dir, path) for path in args.test]
     gold_swc_file = os.path.join(abs_dir, args.gold)
+    gold_file_name = os.path.basename(gold_swc_file)
 
     # reverse
     reverse = args.reverse
@@ -110,7 +111,8 @@ def run(DEBUG=True):
     output_dest = args.output
     if output_dest is not None:
         output_dest = os.path.join(abs_dir, output_dest)
-
+    if output_dest is None:
+        output_dest = os.path.join(os.path.join(abs_dir, "output"))
     # config
     config = args.config
     if config is None:
@@ -145,6 +147,7 @@ def run(DEBUG=True):
     else:
         for file in test_swc_files:
             test_swc_trees += read_swc_trees(file)
+
     gold_swc_trees = read_swc_trees(gold_swc_file)
     config = read_json(config)
 
@@ -197,9 +200,9 @@ def run(DEBUG=True):
                 if output_dest:
                     swc_save(gold_swc_treeroot, output_dest[:-4]+"_reverse.swc")
         if metric == "branch_metric" or metric == "BM":
-            branch_result, leaf_result = branch_leaf_metric(gold_swc_tree=gold_swc_treeroot,
-                                                            test_swc_tree=test_swc_treeroot,
-                                                            config=config)
+            branch_result = branch_leaf_metric(gold_swc_tree=gold_swc_treeroot,
+                                               test_swc_tree=test_swc_treeroot,
+                                               config=config)
             print("---------------Result---------------")
             print("gole_branch_num = {}, test_branch_num = {}\n"
                   "true_positive_number  = {}\n"
@@ -212,6 +215,12 @@ def run(DEBUG=True):
                                                       branch_result[3], branch_result[4], branch_result[5],
                                                       branch_result[6], branch_result[7], branch_result[8]))
             print("----------------End-----------------")
+            swc_save(test_swc_treeroot, os.path.join(output_dest,
+                                                     "branch_metric",
+                                                     "{}{}".format(gold_file_name[:-4], "_test.swc")))
+            swc_save(gold_swc_treeroot, os.path.join(output_dest,
+                                                     "branch_metric",
+                                                     "{}{}".format(gold_file_name[:-4], "_gold.swc")))
         if metric == "link_metric" or metric == "LM":
             edge_loss, tree_dis_loss = link_metric(test_swc_tree=test_swc_treeroot,
                                                    gold_swc_tree=gold_swc_treeroot,
@@ -239,4 +248,4 @@ if __name__ == "__main__":
 
 # pyneval --gold .\data\branch_metric_data\gold\194444.swc --test .\data\branch_metric_data\test\194444.swc --metric link_metric
 
-# pyneval --gold .\data\branch_metric_data\gold\194444.swc --test .\data\branch_metric_data\test\194444.swc --metric branch_metric
+# pyneval --gold .\data\branch_metric_data\gold\194444_core.swc --test .\data\branch_metric_data\test\194444_core.swc --metric branch_metric

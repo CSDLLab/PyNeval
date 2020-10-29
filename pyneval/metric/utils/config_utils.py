@@ -1,5 +1,6 @@
 DINF = 999999999999.0
 EPS = 0.0000001
+SAME_POS_TH = 0.03
 
 
 def get_default_threshold(gold_swc_tree):
