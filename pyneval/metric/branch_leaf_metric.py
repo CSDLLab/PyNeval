@@ -68,7 +68,7 @@ def get_result(test_len, gold_len, switch, km, threshold_dis):
     # print(true_neg_num)
     # print(mean_dis)
     # print(pt_cost)
-    return true_pos_num, false_neg_num, false_pos_num, mean_dis, -km.get_max_dis(), pt_cost
+    return true_pos_num, false_neg_num, false_pos_num, mean_dis, mean_dis * true_pos_num, pt_cost
 
 
 def get_colored_tree(test_node_list, gold_node_list, switch, km, color):
@@ -174,7 +174,7 @@ def branch_leaf_metric(test_swc_tree, gold_swc_tree, config):
 
 if __name__ == "__main__":
     sys.setrecursionlimit(1000000)
-    file_name = "194444_core"
+    file_name = "fake_data5"
     gold_swc_tree = SwcTree()
     test_swc_tree = SwcTree()
 
