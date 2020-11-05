@@ -621,6 +621,8 @@ class SwcTree:
         children.remove(swc_son_node)
         swc_node.children = tuple(children)
 
+        for son in swc_son_node.children:
+            son.parent = self._root
         self.id_set.remove(swc_son_node.get_id())
 
     def get_node_list(self, update=False):
