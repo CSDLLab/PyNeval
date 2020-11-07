@@ -77,9 +77,6 @@ def get_colored_tree(test_node_list, gold_node_list, switch, km, color):
     color[1] = fp's color
     color[2] = fn's color
     '''
-    # print("C")
-    # for i in range(len(gold_node_list)):
-    #     print("i = {}, id = {}".format(i, gold_node_list[i].get_id()))
     tp_set = set()
     for i in range(0, len(gold_node_list)):
         if km.match[i] != -1 and km.G[km.match[i]][i] != -0x3f3f3f3f / 2:
@@ -100,7 +97,7 @@ def get_colored_tree(test_node_list, gold_node_list, switch, km, color):
 
 
 def score_point_distance(gold_tree, test_tree, test_node_list, gold_node_list,
-                         test_gold_dict, threshold_dis, color, mode):
+                         test_gold_dict, threshold_dis, color, metric_mode):
     # disgraph is a 2D ndarray store the distance of nodes in gold and test
     # test_node_list contains only branch or leaf nodes
     dis_graph, switch, test_len, gold_len = get_dis_graph(gold_tree=gold_tree,
@@ -109,7 +106,7 @@ def score_point_distance(gold_tree, test_tree, test_node_list, gold_node_list,
                                                           gold_node_list=gold_node_list,
                                                           test_gold_dict=test_gold_dict,
                                                           threshold_dis=threshold_dis,
-                                                          mode=mode)
+                                                          metric_mode=metric_mode)
     # create a KM object and calculate the minimum match
     km = KM(maxn=max(test_len, gold_len)+10, nx=test_len, ny=gold_len, G=dis_graph)
     km.solve()
@@ -131,9 +128,16 @@ def score_point_distance(gold_tree, test_tree, test_node_list, gold_node_list,
     return gold_len, test_len, true_pos_num, false_neg_num, false_pos_num, mean_dis, tot_dis, pt_cost, iso_node_num
 
 
-def branch_leaf_metric(test_swc_tree, gold_swc_tree, config):
+def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
     threshold_dis = config["threshold_dis"]
-    mode = config["mode"]
+    metric_mode = config["metric_mode"]
+    threshold_mode = config["threshold_mode"]
+    if threshold_mode == 2:
+        # length of the entire gold swc forest
+        tot_dis = gold_swc_tree.length()
+        # number of edges in the forest
+        edge_num = len(gold_swc_tree.get_node_list())-1-len(gold_swc_tree.root().children)
+        threshold_dis = threshold_dis * tot_dis / edge_num
     color = [
         config['true_positive_type'],
         config['false_negative_type'],
@@ -168,13 +172,13 @@ def branch_leaf_metric(test_swc_tree, gold_swc_tree, config):
                                          test_gold_dict=test_gold_dict,
                                          threshold_dis=threshold_dis,
                                          color=color,
-                                         mode=mode)
+                                         metric_mode=metric_mode)
     return branch_result
 
 
 if __name__ == "__main__":
     sys.setrecursionlimit(1000000)
-    file_name = "fake_data5"
+    file_name = "fake_data13"
     gold_swc_tree = SwcTree()
     test_swc_tree = SwcTree()
 
@@ -182,7 +186,9 @@ if __name__ == "__main__":
     gold_swc_tree.load("..\\..\\data\\branch_metric_data\\gold\\{}.swc".format(file_name))
 
     config = read_json("..\\..\\config\\branch_metric.json")
-    config["mode"] = 2
+    config["metric_mode"] = 2
+    config["threshold_dis"] = 1.5
+    config["threshold_mode"] = 2
     branch_result = \
         branch_leaf_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
     print("---------------Result---------------")

@@ -23,7 +23,7 @@ def get_simple_lca_length(std_tree, test_gold_dict, node1, node2, switch):
 
 
 def get_dis_graph(gold_tree, test_tree, test_node_list, gold_node_list,
-                  test_gold_dict, threshold_dis, mode=1):
+                  test_gold_dict, threshold_dis, metric_mode=1):
     """
     We use KM algorithm to get the minimum full match between gold and test branch&leaf nodes
     Since KM is used for calculating maximum match, we use the opposite value of distance
@@ -32,7 +32,7 @@ def get_dis_graph(gold_tree, test_tree, test_node_list, gold_node_list,
     """
     std_tree = gold_tree
 
-    if mode == 2:
+    if metric_mode == 2:
         if std_tree.depth_array is None:
             std_tree.get_lca_preprocess()
 
@@ -52,7 +52,7 @@ def get_dis_graph(gold_tree, test_tree, test_node_list, gold_node_list,
 
     for i in range(test_len):
         for j in range(gold_len):
-            if mode == 1:
+            if metric_mode == 1:
                 dis = test_node_list[i].distance(gold_node_list[j])
             else:
                 dis = get_simple_lca_length(std_tree=std_tree,
