@@ -1,6 +1,7 @@
 {
   "threshold_dis": 2,
-  "mode": 1,
+  "threshold_mode": 1,
+  "metric_mode": 1,
   "true_positive_type":3,
   "false_negative_type":4,
   "false_positive_type":5
