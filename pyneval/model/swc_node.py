@@ -555,19 +555,16 @@ class SwcTree:
                     stack.put(son)
 
     def change_root(self, new_root_id):
-        list_size = 0
         stack = queue.LifoQueue()
         swc_list = self.get_node_list()
-        for node in swc_list:
-            list_size = max(list_size, node.get_id())
-
-        vis_list = np.zeros(shape=(list_size + 10,))
+        list_size = max(self.id_set)
+        vis_list = np.zeros(shape=(list_size+10))
         pa_list = [None] * (list_size+10)
 
         for node in swc_list:
             pa_list[node.get_id()] = node.parent
-
         new_root = self.node_from_id(new_root_id)
+
         stack.put(new_root)
         pa_list[new_root_id] = self.root()
         while not stack.empty():
@@ -584,7 +581,7 @@ class SwcTree:
                 pa_list[cur_node.parent.get_id()] = cur_node
 
         for i in range(1, len(swc_list)):
-            swc_list[i].parent = self.root()
+            swc_list[i].parent = None
         for i in range(1, len(swc_list)):
             swc_list[i].parent = pa_list[swc_list[i].get_id()]
 
@@ -667,12 +664,16 @@ class SwcTree:
 
 
 if __name__ == '__main__':
+    import time,sys
     print('testing ...')
     from pyneval.io.save_swc import swc_save
-    import sys
+
     sys.setrecursionlimit(100000)
     tree = SwcTree()
-    tree.load("E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\swc_cut_data\\fake_data2.swc")
-    tree.change_root(new_root_id=5)
+    start = time.time()
+    tree.load("E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\swc_cut_data\\194444.swc")
+    print(time.time()-start)
+    tree.change_root(new_root_id=100)
     tree.get_node_list(update=True)
-    swc_save(swc_tree=tree, out_path="E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\output\swc_cut\\change_root_fake_data2.swc")
+    swc_save(swc_tree=tree, out_path="E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\output\swc_cut\\194444.swc")
+    print(time.time()-start)
