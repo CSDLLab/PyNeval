@@ -50,7 +50,7 @@ def swc_save(swc_tree, out_path):
     if not is_path_valid(out_path):
         return False
     swc_node_list = swc_tree.get_node_list()
-
+    swc_tree.sort_node_list(key="id")
     with open(out_path, 'w') as f:
         f.truncate()
         for node in swc_node_list:

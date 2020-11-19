@@ -14,7 +14,7 @@ def cut_swc_rectangle(swc_tree, LFD_pos, RBT_pos):
     LFD_pos[2] < RBT_pos[2]
     the output region will be saved in (pyneal)/output/swc_cut/
     '''
-    if LFD_pos[0] > RBT_pos[0] or LFD_pos[1] > RBT_pos[1] or LFD_pos[2] < RBT_pos[2]:
+    if LFD_pos[0] > RBT_pos[0] or LFD_pos[1] > RBT_pos[1] or LFD_pos[2] > RBT_pos[2]:
         raise Exception("[Error: ]LFD pos should be smaller than RBT pos")
     for node in swc_tree.get_node_list():
         if node.is_virtual():
