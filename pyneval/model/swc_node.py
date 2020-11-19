@@ -628,7 +628,19 @@ class SwcTree:
     def get_node_list(self, update=False):
         if self.node_list is None or update:
             self.node_list = [node for node in PreOrderIter(self.root())]
+
         return self.node_list
+
+    def sort_node_list(self, key="default"):
+        '''
+        index:
+            default: order by pre order
+            id: order by id
+        '''
+        if key == "default":
+            self.get_node_list(update=True)
+        if key == "id":
+            self.node_list.sort(key=lambda node:node.get_id())
 
     def to_str_list(self):
         swc_node_list = self.get_node_list()
@@ -656,7 +668,11 @@ class SwcTree:
 
 if __name__ == '__main__':
     print('testing ...')
+    from pyneval.io.save_swc import swc_save
+    import sys
+    sys.setrecursionlimit(100000)
     tree = SwcTree()
-    tree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\gold.swc")
-    tree.get_lca_preprocess()
-    print(tree.get_lca(2, 6))
+    tree.load("E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\swc_cut_data\\fake_data2.swc")
+    tree.change_root(new_root_id=5)
+    tree.get_node_list(update=True)
+    swc_save(swc_tree=tree, out_path="E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\output\swc_cut\\change_root_fake_data2.swc")
