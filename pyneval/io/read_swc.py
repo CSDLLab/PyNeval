@@ -16,7 +16,9 @@ def read_swc_trees(swc_file_paths, tree_name_dict=None):
             tree_name_dict[swc_tree] = os.path.basename(swc_file_paths)
     elif os.path.isdir(swc_file_paths):
         for file in os.listdir(swc_file_paths):
-            swc_tree_list += read_swc_trees(swc_file_paths=os.path.join(swc_file_paths, file), tree_name_dict=tree_name_dict)
+            swc_tree = read_swc_trees(swc_file_paths=os.path.join(swc_file_paths, file), tree_name_dict=tree_name_dict)
+            if swc_tree is not None:
+                swc_tree_list += swc_tree
     return swc_tree_list
 
 

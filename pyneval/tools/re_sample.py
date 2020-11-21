@@ -131,8 +131,10 @@ def re_sample(swc_tree, son, pa, thres_length):
     new_node._type = 7
 
     swc_tree.remove_child(pa, son)
-    swc_tree.add_child(pa, new_node)
-    swc_tree.add_child(new_node, son)
+    if not swc_tree.add_child(pa, new_node):
+        raise Exception("[Error: ] add child fail type of pa :{}, type of son".format(type(pa, new_node)))
+    if not swc_tree.add_child(new_node, son):
+        raise Exception("[Error: ] add child fail type of pa :{}, type of son".format(type(new_node, son)))
 
     re_sample(swc_tree=swc_tree, son=new_node, pa=pa, thres_length=thres_length)
     re_sample(swc_tree=swc_tree, son=son, pa=new_node, thres_length=thres_length)
@@ -166,8 +168,9 @@ def up_sample_swc_tree(swc_tree, thres_length=1.0):
 
 
 if __name__ == "__main__":
+    file_name = "6144_12288_17664"
     swc_tree = SwcTree()
-    swc_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\\2_18_gold.swc")
-    # up_sampled_swc_tree = up_sample_swc_tree(swc_tree=swc_tree, thres_length=1.0)
-    up_sampled_swc_tree = down_sample_swc_tree(swc_tree=swc_tree)
-    swc_save(up_sampled_swc_tree, "D:\\gitProject\\mine\\PyNeval\\output\\up_sample\\out.swc")
+    swc_tree.load("D:\\02_project\\00_neural_tracing\\01_project\PyNeval\data\swc_cut_data\\{}.swc".format(file_name))
+    up_sampled_swc_tree = up_sample_swc_tree(swc_tree=swc_tree, thres_length=1.0)
+    # up_sampled_swc_tree = down_sample_swc_tree(swc_tree=swc_tree)
+    swc_save(up_sampled_swc_tree, "D:\\02_project\\00_neural_tracing\\01_project\PyNeval\output\\resample\\{}.swc".format(file_name))
