@@ -941,7 +941,7 @@ def affine_matrix_from_points(v0, v1, shear=True, scale=True, usesvd=True):
     if ndims < 2 or v0.shape[1] < ndims or v0.shape != v1.shape:
         raise ValueError("input arrays are of wrong shape or type")
 
-    # move centroids to origin
+    # move_5 centroids to origin
     t0 = -numpy.mean(v0, axis=1)
     M0 = numpy.identity(ndims+1)
     M0[:ndims, ndims] = t0
@@ -996,7 +996,7 @@ def affine_matrix_from_points(v0, v1, shear=True, scale=True, usesvd=True):
         v1 *= v1
         M[:ndims, :ndims] *= math.sqrt(numpy.sum(v1) / numpy.sum(v0))
 
-    # move centroids back
+    # move_5 centroids back
     M = numpy.dot(numpy.linalg.inv(M1), numpy.dot(M, M0))
     M /= M[ndims, ndims]
     return M

@@ -1,3 +1,5 @@
+import os
+
 from pyneval.io.read_swc import read_swc_trees
 from pyneval.io.save_swc import swc_save
 from pyneval.model.swc_node import SwcTree
@@ -11,7 +13,7 @@ def get_float_random(down, up):
     return res
 
 
-def delete_random(swc_tree, move_percentage=None, move_num=None):
+def swc_random_delete(swc_tree, move_percentage=None, move_num=None):
     '''
     :param move_percentage:
     :param swc_tree:
@@ -20,43 +22,41 @@ def delete_random(swc_tree, move_percentage=None, move_num=None):
 
     swc_node_list = swc_tree.get_node_list()
 
-    # calculate which nodes to move
-    node_to_move = set()
+    # calculate which nodes to move_5
+    node_to_move = [i for i in range(1, len(swc_node_list))]
     if move_num is not None:
-        while len(node_to_move) < move_num:
-            move_id = random.randint(1, len(swc_node_list)-1)
-            node_to_move.add(move_id)
+        node_to_move = node_to_move[:move_num]
     elif move_percentage is not None:
-        tmp_num = int((len(swc_node_list)-1) * move_percentage)
-        while len(node_to_move) < tmp_num:
-            move_id = random.randint(1, len(swc_node_list)-1)
-            node_to_move.add(move_id)
+        node_to_move = node_to_move[:int(move_percentage*len(swc_node_list))]
+    else:
+        return False
 
     res_tree = swc_tree.get_copy()
     swc_node_list = res_tree.get_node_list()
 
     for remove_id in node_to_move:
         remove_node = swc_node_list[remove_id]
-        for son in remove_node.children:
-            son.parent = res_tree.root()
-        remove_node.parent.remove_child(remove_node)
+        # for son in remove_node.children:
+        #     son.parent = res_tree.root()
+        res_tree.remove_child(remove_node.parent, remove_node)
+        # remove_node.parent.remove_child(remove_node)
         remove_node.parent = None
     res_tree.get_node_list(update=True)
-    swc_save(res_tree, "D:\gitProject\mine\PyNeval\output\\build_out.swc")
-    return res_tree.to_str_list()
+    # swc_save(res_tree, "D:\gitProject\mine\PyNeval\output\\build_out.swc")
+    return res_tree
 
 
-def build_random(swc_tree, move_percentage=None, move_num=None, move_range=1.0, tendency=(1, 1, 1)):
+def swc_random_move(swc_tree, move_percentage=None, move_num=None, move_range=1.0, tendency=(1, 1, 1)):
     '''
     :param swc_tree: standard swc tree
-    :param percentage: percentage of nodes to move (range:[0,1])
+    :param percentage: percentage of nodes to move_5 (range:[0,1])
     :param range:stard range is the averange length of edge.
     :param tendency: a tuple to change the direction of the movement
     :return: modified swc tree(different object from the input one)
     '''
     swc_node_list = swc_tree.get_node_list()
 
-    # calculate move base
+    # calculate move_5 base
     tot_rad = 0.0
     for node in swc_node_list:
         if node.is_virtual():
@@ -64,7 +64,7 @@ def build_random(swc_tree, move_percentage=None, move_num=None, move_range=1.0, 
         tot_rad += node.radius()
     move_base = tot_rad / float(len(swc_node_list) - 1) * move_range
 
-    # calculate which nodes to move
+    # calculate which nodes to move_5
     node_to_move = [i for i in range(1, len(swc_node_list))]
     random.shuffle(node_to_move)
     if move_num is not None:
@@ -77,7 +77,7 @@ def build_random(swc_tree, move_percentage=None, move_num=None, move_range=1.0, 
     res_tree = swc_tree.get_copy()
     res_swc_list = res_tree.get_node_list()
     for node_id in node_to_move:
-        # calculate move length
+        # calculate move_5 length
         dx, dy, dz = get_float_random(-1, 1), get_float_random(-1, 1), get_float_random(-1, 1)
         dx, dy, dz = dx * move_base, dy * move_base, dz * move_base
         dx, dy, dz = dx * tendency[0], dy * tendency[1], dz * tendency[2]
@@ -87,19 +87,42 @@ def build_random(swc_tree, move_percentage=None, move_num=None, move_range=1.0, 
         res_swc_list[node_id].set_y(res_swc_list[node_id].get_y() + dy)
         res_swc_list[node_id].set_z(res_swc_list[node_id].get_z() + dz)
 
-    #debug
-    swc_save(res_tree, "D:\gitProject\mine\PyNeval\output\\build_out.swc")
-    return res_tree.to_str_list()
+    # debug
+    # swc_save(res_tree, "D:\gitProject\mine\PyNeval\output\\build_out.swc")
+    return res_tree
 
 
 if __name__=="__main__":
-    test_tree = SwcTree()
-    test_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\2_18_gold.swc")
-
-    move_percentage = 0.1
+    tree_name_dict = {}
+    gold_trees = read_swc_trees(swc_file_paths="../../data/example_selected",
+                                tree_name_dict=tree_name_dict)
+    iter_num = 50
     move_num = None
-    move_range = 1.0
+    move_range = 2.0
     move_tendency = (1, 1, 1)
-    delete_random(test_tree, move_percentage, None)
+    output_dir = "../../output/random_data"
+    # decide the origin swc tree
+    for gold_tree in gold_trees:
+        # decide how much modes to change
+        tree_name = tree_name_dict[gold_tree]
+        tree_dir = os.path.join(output_dir, tree_name[:-4])
+        if not os.path.exists(tree_dir):
+            os.mkdir(tree_dir)
+        for move_percentage in range(1, 11):
+            # take random for gen_num times
+            percent_dir = os.path.join(tree_dir, "{:03d}".format(move_percentage*10))
+            if not os.path.exists(percent_dir):
+                os.mkdir(percent_dir)
+            for it in range(iter_num):
+                # test_swc = swc_random_move(swc_tree=gold_tree,
+                #                            move_percentage=0.1 * move_percentage,
+                #                            move_num=None,
+                #                            move_range=move_range,
+                #                            tendency=move_tendency)
+                test_swc = swc_random_delete(swc_tree=gold_tree,
+                                             move_percentage=0.1*move_percentage,
+                                             move_num=None)
+                file_name = os.path.join(percent_dir, "move_{:02d}.swc".format(it))
+                swc_save(swc_tree=test_swc, out_path=file_name)
 
 

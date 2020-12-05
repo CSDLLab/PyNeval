@@ -85,7 +85,8 @@ def length_metric(gold_swc_tree, test_swc_tree, abs_dir, config):
                                                            detail_path=detail_path,
                                                            DEBUG=True)
         # print("Recall = {}, Precision = {}".format(recall, precision))
-        return tuple([recall, precision, "".join(vertical_tree)])
+        # return tuple([recall, precision, "".join(vertical_tree)])
+        return tuple([recall, precision])
     else:
         raise Exception("[Error: ] Read config info method {}. length metric only have 1 and 2 two methods".format(
             config["method"]

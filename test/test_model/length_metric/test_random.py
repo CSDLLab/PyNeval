@@ -1,4 +1,5 @@
 import os
+import csv
 import unittest, time
 import numpy as np
 import multiprocessing as mp
@@ -8,290 +9,131 @@ from pyneval.io.read_json import read_json
 from pyneval.model.swc_node import SwcNode, SwcTree
 from pyneval.metric.length_metric import length_metric
 from pyneval.metric.diadem_metric import diadem_metric
-from test.data_builder.dbuilder import build_random, delete_random
+from test.test_model.visualize.linechart_visual import linechar_visual
+
 import sys
 
-CPU_CORE_NUM = 11
-
-def lm_move_percentage_test(gold_tree, move_percentage, move_num, move_range, move_tendency):
-    avg_recalls = []
-    avg_precisions = []
-
-    for it in range(11):
-        recalls = []
-        precitions = []
-        jter = 10
-        for jt in range(jter):
-            test_tree = build_random(swc_tree=gold_tree,
-                                     move_percentage=it * 0.1,
-                                     move_num=None,
-                                     move_range=move_range,
-                                     tendency=move_tendency)
-
-            recall, precision, ver = length_metric(gold_swc_tree=gold_tree,
-                                                   test_swc_tree=test_tree,
-                                                   abs_dir="",
-                                                   config=read_json("..\..\..\config\length_metric.json"))
-
-            recalls.append(recall)
-            precitions.append(precision)
-        recalls = np.array(recalls)
-        precitions = np.array(precitions)
-        avg_recalls.append((recalls.sum()/jter, recalls.std()))
-        avg_precisions.append((precitions.sum()/jter, precitions.std()))
-
-    return avg_recalls, avg_precisions
+CPU_CORE_NUM = 12
 
 
-def lm_move_range_test(gold_tree, move_percentage, move_num, move_tendency):
-    avg_recalls = []
-    avg_precisions = []
-    config = read_json("..\..\..\config\length_metric.json")
-    for it in range(11):
-        recalls = []
-        precitions = []
-        jter = 10
-
-        pool = mp.Pool(processes=12)
-        test_trees = []
-        for jt in range(jter):
-            test_trees.append(
-                pool.apply_async(build_random, args=(gold_tree, move_percentage, move_num, it * 1.0, move_tendency))
-            )
-
-        pool.close()
-        pool.join()
-
-        pool_metric = mp.Pool(processes=12)
-        res_list = []
-        for jt in range(jter):
-            test_tree = SwcTree()
-            test_tree.load_list(test_trees[jt].get().split("\n"))
-            res_list.append(
-                pool_metric.apply_async(length_metric, args=(gold_tree, test_tree, "", config))
-            )
-
-        pool_metric.close()
-        pool_metric.join()
-        for item in res_list:
-            recalls.append(item.get()[0])
-            precitions.append(item.get()[1])
-
-        recalls = np.array(recalls)
-        precitions = np.array(precitions)
-        avg_recalls.append((recalls.sum()/jter, recalls.std()))
-        avg_precisions.append((precitions.sum()/jter, precitions.std()))
-
-    return avg_recalls, avg_precisions
-
-
-def lm_delete_percentage_test(gold_tree, move_percentage, move_num):
-    avg_recalls = []
-    avg_precisions = []
-
-    gold_tree_str = gold_tree.to_str_list().split("\n")
-    config = read_json("..\..\..\config\length_metric.json")
-    for it in range(11):
-        recalls = []
-        precitions = []
-        jter = 10
-
-        pool = mp.Pool(processes=12)
-        test_trees = []
-        for jt in range(jter):
-            gold_tree = SwcTree()
-            gold_tree.load_list(gold_tree_str)
-
-            test_trees.append(
-                pool.apply_async(delete_random, args=(gold_tree, it*0.1, move_num, ))
-            )
-
-        pool.close()
-        pool.join()
-
-        pool_metric = mp.Pool(processes=12)
-        res_list = []
-        for jt in range(jter):
-            test_tree = SwcTree()
-            gold_tree = SwcTree()
-            gold_tree.load_list(gold_tree_str)
-            test_tree.load_list(test_trees[jt].get().split("\n"))
-            res_list.append(
-                pool_metric.apply_async(length_metric, args=(gold_tree, test_tree, "", config))
-            )
-
-        pool_metric.close()
-        pool_metric.join()
-        print("{} down".format(it))
-        for item in res_list:
-            recalls.append(item.get()[0])
-            precitions.append(item.get()[1])
-
-        recalls = np.array(recalls)
-        precitions = np.array(precitions)
-        avg_recalls.append((recalls.sum()/jter, recalls.std()))
-        avg_precisions.append((precitions.sum()/jter, precitions.std()))
-
-    return avg_recalls, avg_precisions
-
-
-def dm_test(gold_tree, test_trees, move_percentage, move_num):
-    sys.setrecursionlimit(1000000)
-    avg_recalls, avg_precisions= [], []
-    config = read_json("..\..\..\config\diadem_metric.json")
-    gold_tree_str = gold_tree.to_str_list().split("\n")
-
-    recalls, precitions, jter = [], [], 200
-    # get recalls&precisions
-    pool_metric = mp.Pool(processes=CPU_CORE_NUM)
-    res_list = []
-    for jt in range(jter):
-        gold_tree = SwcTree()
-        gold_tree.load_list(gold_tree_str)
-        print("test: {}".format(jt))
-        res_list.append(
-            pool_metric.apply_async(diadem_metric, args=(gold_tree, test_trees[jt], config, False, ))
+def len_csv_to_pic(csv_path, pic_path):
+    rows = []
+    for csv_file in os.listdir(csv_path):
+        if os.path.isdir(os.path.join(csv_path, csv_file)):
+            continue
+        with open(os.path.join(csv_path, csv_file), 'r', newline='') as f:
+            csv_reader = csv.reader(f)
+            for row in csv_reader:
+                if len(row) != 0:
+                    rows.append(list(map(float, row)))
+        linechar_visual(
+            avgs=[rows[0], rows[2]],
+            stds=[rows[1], rows[3]],
+            output_dir=pic_path,
+            file_name=csv_file[:-4]+'.png',
+            lables=["recall", "precision"]
         )
-    pool_metric.close()
-    pool_metric.join()
-    # manage data to return
-    for item in res_list:
-        print(item.get())
-        recalls.append(item.get())
-
-    recalls = np.array(recalls)
-    return tuple([recalls.sum() / jter, recalls.std()])
 
 
-def data_random_delete(gold_tree, file_path_out):
-    for it in range(15):
-        jter = 1000
-        pool = mp.Pool(processes=CPU_CORE_NUM)
+def len_res_to_csv(metric_results, csv_path=None, pic_path=None):
+    for swc_file in metric_results.keys():
+        swc_res = metric_results[swc_file]
+        recall_avgs = []
+        recall_stds = []
+        precision_avgs = []
+        precision_stds = []
+        for raw_per_data in swc_res:
+            np_raw_per_data = np.array(raw_per_data)
 
-        # get test trees
-        test_trees = []
-        for jt in range(jter):
-            test_trees.append(
-                pool.apply_async(delete_random, args=(gold_tree, None, it * 1.0, ))
+            avg = np_raw_per_data.mean(axis=0)
+            std = np_raw_per_data.std(axis=0)
+
+            recall_avgs.append(avg[0])
+            recall_stds.append(std[0])
+            precision_avgs.append(avg[1])
+            precision_stds.append(std[1])
+        if csv_path is not None:
+            with open(os.path.join(csv_path, swc_file+".csv"), 'w') as f:
+                c_writer = csv.writer(f)
+                c_writer.writerow(recall_avgs)
+                c_writer.writerow(recall_stds)
+                c_writer.writerow(precision_avgs)
+                c_writer.writerow(precision_stds)
+        # paint different features of a single swc on the same pic
+        if pic_path is not None:
+            linechar_visual(
+                avgs=[recall_avgs, precision_avgs],
+                stds=[recall_stds, precision_stds],
+                output_dir=pic_path,
+                file_name=swc_file,
+                lables=["recall", "precision"]
             )
-        pool.close()
-        pool.join()
-
-        pool_metric = mp.Pool(processes=CPU_CORE_NUM)
-        for jt in range(jter):
-            test_tree = SwcTree()
-            test_tree.load_list(test_trees[jt].get().split("\n"))
-            if not os.path.exists(os.path.join(file_path_out, '{}_dm_mv'.format(it))):
-                os.mkdir(os.path.join(file_path_out, '{}_dm_mv'.format(it)))
-            pool_metric.apply_async(swc_save, args=(test_tree,
-                                                    os.path.join(os.path.join(file_path_out,
-                                                                              '{}_dm_mv'.format(it)),
-                                                                              "{}_{}_dm_mv.txt".format(it, jt))))
-        pool_metric.close()
-        pool_metric.join()
 
 
-def data_random_move(gold_tree, file_path_out):
-    for it in range(3,4):
-        jter = 100
-        pool = mp.Pool(processes=CPU_CORE_NUM)
-
-        # get test trees
-        test_trees = []
-        for jt in range(jter):
-            test_trees.append(
-                pool.apply_async(build_random, args=(gold_tree, it*0.05, None, 1.0, (1, 1, 1), ))
-            )
-        pool.close()
-        pool.join()
-
-        pool_metric = mp.Pool(processes=CPU_CORE_NUM)
-        for jt in range(jter):
-            if not os.path.exists(os.path.join(file_path_out, '{}_dm_mv'.format(it))):
-                os.mkdir(os.path.join(file_path_out, '{}_dm_mv'.format(it)))
-            test_tree = SwcTree()
-            test_tree.load_list(test_trees[jt].get().split("\n"))
-            pool_metric.apply_async(swc_save, args=(test_tree,
-                                                    os.path.join(os.path.join(file_path_out, '{}_dm_mv'.format(it)),
-                                                                                             "{}_{}_dm_mv.txt".format(it, jt))))
-
-        pool_metric.close()
-        pool_metric.join()
-
-
-def test_io(func_method, file_path_in, file_path_out, test_fold, file_name):
+def test_template(func_method, func_args, gold_dir, test_dir, generate_method="move"):
+    '''
+    input: gold_file_in: path to randomly generated different
+    output: average recall on different change rates
+    '''
     sys.setrecursionlimit(1000000)
-    files = os.listdir(file_path_in)
-    avg_recalls, avg_precisions = [], []
-    for file in files:
-        print("filename = {}".format(file))
+    # res
+    metric_results = {}
+    # choose "move" or "delete"
+    # gm_dir sample: test_dir/move
+    gm_dir = os.path.join(test_dir, generate_method)
+
+    for swc_data in os.listdir(gm_dir):
+        # swc_dir sample: test_dir/move/a
+        swc_dir = os.path.join(gm_dir, swc_data)
         gold_tree = SwcTree()
-        gold_tree.load(os.path.join(file_path_in, file))
-        test_path_in = os.path.join(file_path_in, test_fold)
-        for it in range(11):
-            test_path_tmp = os.path.join(test_path_in, '{}_dm_mv'.format(it))
-            test_trees = []
+        gold_tree.load(os.path.join(gold_dir, swc_data+".swc"))
+        swc_res = []
+        for per in os.listdir(swc_dir):
+            # final_dir sample: test_dir/move/a/10
+            final_dir = os.path.join(swc_dir, per)
 
+            results = []
             pool = mp.Pool(processes=CPU_CORE_NUM)
-            for test in os.listdir(test_path_tmp):
+            for file in os.listdir(final_dir):
                 test_tree = SwcTree()
-                test_tree.load(os.path.join(test_path_tmp, test))
-                test_trees.append(test_tree)
-
-            print("test start:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
-            avg_recall, avg_precision = func_method(gold_tree=gold_tree,
-                                                    test_trees=test_trees,
-                                                    move_percentage=None,
-                                                    move_num=None)
-            avg_precisions.append(avg_precisions)
-            avg_recalls.append(avg_recall)
-
-        with open(os.path.join(file_path_out, file_name), 'a') as f:
-            for item in avg_recalls:
-                f.write("{} ".format(str(item[0])))
-            f.write("\n")
-            for item in avg_recalls:
-                f.write("{} ".format(str(item[1])))
-            f.write("\n")
-        with open(os.path.join(file_path_out, file_name), 'a') as f:
-            for item in avg_precisions:
-                f.write("{} ".format(str(item[0])))
-            f.write("\n")
-            for item in avg_precisions:
-                f.write("{} ".format(str(item[1])))
-            f.write("\n")
-        print("test end:", time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
+                test_tree.load(os.path.join(final_dir, file))
+                results.append(
+                    pool.apply_async(func_method, args=tuple([gold_tree, test_tree])+func_args)
+                )
+                # results.append(func_method(gold_tree, test_tree,func_args[0], func_args[1]))
+            pool.close()
+            pool.join()
+            clean_result = []
+            for result in results:
+                clean_result.append(list(result.get()))
+            swc_res.append(clean_result)
+            print("{}----{}".format(swc_data, per))
+        metric_results[swc_data] = swc_res
+    return metric_results
 
 
 if __name__=='__main__':
     sys.setrecursionlimit(1000000)
-    file_path_in = "D:\gitProject\mine\PyNeval\\test\data_example\gold\\random_test_data\\diadem_data"
-    file_path_out = "D:\\gitProject\\mine\\PyNeval\\test\\test_model\\visualize\\input_data"
 
-    # test_io(lm_delete_percentage_test, file_path_in, file_path_out, 'tmp_out.txt')
-    # test_io(dm_delete_num_test, file_path_in, file_path_out, 'std1_delete_random', 'dm_delete_percentage_out.txt')
-    # test_io(dm_test, file_path_in, file_path_out, 'std1_delete_random_1000', 'dm_mv_percentage_out_1000.txt')
+    gold_dir = "../../../data/example_selected"
+    test_dir = "../../../output/random_data"
+    out_dir = "../../../output/"
+    config = read_json("../../../config/length_metric.json")
+    # length metric
+    metric_results = test_template(func_method=length_metric,
+                                   func_args=("D:\\02_project\\00_neural_tracing\\01_project\PyNeval", config),
+                                   gold_dir=gold_dir,
+                                   test_dir=test_dir,
+                                   generate_method="delete")
 
-    # data prepare
-    # start = time.time()
-    # gold_tree = SwcTree()
-    # gold_tree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\random_test_data\diadem_data\diadem_std1.swc")
-    # file_data_path_out = "D:\gitProject\mine\PyNeval\\test\data_example\gold\\random_test_data\diadem_data\std1_delete_random_1000"
-    # data_random_delete(gold_tree, file_data_path_out)
-    # print("time = {}".format(time.time() - start))
+    # metric_results = test_template(func_method=length_metric,
+    #                                func_args=("D:\\02_project\\00_neural_tracing\\01_project\PyNeval", config),
+    #                                gold_dir=gold_dir,
+    #                                test_dir=test_dir,
+    #                                generate_method="move")
 
-    scores = []
-    with open("D:\gitProject\mine\PyNeval\\test\\test_model\\visualize\input_data\dm_1000.txt") as f:
-        lines = f.readlines()
-    tot_str = "".join(lines)
-    print(tot_str.split('\n'))
-    nums = list(map(float, tot_str.split('\n')))
-    for i in range(11):
-        scores.append(nums[i*200:(i+1)*200])
-    with open("D:\gitProject\mine\PyNeval\\test\\test_model\\visualize\input_data\dm_delete_percentage_out_1000.txt", 'a') as f:
-        for score in scores:
-            f.write("{} ".format(np.array(score).sum() / 200))
-        f.write("\n")
-        for score in scores:
-            f.write("{} ".format(np.array(score).std()))
-        f.write("\n")
+    len_res_to_csv(metric_results,
+                   csv_path=os.path.join(out_dir, "csv_dir"),
+                   pic_path=None)
+    len_csv_to_pic(csv_path=os.path.join(out_dir, "csv_dir"),
+                   pic_path=os.path.join(out_dir, "pic_dir"))
