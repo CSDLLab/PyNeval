@@ -72,7 +72,7 @@ def link_metric(gold_swc_tree, test_swc_tree, config):
         dis_graph, switch, test_len, gold_len = \
             get_dis_graph(gold_tree=gold_swc_tree, test_tree=test_swc_tree,
                           gold_node_list=nodes_gold_extra, test_node_list=nodes_test_extra,
-                          test_gold_dict=test_gold_dict, threshold_dis=DINF-1, mode=2)
+                          test_gold_dict=test_gold_dict, threshold_dis=DINF-1, metric_mode=2)
 
         km = KM(maxn=max(test_len, gold_len) + 10, nx=test_len, ny=gold_len, G=dis_graph)
         km.solve()
@@ -86,8 +86,8 @@ if __name__ == "__main__":
     start = time.time()
     gold_swc_tree = SwcTree()
     test_swc_tree = SwcTree()
-    test_swc_tree.load("..\\..\\data\\branch_metric_data\\test\\194444.swc")
-    gold_swc_tree.load("..\\..\\data\\branch_metric_data\\gold\\194444.swc")
+    test_swc_tree.load("..\\..\\data\\test_data\\branch_metric_data\\test\\194444.swc")
+    gold_swc_tree.load("..\\..\\data\\test_data\\branch_metric_data\\gold\\194444.swc")
     config = read_json("..\\..\\config\\branch_metric.json")
     edge_loss, tree_dis_loss = link_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
     print(edge_loss, tree_dis_loss)

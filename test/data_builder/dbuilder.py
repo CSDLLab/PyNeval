@@ -38,7 +38,7 @@ def swc_random_delete(swc_tree, move_percentage=None, move_num=None):
         remove_node = swc_node_list[remove_id]
         # for son in remove_node.children:
         #     son.parent = res_tree.root()
-        res_tree.remove_child(remove_node.parent, remove_node)
+        res_tree.remove_node(remove_node.parent, remove_node)
         # remove_node.parent.remove_child(remove_node)
         remove_node.parent = None
     res_tree.get_node_list(update=True)
@@ -114,14 +114,14 @@ if __name__=="__main__":
             if not os.path.exists(percent_dir):
                 os.mkdir(percent_dir)
             for it in range(iter_num):
-                # test_swc = swc_random_move(swc_tree=gold_tree,
-                #                            move_percentage=0.1 * move_percentage,
-                #                            move_num=None,
-                #                            move_range=move_range,
-                #                            tendency=move_tendency)
-                test_swc = swc_random_delete(swc_tree=gold_tree,
-                                             move_percentage=0.1*move_percentage,
-                                             move_num=None)
+                test_swc = swc_random_move(swc_tree=gold_tree,
+                                           move_percentage=0.1 * move_percentage,
+                                           move_num=None,
+                                           move_range=move_range,
+                                           tendency=move_tendency)
+                # test_swc = swc_random_delete(swc_tree=gold_tree,
+                #                              move_percentage=0.1*move_percentage,
+                #                              move_num=None)
                 file_name = os.path.join(percent_dir, "move_{:02d}.swc".format(it))
                 swc_save(swc_tree=test_swc, out_path=file_name)
 

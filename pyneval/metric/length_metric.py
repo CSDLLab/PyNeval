@@ -126,13 +126,13 @@ if __name__ == "__main__":
     goldTree = SwcTree()
     testTree = SwcTree()
     sys.setrecursionlimit(10000000)
-    goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\\194444.swc")
-    testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\194444.swc")
+    goldTree.load("..\\..\\data\\test_data\\ssd_data\\gold\\194444.swc")
+    testTree.load("..\\..\\data\\test_data\\ssd_data\\test\\194444.swc")
     # print(len(goldTree.root().children))
 
     lm_res = length_metric(gold_swc_tree=goldTree,
                            test_swc_tree=testTree,
-                           abs_dir="D:\gitProject\mine\PyNeval",
-                           config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
+                           abs_dir="D:\\03_backup\\00_project\\00_neural_reconstruction\\01_project\PyNeval",
+                           config=read_json("..\\..\\config\\length_metric.json"))
 
     print(lm_res[0], lm_res[1])

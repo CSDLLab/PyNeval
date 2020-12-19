@@ -130,10 +130,10 @@ def re_sample(swc_tree, son, pa, thres_length):
     new_node.set_r((son.radius() + pa.radius()) / 2)
     new_node._type = 7
 
-    swc_tree.remove_child(pa, son)
+    swc_tree.unlink_child(son)
     if not swc_tree.add_child(pa, new_node):
         raise Exception("[Error: ] add child fail type of pa :{}, type of son".format(type(pa, new_node)))
-    if not swc_tree.add_child(new_node, son):
+    if not swc_tree.link_child(new_node, son):
         raise Exception("[Error: ] add child fail type of pa :{}, type of son".format(type(new_node, son)))
 
     re_sample(swc_tree=swc_tree, son=new_node, pa=pa, thres_length=thres_length)
