@@ -140,7 +140,7 @@ def delete_overlap_node(swc_tree):
         if node._type == 3:
             for son in node.children:
                 son.parent = swc_tree.root()
-            swc_tree.remove_child(node.parent, node)
+            swc_tree.remove_node(node.parent, node)
     swc_tree.node_list = [node for node in PreOrderIter(swc_tree.root())]
 
 

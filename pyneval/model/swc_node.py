@@ -600,6 +600,7 @@ class SwcTree:
     def next_id(self):
         return max(self.id_set) + 1
 
+    # use this function if son is a new node
     def add_child(self, swc_node, swc_son_node):
         if not isinstance(swc_son_node, SwcNode) or not isinstance(swc_node, SwcNode):
             return False
@@ -611,16 +612,34 @@ class SwcTree:
         self.id_set.add(nid)
         return True
 
-    def remove_child(self, swc_node, swc_son_node):
-        if not isinstance(swc_node, SwcNode) or not isinstance(swc_son_node, SwcNode):
+    # use this function if son use to be a part of this tree
+    def link_child(self, pa, son):
+        if not isinstance(pa, SwcNode) or not isinstance(son, SwcNode):
             return False
-        children = list(swc_node.children)
-        children.remove(swc_son_node)
-        swc_node.children = tuple(children)
+        son.parent = pa
+        return True
 
-        for son in swc_son_node.children:
+    def remove_node(self, node):
+        if not isinstance(node, SwcNode):
+            return False
+        pa = node.parent
+        children = list(pa.children)
+        children.remove(node)
+        pa.children = tuple(children)
+
+        for son in node.children:
             son.parent = self._root
-        self.id_set.remove(swc_son_node.get_id())
+        self.id_set.remove(node.get_id())
+        return True
+
+    def unlink_child(self, node):
+        if not isinstance(node, SwcNode):
+            return False
+        pa = node.parent
+        children = list(pa.children)
+        children.remove(node)
+        pa.children = tuple(children)
+        return True
 
     def get_node_list(self, update=False):
         if self.node_list is None or update:

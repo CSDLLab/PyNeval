@@ -178,12 +178,12 @@ def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
 
 if __name__ == "__main__":
     sys.setrecursionlimit(1000000)
-    file_name = "fake_data13"
+    file_name = "fake_data11"
     gold_swc_tree = SwcTree()
     test_swc_tree = SwcTree()
 
-    test_swc_tree.load("..\\..\\data\\branch_metric_data\\test\\{}.swc".format(file_name))
-    gold_swc_tree.load("..\\..\\data\\branch_metric_data\\gold\\{}.swc".format(file_name))
+    test_swc_tree.load("..\\..\\data\\test_data\\branch_metric_data\\test\\{}.swc".format(file_name))
+    gold_swc_tree.load("..\\..\\data\\test_data\\branch_metric_data\\gold\\{}.swc".format(file_name))
 
     config = read_json("..\\..\\config\\branch_metric.json")
     config["metric_mode"] = 2
@@ -203,8 +203,8 @@ if __name__ == "__main__":
                                               branch_result[3], branch_result[4], branch_result[5],
                                               branch_result[6], branch_result[7], branch_result[8]))
     print("----------------End-----------------")
-    with open("../../output/branch_metric/{}_gold.swc".format(file_name), 'w') as f:
-        f.write(gold_swc_tree.to_str_list())
-    with open("../../output/branch_metric/{}_test.swc".format(file_name), 'w') as f:
-        f.write(test_swc_tree.to_str_list())
+    # with open("../../output/branch_metric/{}_gold.swc".format(file_name), 'w') as f:
+    #     f.write(gold_swc_tree.to_str_list())
+    # with open("../../output/branch_metric/{}_test.swc".format(file_name), 'w') as f:
+    #     f.write(test_swc_tree.to_str_list())
 

@@ -22,7 +22,7 @@ def cut_swc_rectangle(swc_tree, LFD_pos, RBT_pos):
         if not (LFD_pos[0] <= node.get_x() <= RBT_pos[0] and \
                 LFD_pos[1] <= node.get_y() <= RBT_pos[1] and \
                 LFD_pos[2] <= node.get_z() <= RBT_pos[2]):
-            swc_tree.remove_child(node.parent, node)
+            swc_tree.remove_node(node.parent, node)
                             
 
 if __name__ == "__main__":
