@@ -17,7 +17,7 @@ FLOAT_ERROR = 0.001
 def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                     vertical_tree=None,
                     rad_threshold=-1.0, len_threshold=0.2,
-                    detail_path=None, DEBUG=False):
+                    debug=False):
     """
     :param gold_swc_tree: Swc_Tree
     :param test_swc_tree: Swc_Tree
@@ -25,7 +25,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
     :param rad_threshold: float, radius threshold
     :param len_threshold: float, length threshold
     :param detail_path: string, path for extra detail
-    :param DEBUG: bool, true or false, to show DEBUG info or not
+    :param debug: bool, true or false, to show debug info or not
     :return: match_edge set contains tuple of two swc nodes
     level: 0
     """
@@ -56,9 +56,9 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
         rad_threshold1, rad_threshold2 = cal_rad_threshold(rad_threshold, node.radius(), node.parent.radius())
 
         line_tuple_a_set = get_nearby_edges(idx3d=idx3d, point=node, id_edge_dict=id_edge_dict,
-                                            threshold=rad_threshold1, not_self=False, DEBUG=False)
+                                            threshold=rad_threshold1, not_self=False, debug=debug)
         line_tuple_b_set = get_nearby_edges(idx3d=idx3d, point=node.parent, id_edge_dict=id_edge_dict,
-                                            threshold=rad_threshold2, not_self=False, DEBUG=False)
+                                            threshold=rad_threshold2, not_self=False, debug=debug)
 
         done = False
         for line_tuple_a_dis in line_tuple_a_set:
@@ -83,16 +83,19 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
 
                 len_threshold1 = cal_len_threshold(len_threshold, gold_length)
                 if not (dis_a <= rad_threshold1 and dis_b <= rad_threshold2):
-                    # print(node.get_id(), dis_a, rad_threshold1, dis_b, rad_threshold2, "error1")
+                    if debug:
+                        print(node.get_id(), dis_a, rad_threshold1, dis_b, rad_threshold2, "error1")
                     continue
                 if not (math.fabs(test_length - gold_length) < len_threshold1):
-                    # print(node.get_id(), "error2")
+                    if debug:
+                        print(node.get_id(), "error2")
                     continue
                 if not is_route_clean(gold_swc_tree=test_swc_tree,
                                       gold_line_tuple_a=line_tuple_a, gold_line_tuple_b=line_tuple_b,
                                       node1=node, node2=node.parent,
-                                      edge_use_dict=edge_use_dict, vis_list= vis_list, DEBUG=False):
-                    # print(node.get_id(), "error3")
+                                      edge_use_dict=edge_use_dict, vis_list= vis_list, debug=debug):
+                    if debug:
+                        print(node.get_id(), "error3")
                     continue
                 match_edge.add(tuple([node, node.parent]))
                 vertical_id = adjust_vertical_tree(node, line_tuple_a, line_tuple_b, vertical_tree, vertical_id)
@@ -102,10 +105,9 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
 
         if not done:
             node._type = 6
-            # print("{} not done".format(node.get_id()))
-            # node.parent._type = 6
-    # debugging
-    swc_save(gold_swc_tree, "..\..\output\out_30_18_10.swc")
+            if debug:
+                print("{} not done".format(node.get_id()))
+
     return match_edge, test_match_length
 
 
@@ -215,14 +217,14 @@ def get_nearby_edges_slow(test_node_list, point, threshold, not_self=False, DEBU
 
 
 # find the closest edge base on rtree
-def get_nearby_edges(idx3d, point, id_edge_dict, threshold, not_self=False, DEBUG=False):
+def get_nearby_edges(idx3d, point, id_edge_dict, threshold, not_self=False, debug=False):
     '''
     :param idx3d: an rtree
     :param point: point to get nearby edges
     :param id_edge_dict:map between id and line tuple(edge)
     :param threshold:
     :param not_self: exclude self,used in overlap detect
-    :param DEBUG:
+    :param debug:
     :return: a list of tuple(edge, dis). Sorted according to dis
     level: 1
     '''
@@ -233,7 +235,7 @@ def get_nearby_edges(idx3d, point, id_edge_dict, threshold, not_self=False, DEBU
 
     for h in hits:
         line_tuple = id_edge_dict[h]
-        if DEBUG:
+        if debug:
             print("\npoint = id{} poi{}, line_a = id{} poi{}, line_b = id{} poi{}".format(
                 point.get_id(), point.get_center()._pos,
                 line_tuple[0].get_id(), line_tuple[0].get_center()._pos,
@@ -255,9 +257,15 @@ def get_nearby_edges(idx3d, point, id_edge_dict, threshold, not_self=False, DEBU
 
 # get the distance of two matched closest edges
 def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_line, id_rootdis_dict):
-    '''
+    """
+    :param gold_swc_tree SwcTree object
+    :param gold_line_tuple_a: a list of two nodes describe a edge
+    :param gold_line_tuple_b: a list of two nodes describe a edge
+    :param test_line: Line object defined in pyneval/model/euclidean_point
+    :param id_rootdis_dict: a dict [int to float], get nodes' distance to root by its id
+    :return lca_length of two side nodes of test line
     level: 1
-    '''
+    """
     point_a, point_b = test_line.get_points()
 
     gold_line_a = Line(e_node_1=gold_line_tuple_a[0].get_center(),
@@ -316,17 +324,24 @@ def get_lca_length(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, test_lin
         if node.get_id() == lca_id:
             continue
         lca_length += node.parent_distance()
-    # if lca_length-lca_length2 > 0.0000001:
-    #     print(lca_length, lca_length2)
+
     return lca_length
 
 
-#
-def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, node2, edge_use_dict, vis_list, DEBUG):
-    '''
+def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, node2, edge_use_dict, vis_list, debug):
+    """
+    :param gold_swc_tree SwcTree object
+    :param gold_line_tuple_a: a list of two nodes describe a edge
+    :param gold_line_tuple_b: a list of two nodes describe a edge
+    :param node1: one node side
+    :param node2: the other node side
+    :param edge_use_dict: [swc_node, list[interval_1, interval_2]], interval is a tuple of two int,
+    edge_use_dict shows which part of edge between swc_node and swc_node.parent has been used
+    :param vis_list: list, check if edge has been used
     level: 1
     check if any part between two pedals is used
-    '''
+    :return True/False
+    """
     point_a = node1.get_center()
     point_b = node2.get_center()
     gold_line_a = Line(e_node_1=gold_line_tuple_a[0].get_center(), e_node_2=gold_line_tuple_a[1].get_center())
@@ -341,7 +356,7 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
             total_length = gold_line_tuple_a[0].distance(gold_line_tuple_a[1])
             start = foot_a.distance(gold_line_tuple_a[0].get_center()) / total_length
             end = foot_b.distance(gold_line_tuple_a[0].get_center()) / total_length
-            if DEBUG:
+            if debug:
                 print("node = {} {}\nnode.parent = {} {}\nnode_line = {},{} usage = {} {}\n".format(
                         node1.get_id(), node1.get_center()._pos,
                         node2.get_id(), node2.get_center()._pos,
@@ -383,7 +398,7 @@ def is_route_clean(gold_swc_tree, gold_line_tuple_a, gold_line_tuple_b, node1, n
         start_b = 0.0
         end_b = foot_b.distance(gold_line_tuple_b[0].get_center()) / gold_line_tuple_b[0].parent_distance()
 
-    if DEBUG:
+    if debug:
         print("\nnode = {} {}\nnode.parent = {} {}\nnode_line = {},{} usage = {} {}\nnode_p_line = {},{} usage = {} {}\n".format(
             node1.get_id(), node1._pos,
             node2.get_id(), node2._pos,
@@ -452,9 +467,7 @@ def get_route_node(current_node, lca_id):
     while not current_node.is_virtual() and not current_node.get_id() == lca_id:
         res_list.append(current_node)
         current_node = current_node.parent
-    # if current_node.is_virtual():
-    #
-    #     raise Exception("[Error: ] something wrong in LCA process")
+
     res_list.append(current_node)
     return res_list
 
