@@ -1,4 +1,5 @@
 from setuptools import setup
+import glob
 
 setup(name='pyneval',
       version='1.0',
@@ -12,6 +13,7 @@ setup(name='pyneval',
       py_modules=['pyneval', 'pyneval.cli', 'test', 'test.test_model',
                 'test.test_model.diadem_metric', 'test.test_model.length_metric',
                 'pyneval.io', 'pyneval.metric', 'pyneval.metric.utils', 'pyneval.metric.utils.klib', 'pyneval.model', 'pyneval.tools'],
+      data_files=[('config', glob.glob('config/*.json'))],
       install_requires=[
             'anytree>=2.7.2',
             'numpy>=1.17.3',

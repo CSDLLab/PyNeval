@@ -2,6 +2,7 @@ import argparse
 import sys
 import os
 import platform
+import pyneval
 from pyneval.io.read_swc import read_swc_trees
 from pyneval.io.read_json import read_json
 from pyneval.io.save_swc import swc_save
@@ -12,16 +13,77 @@ from pyneval.metric.volume_metric import volume_metric
 from pyneval.metric.branch_leaf_metric import branch_leaf_metric
 from pyneval.metric.link_metric import link_metric
 
-metric_list = [
-    "diadem_metric",
-    "overall_length",
-    "matched_length",
-    "volume_metric",
-    "branch_metric",
-    "link_metric",
-    "DM", "OL", "ML", "VM", "BM", "LM"
-]
+METRICS = {
+    'diadem_metric': {
+        'config': "diadem_metric.json",
+        'description': "DIADEM metric (https://doi.org/10.1007/s12021-011-9117-y)",
+        'alias': ['DM'],
+        'public': True
+    },
+    'overall_length': {
+        'config': "length_metric.json",
+        'description': "overall length difference",
+        'alias': ['OL'],
+        'public': True
+    },
+    'matched_length': {
+        'config': "length_metric.json",
+        'description': "amount of matched branches",
+        'alias': ['ML'],
+        'public': True
+    },
+    'volume_metric': {
+        'config': "volume_metric.json",
+        'description': "volume overlap",
+        'alias': ['VM'],
+        'public': False
+    },
+    'branch_metric': {
+        'config': "branch_metric.json",
+        'description': "quality of critical points",
+        'alias': ['BM'],
+        'public': True
+    },
+    'link_metric': {
+        'config': "link_metric.json",
+        'description': "",
+        'alias': ['LM'],
+        'public': False
+    },
+}
 
+METRIC_ALIAS_MAP = {}
+
+for metric in METRICS:
+    if 'alias' in METRICS[metric]:
+        for alias in METRICS[metric]['alias']:
+            METRIC_ALIAS_MAP[alias] = metric
+
+def get_root_metric(metric):
+    if metric in METRIC_ALIAS_MAP:
+        return METRIC_ALIAS_MAP[metric]
+    elif metric in METRICS:
+        return metric
+
+def get_metric_config(metric):
+    return METRICS[get_root_metric(metric)]
+
+def get_metric_summary(with_description):
+    summary = ''
+    if with_description:
+        for metric in METRICS:
+            if METRICS[metric].get('public', False):
+                description = METRICS[metric]['description']
+                summary += '[{}]: '.format(metric) + (description if description else '[No description]') + '\n'
+    else:
+        summary = ', '.join((filter(lambda m: METRICS[m].get('public', False), METRICS.keys())))
+
+    return summary
+
+config_dir = os.path.join(os.path.dirname(pyneval.__file__), '../config', )
+
+def get_metric_config_path(metric, root_dir):
+    return os.path.join(config_dir, get_metric_config(metric)['config'])
 
 def read_parameters():
     parser = argparse.ArgumentParser(
@@ -31,32 +93,32 @@ def read_parameters():
     parser.add_argument(
         "--test",
         "-T",
-        help="the route of the test file",
+        help="a list of SWC files for evaluation",
         required=False,
         nargs='*',
     )
     parser.add_argument(
         "--gold",
         "-G",
-        help="the route of the gold file",
+        help="path to the gold-standard SWC file",
         required=True
     )
     parser.add_argument(
         "--metric",
         "-M",
-        help="choose a metric method",
+        help="metric choice: " + get_metric_summary(False) + ".",
         required=True
     )
     parser.add_argument(
         "--output",
         "-O",
-        help="the route of the output file.\nif not specified, output to screen",
+        help="path to the output file (output to screen if not specified)",
         required=False
     )
     parser.add_argument(
         "--config",
         "-C",
-        help="special config for different metric method",
+        help="custom configuration file for the specified metric",
         required=False
     )
     parser.add_argument(
@@ -68,7 +130,7 @@ def read_parameters():
     parser.add_argument(
         "--debug",
         "-D",
-        help="Print debug info or not",
+        help="print debug info or not",
         required=False
     )
     return parser.parse_args()
@@ -84,7 +146,10 @@ def run(DEBUG=True):
     sys.setrecursionlimit(1000000)
 
     # read parameter
-    args = read_parameters()
+    try:
+        args = read_parameters()
+    except:
+        return 1
 
     # set config
     # gold/test files
@@ -101,11 +166,12 @@ def run(DEBUG=True):
         reverse = True
 
     # metric
-    metric = args.metric
-    if metric not in metric_list:
-        raise Exception("[Error: ] Unknown metric method {}".format(
-            metric
-        ))
+    metric = get_root_metric(args.metric)
+    if not metric:
+        print("\nERROR: The metric '{}' is not supported.".format(args.metric))
+        print("\nValid options for --metric:\n")
+        print(get_metric_summary(True))
+        return 1
 
     # output path
     output_dest = args.output
@@ -116,28 +182,7 @@ def run(DEBUG=True):
     # config
     config = args.config
     if config is None:
-        if platform.system() == "Windows":
-            if metric == "diadem_metric" or metric == "DM":
-                config = os.path.join(abs_dir, "config\\diadem_metric.json")
-            if metric in ["overall_length", "matched_length", "OL", "ML"]:
-                config = os.path.join(abs_dir, "config\\length_metric.json")
-            if metric in ['volume_metric', 'VM']:
-                config = os.path.join(abs_dir, "config\\volume_metric.json")
-            if metric in ['branch_metric', "BM"]:
-                config = os.path.join(abs_dir, "config\\branch_metric.json")
-            if metric in ['link_metric', 'LM']:
-                config = os.path.join(abs_dir, "config\\link_metric.json")
-        elif platform.system() == "Linux":
-            if metric == "diadem_metric" or metric == "DM":
-                config = os.path.join(abs_dir, "config/diadem_metric.json")
-            if metric in ["overall_length", "matched_length", "OL", "ML"]:
-                config = os.path.join(abs_dir, "config/length_metric.json")
-            if metric in ['volume_metric', 'VM']:
-                config = os.path.join(abs_dir, "config/volume_metric.json")
-            if metric in ['branch_metric', "BM"]:
-                config = os.path.join(abs_dir, "config/branch_metric.json")
-            if metric in ['link_metric', 'LM']:
-                config = os.path.join(abs_dir, "config/link_metric.json")
+        config = get_metric_config_path(metric, abs_dir)
 
     test_swc_trees, test_tiffs = [], []
     # read test trees, gold trees and configs
@@ -161,12 +206,12 @@ def run(DEBUG=True):
     # entries to different metrics
     gold_swc_treeroot = gold_swc_trees[0]
     for test_tiff in test_tiffs:
-        if metric == "volume_metric" or metric == "VM":
+        if metric == "volume_metric":
             recall = volume_metric(tiff_test=test_tiff, swc_gold=gold_swc_treeroot, config=config)
             print(recall)
 
     for test_swc_treeroot in test_swc_trees:
-        if metric == "diadem_metric" or metric == "DM":
+        if metric == "diadem_metric":
             ans = diadem_metric(swc_test_tree=test_swc_treeroot,
                                 swc_gold_tree=gold_swc_treeroot,
                                 config=config)
@@ -175,27 +220,24 @@ def run(DEBUG=True):
                 ans_rev = diadem_metric(swc_test_tree=gold_swc_treeroot, swc_gold_tree=test_swc_treeroot, config=config)
                 print("rev_score = {}".format(ans_rev[2]))
 
-        if metric == "overall_length" or metric == "OL":
+        if metric == "overall_length":
             config["method"] = 1
-            lm_res = length_metric(gold_swc_treeroot, test_swc_treeroot,
-                                   abs_dir, config)
+            lm_res = length_metric(gold_swc_treeroot, test_swc_treeroot, config)
             if reverse:
-                lm_res = length_metric(test_swc_treeroot, gold_swc_treeroot,
-                                       abs_dir, config)
+                lm_res = length_metric(test_swc_treeroot, gold_swc_treeroot, config)
                 print("Recall = {} Precision = {}".format(lm_res[0], lm_res[1]))
 
-        if metric == "matched_length" or metric == "ML":
+        if metric == "matched_length":
             config["method"] = 2
-            lm_res = length_metric(gold_swc_treeroot, test_swc_treeroot,
-                          abs_dir, config)
+            lm_res = length_metric(gold_swc_treeroot, test_swc_treeroot, config)
             print("Recall = {} Precision = {}".format(lm_res[0], lm_res[1]))
 
             if output_dest:
                 swc_save(test_swc_treeroot, output_dest)
             if reverse:
-                config["detail"] = config["detail"][:-4] + "_reverse.swc"
-                lm_res = length_metric(test_swc_treeroot, gold_swc_treeroot,
-                                       abs_dir, config)
+                if "detail" in config:
+                    config["detail"] = config["detail"][:-4] + "_reverse.swc"
+                lm_res = length_metric(test_swc_treeroot, gold_swc_treeroot, config)
                 print("Recall = {} Precision = {}".format(lm_res[0], lm_res[1]))
                 if output_dest:
                     swc_save(gold_swc_treeroot, output_dest[:-4]+"_reverse.swc")
