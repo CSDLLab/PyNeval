@@ -80,7 +80,8 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
         swc_save(test_swc_tree, detail_path[:-4]+"_test.swc")
     if debug:
         print("Recall = {}, Precision = {}".format(recall, precision))
-    return tuple([recall, precision, "".join(vertical_tree)])
+    # return tuple([recall, precision, "".join(vertical_tree)])
+    return tuple([recall, precision])
 
 
 # length metric interface connect to webmets

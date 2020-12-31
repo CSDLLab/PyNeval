@@ -64,7 +64,7 @@ def swc_random_move(swc_tree, move_percentage=None, move_num=None, move_range=1.
         tot_rad += node.radius()
     move_base = tot_rad / float(len(swc_node_list) - 1) * move_range
 
-    # calculate which nodes to move_5
+    # calculate which nodes to volume_move
     node_to_move = [i for i in range(1, len(swc_node_list))]
     random.shuffle(node_to_move)
     if move_num is not None:
@@ -92,11 +92,49 @@ def swc_random_move(swc_tree, move_percentage=None, move_num=None, move_range=1.
     return res_tree
 
 
-if __name__=="__main__":
+def swc_random_link(swc_tree, move_percentage=None, move_num=None):
+    '''
+    :param swc_tree: standard swc tree
+    :param percentage: percentage of nodes to volume_move (range:[0,1])
+    :param range:stard range is the averange length of edge.
+    :param tendency: a tuple to change the direction of the movement
+    :return: modified swc tree(different object from the input one)
+    '''
+    branch_list = swc_tree.get_branch_swc_list()
+
+    # calculate which nodes to volume_move
+    node_to_modify = [i for i in range(1, len(branch_list))]
+    random.shuffle(node_to_modify)
+    if move_num is not None:
+        node_to_modify = node_to_modify[:move_num]
+    elif move_percentage is not None:
+        node_to_modify = node_to_modify[:int(move_percentage*len(branch_list))]
+    else:
+        return False
+
+    res_tree = swc_tree.get_copy()
+    res_swc_list = res_tree.get_branch_swc_list()
+
+    for node_id in node_to_modify:
+        pa = res_swc_list[node_id]
+        rm_c_id = -1
+        if len(res_swc_list[node_id].children) >= 1:
+            rm_c_id = random.randint(0, len(res_swc_list[node_id].children) - 1)
+        if rm_c_id == -1:
+            continue
+        son = res_swc_list[node_id].children[rm_c_id]
+
+        res_tree.unlink_child(son)
+
+        res_tree.link_child(pa.parent, son)
+    return res_tree
+
+
+def generate_data():
     tree_name_dict = {}
     gold_trees = read_swc_trees(swc_file_paths="../../data/example_selected",
                                 tree_name_dict=tree_name_dict)
-    iter_num = 50
+    iter_num = 10
     move_num = None
     move_range = 2.0
     move_tendency = (1, 1, 1)
@@ -122,7 +160,12 @@ if __name__=="__main__":
                 # test_swc = swc_random_delete(swc_tree=gold_tree,
                 #                              move_percentage=0.1*move_percentage,
                 #                              move_num=None)
+                # test_swc = swc_random_link(swc_tree=gold_tree,
+                #                            move_percentage=0.1 * move_percentage,
+                #                            move_num=None)
                 file_name = os.path.join(percent_dir, "move_{:02d}.swc".format(it))
                 swc_save(swc_tree=test_swc, out_path=file_name)
 
 
+if __name__ == "__main__":
+    generate_data()

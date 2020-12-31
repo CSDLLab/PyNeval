@@ -1,6 +1,17 @@
 import os,platform
 
 
+def read_int_config(config, config_name, default):
+    config_value = 0.0
+    if config_name not in config.keys() or config[config_name] == "default":
+        print("[Warning: ]config {} is not defined or value is default, default value {} is used".format(
+            config_name, default))
+        config_value = default
+    else:
+        config_value = int(config[config_name])
+    return config_value
+
+
 def read_float_config(config, config_name, default):
     config_value = 0.0
     if config_name not in config.keys() or config[config_name] == "default":

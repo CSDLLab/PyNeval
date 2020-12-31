@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+"""a geometry metric method, SSD metric
+
+This module implement a geometry metric method called Substantial Spatial Distance.
+SSD method was firstly
+"""
 import sys
 
 from pyneval.model.swc_node import SwcTree
@@ -5,6 +11,7 @@ from pyneval.io.read_json import read_json
 from pyneval.tools.re_sample import up_sample_swc_tree
 from pyneval.io.save_swc import swc_save
 from pyneval.metric.utils.point_match_utils import create_kdtree
+from pyneval.io.read_config import read_bool_config
 
 
 def get_mse(src_tree, tar_tree, min_threshold):
@@ -24,7 +31,8 @@ def get_mse(src_tree, tar_tree, min_threshold):
     return dis, num
 
 
-def ssd_metric(gold_swc_tree, test_swc_tree, config, debug):
+def ssd_metric(gold_swc_tree, test_swc_tree, config):
+    debug = read_bool_config(config=config, config_name="debug", default=False)
     if debug:
         print("[Debug: ] In ssd metric")
 
@@ -52,9 +60,8 @@ if __name__ == "__main__":
     config = read_json("..\\..\\config\\ssd_metric.json")
 
     score, per1, per2 = ssd_metric(gold_swc_tree=gold_tree,
-                       test_swc_tree=test_tree,
-                       config=config,
-                       debug=False)
+                                   test_swc_tree=test_tree,
+                                   config=config)
     print("ssd score    = {}\nssd% of gold = {}%\nssd% of test = {}%".
           format(round(score, 2), round(per1*100, 2), round(per2*100, 2)))
 
