@@ -2,6 +2,5 @@
   "method": 2,
   "rad_threshold": "-1",
   "len_threshold": "0.2",
-  "detail": "../../../output/length_output/length_metric_detail.swc",
   "debug": false
 }
