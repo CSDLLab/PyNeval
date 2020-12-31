@@ -852,7 +852,7 @@ def adjust_root(swc_gold_tree, swc_test_tree, t_match):
                 break
 
 
-def diadem_metric(swc_gold_tree, swc_test_tree, config, DEBUG=False):
+def diadem_metric(swc_gold_tree, swc_test_tree, config):
     global g_spur_set
     global g_weight_dict
     swc_gold_tree.type_clear(0)
@@ -861,6 +861,7 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config, DEBUG=False):
     diadem_init()
     t_matches = {}
     switch_initialize(config)
+    debug = False
     if g_find_proper_root:
         adjust_root(swc_gold_tree, swc_test_tree, t_matches)
     # swc_save(swc_test_tree, "D:\gitProject\mine\PyNeval\\test\output\diadem_out.swc")
@@ -886,16 +887,15 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config, DEBUG=False):
         score_trees(bin_gold_root,
                     bin_test_root,
                     bin_gold_list,
-                    bin_test_list,
-                    DEBUG=DEBUG)
+                    bin_test_list)
 
         # debug
-        if DEBUG:
+        if debug:
             for key in g_matches.keys():
                 print('match1 = {}, match2 = {}'.format(
                     key.data.get_id(), g_matches[key].data.get_id()
                 ))
-    if DEBUG:
+    if debug:
         for k in g_weight_dict.keys():
             print("id = {} wt = {}".format(k.data.get_id(), g_weight_dict[k]))
 
@@ -932,8 +932,8 @@ def pyneval_diadem_metric(gold_swc, test_swc, config):
 if __name__ == "__main__":
     testTree = SwcTree()
     goldTree = SwcTree()
-    goldTree.load("D:\workSpace\\real_neural\\6_27\wv\swc\\6656_gold.swc")
-    testTree.load("D:\workSpace\\real_neural\\6_27\wv\swc\\6656_test.swc")
+    goldTree.load("D:\\03_backup\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\example_selected\\a.swc")
+    testTree.load("D:\\03_backup\\00_project\\00_neural_reconstruction\\01_project\PyNeval\output\\random_data\move\\a\\010\move_00.swc")
     # goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\diadem\\5632_4864_21760.swc")
     # testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\diadem\\5632_4864_21760.swc")
     # goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\\ExampleGoldStandard.swc")
@@ -941,9 +941,8 @@ if __name__ == "__main__":
     get_default_threshold(goldTree)
 
     ans = diadem_metric(swc_test_tree=testTree,
-                  swc_gold_tree=goldTree,
-                  config=read_json("D:\gitProject\mine\PyNeval\config\diadem_metric.json"),
-                  DEBUG=False)
+                        swc_gold_tree=goldTree,
+                        config=read_json("D:\\03_backup\\00_project\\00_neural_reconstruction\\01_project\PyNeval\config\diadem_metric.json"))
     print(ans[0], ans[1], ans[2])
-    swc_save(goldTree, "D:\gitProject\mine\PyNeval\output\gold_tree_out.swc")
+    # swc_save(goldTree, "D:\gitProject\mine\PyNeval\output\gold_tree_out.swc")
 

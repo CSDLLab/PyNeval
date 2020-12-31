@@ -31,13 +31,11 @@ def read_data(file_path):
 
 
 def linechar_visual(avgs, stds, output_dir, lables=None, file_name=None):
-    if lables is None:
-        lables = ['line1', 'line2', 'line3', 'line4']
     it = ["{}%".format((i+1)*10) for i in range(len(avgs[0]))]
 
     colors = ['#FF3030', '#FF8C00', '#4876FF', '#458B00']
     f, ax = plt.subplots(1, 1)
-    # plt.xlim(it[0], it[-1])
+    plt.xlim(0, 9)
 
     for i in range(len(avgs)):
         ax.plot(it, avgs[i], color=colors[i], label=lables[i])
@@ -49,9 +47,10 @@ def linechar_visual(avgs, stds, output_dir, lables=None, file_name=None):
         ax.fill_between(it, r3, r4, color=colors[i], alpha=0.3)
         ax.legend()
 
-        ax.set_xlabel('moved node number')
-        ax.set_ylabel('score')
-
+        ax.set_xlabel('moved node number', fontsize=15)
+        ax.set_ylabel('score', fontsize=15)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
     plt.show()
     f.savefig(os.path.join(output_dir, file_name), dpi=500)
 

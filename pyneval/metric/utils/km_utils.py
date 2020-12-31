@@ -72,7 +72,7 @@ def get_dis_graph(gold_tree, test_tree, test_node_list, gold_node_list,
 
 class KM:
     def __init__(self, maxn, nx, ny, G):
-        self.maxn = 1000
+        self.maxn = 10000
         self.ny = ny
         self.nx = nx
         self.G = G

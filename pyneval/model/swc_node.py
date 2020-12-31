@@ -643,7 +643,14 @@ class SwcTree:
 
     def get_node_list(self, update=False):
         if self.node_list is None or update:
-            self.node_list = [node for node in PreOrderIter(self.root())]
+            self.node_list = []
+            q = queue.LifoQueue()
+            q.put(self._root)
+            while not q.empty():
+                cur = q.get()
+                self.node_list.append(cur)
+                for child in cur.children:
+                    q.put(child)
 
         return self.node_list
 
@@ -681,18 +688,62 @@ class SwcTree:
             self.id_node_dict[node.get_id()] = node
         return self.id_node_dict
 
+    def get_branch_swc_list(self):
+        """
+        get branch nodes (link to more than 3 nodes) of swc tree
+        """
+        swc_list = self.get_node_list()
+        branch_list = []
+        for node in swc_list:
+            if node.is_virtual():
+                continue
+            if node.parent.is_virtual():
+                if len(node.children) > 2:
+                    branch_list.append(node)
+            elif len(node.children) > 1:
+                branch_list.append(node)
+        return branch_list
+
+    def get_leaf_swc_list(self):
+        swc_list = self.get_node_list()
+        leaf_list = []
+        for node in swc_list:
+            if node.is_virtual():
+                continue
+            if len(node.children) == 0:
+                leaf_list.append(node)
+        return leaf_list
+
+    def set_node_type_by_topo(self, root_id=1):
+        """
+        root_id decide other nodes' id
+        branch = root_id + 1
+        leaf = root_id + 3
+        normal node = root_id + 2
+        """
+        swc_list = self.get_node_list()
+        for node in swc_list:
+            if node.is_virtual():
+                continue
+            if node.parent.get_id() == -1:
+                node._type = root_id
+            elif len(node.children) > 1:
+                node._type = root_id + 1
+            elif len(node.children) == 1:
+                node._type = root_id + 2
+            else:
+                node._type = root_id + 3
+
 
 if __name__ == '__main__':
-    import time,sys
-    print('testing ...')
+    import os
     from pyneval.io.save_swc import swc_save
-
-    sys.setrecursionlimit(100000)
-    tree = SwcTree()
-    start = time.time()
-    tree.load("E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\swc_cut_data\\194444.swc")
-    print(time.time()-start)
-    tree.change_root(new_root_id=100)
-    tree.get_node_list(update=True)
-    swc_save(swc_tree=tree, out_path="E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\output\swc_cut\\194444.swc")
-    print(time.time()-start)
+    path = "E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\\test_data\\topo_metric_data"
+    for file in os.listdir(path):
+        tree = SwcTree()
+        tree.load(os.path.join(path, file))
+        if file[:4] == "gold":
+            tree.set_node_type_by_topo(root_id=1)
+        else:
+            tree.set_node_type_by_topo(root_id=5)
+        swc_save(tree, out_path=os.path.join(path, "s" + file))

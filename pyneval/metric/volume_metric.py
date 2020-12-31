@@ -2,6 +2,7 @@ from pyneval.metric.utils.klib.TiffFile import imread
 from pyneval.model.swc_node import SwcTree
 from pyneval.io.save_swc import swc_save
 from pyneval.tools.re_sample import up_sample_swc_tree
+from pyneval.metric.utils.tiff_utils import front_expend_step
 import queue
 import math
 
@@ -64,7 +65,7 @@ def cal_label(node, test_tiff, thres_intensity, max_step=0):
             if new_pos not in vis:
                 vis.add(tuple([new_pos, cur_step + 1]))
                 que.put(tuple([new_pos, cur_step + 1]))
-    return False
+    return None
 
 
 def cal_volume_recall(test_tiff, gold_swc, thres_intensity):
@@ -75,15 +76,18 @@ def cal_volume_recall(test_tiff, gold_swc, thres_intensity):
         if node.is_virtual():
             continue
         if (len(node.children) == 0 or node.parent.is_virtual()) and\
-                cal_label(node, test_tiff, thres_intensity, 0) is not False:
+                cal_label(node, test_tiff, thres_intensity, 0) is not None:
             tot_front += 1
-        elif cal_label(node, test_tiff, thres_intensity, 1) is not False:
+        elif cal_label(node, test_tiff, thres_intensity, 1) is not None:
             tot_front += 1
         else:
-            print("[Info: ] fail: {} {} {} {} {}".format(
-                node.get_id(), round(node.get_x()), round(node.get_y()), round(node.get_z()),
-                test_tiff[round(node.get_z())][round(node.get_y())][round(node.get_x())]
-            ))
+            try:
+                print("[Info: ] fail: {} {} {} {} {}".format(
+                    node.get_id(), round(node.get_x()), round(node.get_y()), round(node.get_z()),
+                    test_tiff[round(node.get_z())][round(node.get_y())][round(node.get_x())]
+                ))
+            except:
+                continue
         tot_back += 1
     print(tot_front, tot_back)
     return tot_front/tot_back
@@ -94,21 +98,16 @@ def volume_metric(swc_gold, tiff_test, config=None):
     thres_intensity = config['thres_intensity']
     densed_swc_tree = up_sample_swc_tree(swc_tree=swc_gold, thres_length=thres_length)
     recall = cal_volume_recall(tiff_test, densed_swc_tree, thres_intensity)
-    return recall
+    return recall, 0
 
 
 if __name__ == "__main__":
-    swc_path = "D:\gitProject\mine\PyNeval\output\\volume_metric_test\\2_18_test.swc"
-    tiff_path = "D:\gitProject\mine\PyNeval\\test\data_example\\test\\vol_metric\\6656_2304_22016_label.tif"
+    swc_path = "D:\\03_backup\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\example_selected\g.swc"
+    tiff_path = "D:\\03_backup\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\example_selected\g.tif"
     test_tiff = imread(tiff_path)
-
     swc_tree = SwcTree()
     swc_tree.load(swc_path)
 
-    densed_swc_tree = up_sample_swc_tree(swc_tree=swc_tree, thres_length=1)
-    adjust_swc_tree(swc_tree=densed_swc_tree, tiff_file=test_tiff, thres_intensity=128, max_step=8)
-    recall = cal_volume_recall(test_tiff=test_tiff, gold_swc=swc_tree, thres_intensity=128)
-
-    # get_light_fig(tiff_test=test_tiff)
+    # adjust_swc_tree(swc_tree=densed_swc_tree, tiff_file=test_tiff, thres_intensity=128, max_step=4)
+    recall = cal_volume_recall(test_tiff=test_tiff, gold_swc=swc_tree, thres_intensity=1)
     print(recall)
-    swc_save(densed_swc_tree, "D:\gitProject\mine\PyNeval\output\\volume_metric_test\\2_18_test.swc")

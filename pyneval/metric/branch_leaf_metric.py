@@ -1,10 +1,10 @@
 import sys
-import time
 
 from pyneval.model.swc_node import SwcTree
 from pyneval.metric.utils.km_utils import KM, get_dis_graph
 from pyneval.io.read_json import read_json
 from pyneval.metric.utils.point_match_utils import get_swc2swc_dicts
+from pyneval.io.read_config import *
 
 
 def debug_out_list(swc_list, _str):
@@ -12,31 +12,6 @@ def debug_out_list(swc_list, _str):
     for node in swc_list:
         print(node.get_id(), end=" ")
     print("")
-
-
-def get_branch_swc_list(swc_tree):
-    swc_list = swc_tree.get_node_list()
-    branch_list = []
-    for node in swc_list:
-        if node.is_virtual():
-            continue
-        if node.parent.is_virtual():
-            if len(node.children) > 2:
-                branch_list.append(node)
-        elif len(node.children) > 1:
-            branch_list.append(node)
-    return branch_list
-
-
-def get_leaf_swc_list(swc_tree):
-    swc_list = swc_tree.get_node_list()
-    leaf_list = []
-    for node in swc_list:
-        if node.is_virtual():
-            continue
-        if len(node.children) == 0:
-            leaf_list.append(node)
-    return leaf_list
 
 
 def get_result(test_len, gold_len, switch, km, threshold_dis):
@@ -129,9 +104,18 @@ def score_point_distance(gold_tree, test_tree, test_node_list, gold_node_list,
 
 
 def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
-    threshold_dis = config["threshold_dis"]
-    metric_mode = config["metric_mode"]
-    threshold_mode = config["threshold_mode"]
+    """
+    calculate branch metric value of two swc trees
+    :param gold_swc_tree(Swc Tree) gold standard tree
+    :param test_swc_tree(Swc Tree) reconstructed Swc Tree object
+    :param config(dict) dict read by json object
+
+    :return branch_result(tuple) a tuple of 9 metric results
+    """
+    threshold_dis = read_float_config(config=config, config_name="threshold_dis", default=2)
+    metric_mode = read_int_config(config=config, config_name="metric_mode", default=1)
+    threshold_mode = read_int_config(config=config, config_name="threshold_mode", default=1)
+
     if threshold_mode == 2:
         # length of the entire gold swc forest
         tot_dis = gold_swc_tree.length()
@@ -139,14 +123,14 @@ def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
         edge_num = len(gold_swc_tree.get_node_list())-1-len(gold_swc_tree.root().children)
         threshold_dis = threshold_dis * tot_dis / edge_num
     color = [
-        config['true_positive_type'],
-        config['false_negative_type'],
-        config['false_positive_type']
+        read_int_config(config=config, config_name="true_positive_type", default=1),
+        read_int_config(config=config, config_name="false_negative_type", default=1),
+        read_int_config(config=config, config_name="false_positive_type", default=1)
     ]
     gold_swc_tree.type_clear(0, 0)
     test_swc_tree.type_clear(0, 0)
-    test_branch_swc_list = get_branch_swc_list(test_swc_tree)
-    gold_branch_swc_list = get_branch_swc_list(gold_swc_tree)
+    test_branch_swc_list = test_swc_tree.get_branch_swc_list()
+    gold_branch_swc_list = gold_swc_tree.get_branch_swc_list()
 
     test_gold_dict = get_swc2swc_dicts(src_node_list=test_swc_tree.get_node_list(),
                                        tar_node_list=gold_swc_tree.get_node_list())

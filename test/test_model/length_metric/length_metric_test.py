@@ -4,7 +4,7 @@ from pyneval.model.swc_node import SwcNode, SwcTree
 from pyneval.metric.length_metric import length_metric
 
 
-class PymetsTotCase(unittest.TestCase):
+class LengthMetricTest(unittest.TestCase):
     def test_len_1(self):
         goldtree = SwcTree()
         testTree = SwcTree()
@@ -15,12 +15,10 @@ class PymetsTotCase(unittest.TestCase):
         start = time.time()
         lm_res = length_metric(gold_swc_tree=goldtree,
                                test_swc_tree=testTree,
-                               abs_dir="D:\gitProject\mine\PyNeval",
                                config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
 
         lm_res2 = length_metric(gold_swc_tree=testTree,
                                 test_swc_tree=goldtree,
-                                abs_dir="D:\gitProject\mine\PyNeval",
                                 config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
 
         print("2_18 {}".format(time.time()-start))
@@ -39,12 +37,10 @@ class PymetsTotCase(unittest.TestCase):
         start = time.time()
         recall1, precision1, vertical_tree = length_metric(gold_swc_tree=goldtree,
                                                            test_swc_tree=testTree,
-                                                           abs_dir="D:\gitProject\mine\PyNeval",
                                                            config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
 
         recall2, precision2, vertical_tree = length_metric(gold_swc_tree=testTree,
                                                            test_swc_tree=goldtree,
-                                                           abs_dir="D:\gitProject\mine\PyNeval",
                                                            config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
         print("30_18_10 {}".format(time.time()-start))
         self.assertEqual(recall1, 0.95037505)
@@ -62,12 +58,10 @@ class PymetsTotCase(unittest.TestCase):
         start = time.time()
         recall1, precision1, vertical_tree = length_metric(gold_swc_tree=goldtree,                                                    
                                                            test_swc_tree=testTree,                                                    
-                                                           abs_dir="D:\gitProject\mine\PyNeval",
                                                            config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
                                                                                                                                       
         recall2, precision2, vertical_tree = length_metric(gold_swc_tree=testTree,                                                    
                                                            test_swc_tree=goldtree,                                                    
-                                                           abs_dir="D:\gitProject\mine\PyNeval",
                                                            config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
         print("34_23_10 {}".format(time.time()-start))
         self.assertEqual(recall1, 0.66041513)
@@ -84,12 +78,10 @@ class PymetsTotCase(unittest.TestCase):
 
         recall1, precision1, vertical_tree = length_metric(gold_swc_tree=goldtree,                                                    
                                                            test_swc_tree=testTree,                                                    
-                                                           abs_dir="D:\gitProject\mine\PyNeval",
                                                            config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
                                                                                                                                       
         recall2, precision2, vertical_tree = length_metric(gold_swc_tree=testTree,                                                    
                                                            test_swc_tree=goldtree,                                                    
-                                                           abs_dir="D:\gitProject\mine\PyNeval",
                                                            config=read_json("D:\gitProject\mine\PyNeval\config\length_metric.json"))
 
         self.assertEqual(recall1, 1.0)
@@ -106,13 +98,11 @@ class PymetsTotCase(unittest.TestCase):
 
         recall1, precision1, vertical_tree = length_metric(gold_swc_tree=goldtree,
                                                            test_swc_tree=testTree,
-                                                           abs_dir="D:\gitProject\mine\PyNeval",
                                                            config=read_json(
                                                                "D:\gitProject\mine\PyNeval\config\length_metric.json"))
 
         recall2, precision2, vertical_tree = length_metric(gold_swc_tree=testTree,
                                                            test_swc_tree=goldtree,
-                                                           abs_dir="D:\gitProject\mine\PyNeval",
                                                            config=read_json(
                                                                "D:\gitProject\mine\PyNeval\config\length_metric.json"))
 
@@ -120,6 +110,17 @@ class PymetsTotCase(unittest.TestCase):
         self.assertEqual(recall2, 0.39212906)
         self.assertEqual(precision1, 0.40348057)
         self.assertEqual(precision2, 0.75791792)
+
+    def test_len_6(self):
+        test_tree = SwcTree()
+        gold_tree = SwcTree()
+        test_tree.load("../../../data/test_data/geo_metric_data/test/fake_data1.swc")
+        gold_tree.load("../../../data/test_data/geo_metric_data/gold/fake_data1.swc")
+        config = read_json("../../../config/length_metric.json")
+
+        recall, precision = length_metric(gold_swc_tree=gold_tree, test_swc_tree=test_tree, config=config)
+        print(recall)
+        print(precision)
 
 
 if __name__ == '__main__':
