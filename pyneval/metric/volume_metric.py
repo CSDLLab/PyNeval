@@ -1,6 +1,6 @@
 from pyneval.metric.utils.klib.TiffFile import imread
 from pyneval.model.swc_node import SwcTree
-from pyneval.io.save_swc import swc_save
+from pyneval.io.swc_writer import swc_save
 from pyneval.tools.re_sample import up_sample_swc_tree
 from pyneval.metric.utils.tiff_utils import front_expend_step
 import queue

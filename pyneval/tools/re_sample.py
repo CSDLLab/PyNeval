@@ -2,7 +2,7 @@ import queue
 from pyneval.model.swc_node import SwcNode, SwcTree, Make_Virtual
 from pyneval.model.euclidean_point import Line, EuclideanPoint
 from anytree import PreOrderIter
-from pyneval.io.save_swc import swc_save
+from pyneval.io.swc_writer import swc_save
 import copy
 
 

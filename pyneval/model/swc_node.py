@@ -18,7 +18,7 @@ def Make_Virtual():
     return SwcNode(nid=-1, center=EuclideanPoint(center=[0, 0, 0]))
 
 
-def get_nearby_swc_node_list(gold_node, test_swc_list, threshold):
+def get_nearby_swc_node_list(gold_node, test_kdtree, test_pos_node_dict, threshold):
     '''
     find all nodes in "test_swc_list" which are close enough to "gold_node"
     sort them by distance
@@ -28,12 +28,19 @@ def get_nearby_swc_node_list(gold_node, test_swc_list, threshold):
     :param threshold:
     :return:
     '''
+    if gold_node.is_virtual():
+        return
     tmp_list = []
-    for node in test_swc_list:
-        if node.is_virtual() or gold_node.is_virtual():
+    # find the closest pos for gold node
+    target_pos_list = test_kdtree.search_knn(list(gold_node.get_center_as_tuple()), k=5)
+    for pos in target_pos_list:
+        target_node = test_pos_node_dict[tuple(pos[0].data)]
+        if target_node.is_virtual() or gold_node.is_virtual():
             continue
-        if node.distance(gold_node) < threshold:
-            tmp_list.append(tuple([node, node.distance(gold_node)]))
+        # only if gold and test nodes are very close(dis < 0.03), they can be considered as the same pos
+        if gold_node.distance(target_node) < threshold:
+            tmp_list.append(tuple([target_node, target_node.distance(gold_node)]))
+
     tmp_list.sort(key=lambda x: x[1])
     res_list = []
     for tu in tmp_list:
@@ -737,8 +744,8 @@ class SwcTree:
 
 if __name__ == '__main__':
     import os
-    from pyneval.io.save_swc import swc_save
-    path = "E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\\test_data\\topo_metric_data"
+    from pyneval.io.swc_writer import swc_save
+    path = "..\..\data\\test_data\\topo_metric_data"
     for file in os.listdir(path):
         tree = SwcTree()
         tree.load(os.path.join(path, file))
@@ -747,3 +754,4 @@ if __name__ == '__main__':
         else:
             tree.set_node_type_by_topo(root_id=5)
         swc_save(tree, out_path=os.path.join(path, "s" + file))
+

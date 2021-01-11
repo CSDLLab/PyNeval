@@ -166,12 +166,12 @@ if __name__ == "__main__":
     gold_swc_tree = SwcTree()
     test_swc_tree = SwcTree()
 
-    test_swc_tree.load("..\\..\\data\\test_data\\branch_metric_data\\test\\{}.swc".format(file_name))
-    gold_swc_tree.load("..\\..\\data\\test_data\\branch_metric_data\\gold\\{}.swc".format(file_name))
+    test_swc_tree.load("../../data/test_data/topo_metric_data/gold_fake_data4.swc")
+    gold_swc_tree.load("../../data/test_data/topo_metric_data/test_fake_data4.swc")
 
     config = read_json("..\\..\\config\\branch_metric.json")
     config["metric_mode"] = 2
-    config["threshold_dis"] = 1.5
+    config["threshold_dis"] = 1
     config["threshold_mode"] = 2
     branch_result = \
         branch_leaf_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)

@@ -1,4 +1,5 @@
-import os,platform
+import os
+import platform
 
 
 def read_int_config(config, config_name, default):

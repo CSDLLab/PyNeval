@@ -10,5 +10,4 @@ def get_default_threshold(gold_swc_tree):
         dis_threshold = 0.1
     else:
         dis_threshold = (total_length/total_node)/10
-    print("reshold = ", dis_threshold)
     return dis_threshold
