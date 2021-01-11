@@ -1,7 +1,7 @@
 from pyneval.model.euclidean_point import EuclideanPoint,Line
 from pyneval.metric.utils.config_utils import DINF
 from pyneval.model.swc_node import get_lca, SwcNode
-from pyneval.io.save_swc import swc_save
+from pyneval.io.swc_writer import swc_save
 
 import numpy as np
 import math, copy
@@ -104,7 +104,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                 break
 
         if not done:
-            node._type = 6
+            node._type = 9
             if debug:
                 print("{} not done".format(node.get_id()))
 

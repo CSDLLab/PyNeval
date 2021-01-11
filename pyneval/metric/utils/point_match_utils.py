@@ -11,20 +11,6 @@ def get_kdtree_data(kd_node):
     return kd_node[0].data
 
 
-# def check_match(gold_node_knn, son_node_knn, edge_set, id_center_dict):
-#     for pa in gold_node_knn:
-#         test_pa_node = id_center_dict[tuple(get_kdtree_data(pa))]
-#         for tpn in test_pa_node:
-#             for sn in son_node_knn:
-#                 test_son_node = id_center_dict[tuple(get_kdtree_data(sn))]
-#                 for tsn in test_son_node:
-#                     if tuple([tpn, tsn]) in edge_set:
-#                         edge_set.remove(tuple([tpn, tsn]))
-#                         edge_set.remove(tuple([tsn, tpn]))
-#                         return tuple([tpn, tsn])
-#     return None
-
-
 def create_kdtree(node_list):
     pos_node_dict = {}
     center_list = []
@@ -60,16 +46,6 @@ def get_swc2swc_dicts(src_node_list, tar_node_list):
             src_tar_dict[src_node] = None
 
     return src_tar_dict
-
-
-# def search_knn(kdtree, id_center_dict, gold_node, knn_num):
-#     knn_pos = kdtree.search_knn(gold_node._pos, knn_num)
-#     knn_node = []
-#     for poses in knn_pos:
-#         node_list = id_center_dict[tuple(poses)]
-#         for node in node_list:
-#             knn_node.append(node)
-#     return knn_node[:knn_num]
 
 
 if __name__ == "__main__":

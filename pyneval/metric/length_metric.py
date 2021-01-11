@@ -5,7 +5,7 @@ from pyneval.metric.utils.edge_match_utils import get_match_edges
 from pyneval.io.read_json import read_json
 from pyneval.io.read_swc import adjust_swcfile
 from pyneval.io.read_config import read_float_config, read_path_config, read_bool_config
-from pyneval.io.save_swc import swc_save
+from pyneval.io.swc_writer import swc_save
 
 
 def length_metric_run(gold_swc_tree=None, test_swc_tree=None,
@@ -58,8 +58,8 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
     Output: recall(int) and precision(int)
     """
     # remove old pot mark
-    gold_swc_tree.type_clear(5)
-    test_swc_tree.type_clear(4)
+    # gold_swc_tree.type_clear(5)
+    # test_swc_tree.type_clear(4)
 
     # read config
     rad_threshold = read_float_config(config=config, config_name="rad_threshold", default=-1.0)
@@ -116,11 +116,13 @@ if __name__ == "__main__":
     goldTree = SwcTree()
     testTree = SwcTree()
     sys.setrecursionlimit(10000000)
-    goldTree.load("..\\..\\data\\test_data\\ssd_data\\gold\\a.swc")
-    testTree.load("..\\..\\data\\test_data\\ssd_data\\test\\a.swc")
-
+    goldTree.load("..\\..\\data\\test_data\\geo_metric_data\\gold_fake_data5.swc")
+    testTree.load("..\\..\\data\\test_data\\geo_metric_data\\test_fake_data5.swc")
+    config = read_json("..\\..\\config\\length_metric.json")
+    config["detail"] = "..\\..\\output\\length_output\\length_metric_detail.swc"
     lm_res = length_metric(gold_swc_tree=goldTree,
                            test_swc_tree=testTree,
-                           config=read_json("..\\..\\config\\length_metric.json"))
+                           config=config)
 
-    print(lm_res[0], lm_res[1])
+    print("recall    = {}\n"
+          "precision = {}\n".format(lm_res[0], lm_res[1]))

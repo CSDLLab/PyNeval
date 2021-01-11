@@ -43,5 +43,6 @@ class TestStringMethods(unittest.TestCase):
             dis, line_tuple[0]._pos,line_tuple[1]._pos
         ))
 
+
 if __name__ == "__main__":
     unittest.main()

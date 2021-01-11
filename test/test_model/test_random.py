@@ -5,7 +5,7 @@ import numpy as np
 import multiprocessing as mp
 
 from pyneval.metric.utils.klib.TiffFile import imread
-from pyneval.io.save_swc import swc_save
+from pyneval.io.swc_writer import swc_save
 from pyneval.io.read_json import read_json
 from pyneval.model.swc_node import SwcNode, SwcTree
 from pyneval.metric.length_metric import length_metric
@@ -140,7 +140,7 @@ if __name__=='__main__':
     gold_dir = "../../data/example_selected"
     test_dir = "../../output/random_data"
     out_dir = "../../output/"
-    config = read_json("../../config/volume_metric.json")
+    config = read_json("../../config/diadem_metric.json")
     # length metric
     # metric_results = test_template(func_method=ssd_metric,
     #                                func_args=(config, ),
@@ -164,21 +164,26 @@ if __name__=='__main__':
     #                                gold_dir=gold_dir,
     #                                test_dir=test_dir,
     #                                generate_method="link")
+    # metric_results = test_template(func_method=diadem_metric,
+    #                                func_args=(config, ),
+    #                                gold_dir=gold_dir,
+    #                                test_dir=test_dir,
+    #                                generate_method="move")
     label_list_branch = ["true_positive_number", "false_negative_num", "false_positive_num", "matched_mean_distance"]
     label_list_link = ["edge_loss", "tree_dis_loss"]
     label_list_ssd = ["ssd_score", "recall", "precision"]
     label_list_length = ["recall", "precision"]
     label_list_diadem = ["final_score"]
     label_list_volume = ["recall"]
-    method = "volume"
+    method = "diadem"
 
-    # len_res_to_csv(metric_results,
-    #                csv_path=os.path.join(out_dir, "csv_dir"),
-    #                pic_path=None,
-    #                method=method,
-    #                concern_list=[0],
-    #                label_list=label_list_volume)
-    csv_to_pic_single(csv_path=os.path.join(out_dir, "csv_dir/gvolume.csv"),
+    # res_to_csv(metric_results,
+    #            csv_path=os.path.join(out_dir, "csv_dir"),
+    #            pic_path=None,
+    #            method=method,
+    #            concern_list=[2],
+    #            label_list=label_list_volume)
+    csv_to_pic_single(csv_path=os.path.join(out_dir, "csv_dir//adiadem.csv"),
                       pic_path=os.path.join(out_dir, "pic_dir"),
-                      label_list=label_list_volume)
+                      label_list=label_list_diadem)
 

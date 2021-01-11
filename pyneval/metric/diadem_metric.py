@@ -4,18 +4,20 @@ import time
 import math
 import numpy as np
 from anytree import PreOrderIter
-from pyneval.metric.utils.config_utils import get_default_threshold
+from pyneval.metric.utils import config_utils
+from pyneval.io import read_config
 from pyneval.model.binary_node import RIGHT
 from pyneval.model.swc_node import SwcTree, SwcNode, get_nearby_swc_node_list
 from pyneval.model.euclidean_point import EuclideanPoint
 from pyneval.metric.utils.diadam_match_utils import \
     get_match_path_length_difference, get_nearby_node_list, \
     get_end_node_XY_dis_diff, get_end_node_Z_dis_diff, get_trajectory_for_path, \
-    path_length_matches,is_within_dis_match_threshold,LCA
+    path_length_matches,is_within_dis_match_threshold, LCA
 from pyneval.metric.utils.bin_utils import convert_to_binarytrees
 from pyneval.io.read_json import read_json
-from pyneval.io.save_swc import swc_save
+from pyneval.io.swc_writer import swc_save
 from pyneval.io.read_swc import adjust_swcfile
+from pyneval.metric.utils import point_match_utils
 
 # thresholds
 g_terminal_threshold = 0
@@ -663,8 +665,14 @@ def score_trees(bin_gold_root, bin_test_root, bin_gold_subroots, bin_test_subroo
         g_miss.remove(node)
 
     if g_weight_sum > 0:
-        g_direct_match_score = g_quantity_score_sum / number_of_nodes
-        g_quantity_score = g_score_sum / g_weight_sum
+        try:
+            g_direct_match_score = g_quantity_score_sum / number_of_nodes
+        except ZeroDivisionError:
+            g_direct_match_score = 0
+        try:
+            g_quantity_score = g_score_sum / g_weight_sum
+        except ZeroDivisionError:
+            g_quantity_score = 0
 
         if g_remove_spur > 0:
             remove_spurs(bin_test_root)
@@ -672,11 +680,13 @@ def score_trees(bin_gold_root, bin_test_root, bin_gold_subroots, bin_test_subroo
         if g_count_excess_nodes:
             g_weight_sum += weight_excess(bin_gold_subroots, bin_test_subroots)
 
-        g_final_score = g_score_sum / g_weight_sum
+        try:
+            g_final_score = g_score_sum / g_weight_sum
+        except ZeroDivisionError:
+            g_final_score = 0
 
 
-def switch_initialize(config):
-    # switch
+def config_init(config):
     global g_remove_spur
     global g_align_tree_by_root
     global g_count_excess_nodes
@@ -686,7 +696,7 @@ def switch_initialize(config):
     global g_list_continuations
     global g_find_proper_root
 
-    if "remove_spur" in config.keys():
+    if "remove_spur" in config:
         g_remove_spur = config["remove_spur"]
     if "align_tree_by_root" in config.keys():
         g_align_tree_by_root = config["align_tree_by_root"]
@@ -705,7 +715,6 @@ def switch_initialize(config):
 
 
 def color_tree_only():
-    print("color")
     if g_list_miss:
         if len(g_miss) > 0:
             for node in g_miss:
@@ -729,7 +738,7 @@ def color_tree_only():
                 node.data._type = 5
 
 
-def print_result(swc_tree, out_path):
+def print_result():
     start = time.time()
     print("g_weight_sum = {}".format(
         g_weight_sum
@@ -794,8 +803,6 @@ def print_result(swc_tree, out_path):
                 node.data._type = 5
         else:
             print("Distant Matches: none")
-    if os.path.isfile(out_path) and out_path[-4:] == ".swc":
-        swc_save(swc_tree=swc_tree, out_path=out_path)
 
 
 def diadem_init():
@@ -829,19 +836,22 @@ def diadem_init():
     g_continuation = []
 
 
-def adjust_root(swc_gold_tree, swc_test_tree, t_match):
-    swc_gold_list = [node for node in PreOrderIter(swc_gold_tree.root())]
-    swc_test_list = [node for node in PreOrderIter(swc_test_tree.root())]
+def adjust_root(swc_gold_tree, swc_test_tree,
+                test_kdtree, test_pos_node_dict, t_matches):
+    swc_gold_list = swc_gold_tree.get_node_list()
+    swc_test_list = swc_test_tree.get_node_list()
 
     gold_vis_list = np.zeros(shape=(len(swc_gold_list) + 10,))
     test_vis_list = np.zeros(shape=(len(swc_test_list) + 10,))
 
     for node in swc_gold_list:
-        nearby_nodes = get_nearby_swc_node_list(gold_node=node, test_swc_list=swc_test_list,
-                                                threshold=node.radius() / 2)
+        if node.is_virtual():
+            continue
+        nearby_nodes = get_nearby_swc_node_list(gold_node=node, threshold=node.radius() / 2,
+                                                test_kdtree=test_kdtree, test_pos_node_dict=test_pos_node_dict)
         for t_node in nearby_nodes:
             if not gold_vis_list[node.get_id()] and not test_vis_list[t_node.get_id()]:
-                t_match[node] = t_node
+                t_matches[node] = t_node
                 swc_gold_tree.change_root(node.get_id())
                 swc_test_tree.change_root(t_node.get_id())
 
@@ -853,24 +863,52 @@ def adjust_root(swc_gold_tree, swc_test_tree, t_match):
 
 
 def diadem_metric(swc_gold_tree, swc_test_tree, config):
+    """Main function of diadem metric
+    Args:
+        swc_gold_tree(SwcTree):
+        swc_test_tree(SwcTree):
+        config(Dict):
+            The keys of 'config' is the name of configs, and the items are config values
+
+    Example:
+        test_tree = swc_node.SwcTree()
+        gold_tree = swc_node.SwcTree()
+        gold_tree.load("..\\..\\data\\test_data\\topo_metric_data\\sgold_fake_data2.swc")
+        test_tree.load("..\\..\\data\\test_data\\topo_metric_data\\stest_fake_data2.swc")
+        score, recall, precision = ssd_metric(gold_swc_tree=gold_tree,
+                                              test_swc_tree=test_tree,
+                                              config=config)
+
+    Return:
+        tuple: contain three values to demonstrate metric result
+            g_weight_sum(float): weight of all nodes in the gold tree
+            g_score_sum(float): weight of all the nodes that are matched.
+            g_final_score(float): ratio of above two value
+
+    Raise:
+        None
+    """
     global g_spur_set
     global g_weight_dict
     swc_gold_tree.type_clear(0)
     swc_test_tree.type_clear(1)
-
+    # initialize diadem global parameter
     diadem_init()
+    # initialize diadem configs
+    config_init(config)
+
+    test_kdtree, test_pos_node_dict = point_match_utils.create_kdtree(swc_test_tree.get_node_list())
+
     t_matches = {}
-    switch_initialize(config)
     debug = False
     if g_find_proper_root:
-        adjust_root(swc_gold_tree, swc_test_tree, t_matches)
-    # swc_save(swc_test_tree, "D:\gitProject\mine\PyNeval\\test\output\diadem_out.swc")
-    # swc_test_tree.change_root(swc_gold_tree, t_matches)
-
+        adjust_root(swc_gold_tree=swc_gold_tree, swc_test_tree=swc_test_tree,
+                    test_kdtree=test_kdtree, test_pos_node_dict=test_pos_node_dict,
+                    t_matches=t_matches)
     if g_align_tree_by_root:
         swc_test_tree.align_roots(swc_gold_tree, t_matches)
 
-    # root here is 100% -1
+    # the id of root here is always -1, so we need to figure out first level sons of root
     for sub_gold_root in swc_gold_tree.root().children:
         if sub_gold_root in t_matches.keys():
             sub_test_root = t_matches[sub_gold_root]
@@ -891,23 +929,32 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
 
         # debug
         if debug:
-            for key in g_matches.keys():
+            for key in g_matches:
                 print('match1 = {}, match2 = {}'.format(
                     key.data.get_id(), g_matches[key].data.get_id()
                 ))
     if debug:
-        for k in g_weight_dict.keys():
+        for k in g_weight_dict:
             print("id = {} wt = {}".format(k.data.get_id(), g_weight_dict[k]))
 
-    if 'detail_path' in config.keys():
-        # print_result(swc_tree=swc_gold_tree, out_path=config["detail_path"])
-        pass
+    if config['detail_path'] is not None:
+        print_result()
+        swc_save(swc_tree=swc_gold_tree, out_path=config["detail_path"])
     else:
         color_tree_only()
     return tuple([g_weight_sum, g_score_sum, g_final_score])
 
 
 def pyneval_diadem_metric(gold_swc, test_swc, config):
+    """ interface to webmets, which is a web visualization project abandoned now
+    Args: Same as func:diadem_metric
+        gold_swc_tree(SwcTree):
+        test_swc_tree(SwcTree):
+        config(Dict):
+            The keys of 'config' is the name of configs, and the items are config values
+    Return:
+        result(Dict): contain several metric results
+    """
     gold_tree = SwcTree()
     test_tree = SwcTree()
 
@@ -930,19 +977,16 @@ def pyneval_diadem_metric(gold_swc, test_swc, config):
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     testTree = SwcTree()
     goldTree = SwcTree()
-    goldTree.load("D:\\03_backup\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\example_selected\\a.swc")
-    testTree.load("D:\\03_backup\\00_project\\00_neural_reconstruction\\01_project\PyNeval\output\\random_data\move\\a\\010\move_00.swc")
-    # goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\diadem\\5632_4864_21760.swc")
-    # testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\diadem\\5632_4864_21760.swc")
-    # goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\\ExampleGoldStandard.swc")
-    # testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\ExampleTest.swc")
-    get_default_threshold(goldTree)
+    goldTree.load("../../data/test_data/topo_metric_data/gold_fake_data4.swc")
+    testTree.load("../../data/test_data/topo_metric_data/test_fake_data4.swc")
+    config_utils.get_default_threshold(goldTree)
 
     ans = diadem_metric(swc_test_tree=testTree,
                         swc_gold_tree=goldTree,
-                        config=read_json("D:\\03_backup\\00_project\\00_neural_reconstruction\\01_project\PyNeval\config\diadem_metric.json"))
-    print(ans[0], ans[1], ans[2])
-    # swc_save(goldTree, "D:\gitProject\mine\PyNeval\output\gold_tree_out.swc")
-
+                        config=read_json("../../config/diadem_metric.json"))
+    print("matched weight = {}\n"
+          "total weight   = {}\n"
+          "diadem score   = {}\n".format(ans[1], ans[0], ans[2]))
