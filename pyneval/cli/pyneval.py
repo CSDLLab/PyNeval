@@ -178,8 +178,7 @@ def run(DEBUG=True):
     output_dest = args.output
     if output_dest is not None:
         output_dest = os.path.join(abs_dir, output_dest)
-    if output_dest is None:
-        output_dest = os.path.join(os.path.join(abs_dir, "output"))
+
     # config
     config = args.config
     if config is None:
@@ -293,3 +292,5 @@ if __name__ == "__main__":
 # pyneval --gold .\\data\test_data\topo_metric_data\gold_fake_data1.swc --test .\data\test_data\topo_metric_data\test_fake_data1.swc --metric link_metric
 
 # pyneval --gold .\\data\\test_data\\ssd_data\\gold\\a.swc --test .\\data\\test_data\\ssd_data\\test\\a.swc --metric branch_metric
+
+# pyneval --gold .\\data\test_data\geo_metric_data\gold_34_23_10.swc --test .\data\test_data\geo_metric_data\test_34_23_10.swc --metric ssd_metric

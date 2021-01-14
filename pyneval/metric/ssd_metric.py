@@ -107,6 +107,10 @@ def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree,
     avg_score = (g2t_score + t2g_score) / 2
     recall = 1 - g2t_num/u_gold_swc_tree.size()
     precision = 1 - t2g_num/u_test_swc_tree.size()
+    if debug:
+        print("recall_num = {}, pre_num = {}, gold_tot_num = {}, test_tot_num = {} {} {}".format(
+            g2t_num, t2g_num, u_gold_swc_tree.size(), u_test_swc_tree.size(), gold_swc_tree.length(), test_swc_tree.length()
+        ))
     return avg_score, recall, precision
 
 
@@ -115,8 +119,9 @@ if __name__ == "__main__":
     gold_tree = swc_node.SwcTree()
 
     sys.setrecursionlimit(10000000)
-    gold_tree.load("..\\..\\data\\test_data\\geo_metric_data\\gold_fake_data5.swc")
-    test_tree.load("..\\..\\data\\test_data\\geo_metric_data\\test_fake_data5.swc")
+    gold_tree.load("..\\..\\data\\test_data\\geo_metric_data\\gold_34_23_10.swc")
+    test_tree.load("..\\..\\data\\test_data\\geo_metric_data\\test_34_23_10.swc")
+
     config = read_json.read_json("..\\..\\config\\ssd_metric.json")
 
     score, recall, precision = ssd_metric(gold_swc_tree=gold_tree,
