@@ -68,8 +68,8 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
     debug = read_bool_config(config=config, config_name="debug", default=True)
 
     # check every edge in test, if it is overlap with any edge in gold three
-    recall, precision, vertical_tree = length_metric_run(gold_swc_tree=test_swc_tree,
-                                                         test_swc_tree=gold_swc_tree,
+    recall, precision, vertical_tree = length_metric_run(gold_swc_tree=gold_swc_tree,
+                                                         test_swc_tree=test_swc_tree,
                                                          rad_threshold=rad_threshold,
                                                          len_threshold=len_threshold,
                                                          detail_path=detail_path,
@@ -116,8 +116,9 @@ if __name__ == "__main__":
     goldTree = SwcTree()
     testTree = SwcTree()
     sys.setrecursionlimit(10000000)
-    goldTree.load("..\\..\\data\\test_data\\geo_metric_data\\gold_fake_data5.swc")
-    testTree.load("..\\..\\data\\test_data\\geo_metric_data\\test_fake_data5.swc")
+    goldTree.load("..\\..\\data\\test_data\\geo_metric_data\\gold_34_23_10.swc")
+    testTree.load("..\\..\\data\\test_data\\geo_metric_data\\test_34_23_10.swc")
+
     config = read_json("..\\..\\config\\length_metric.json")
     config["detail"] = "..\\..\\output\\length_output\\length_metric_detail.swc"
     lm_res = length_metric(gold_swc_tree=goldTree,

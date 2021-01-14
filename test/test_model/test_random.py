@@ -140,15 +140,15 @@ if __name__=='__main__':
     gold_dir = "../../data/example_selected"
     test_dir = "../../output/random_data"
     out_dir = "../../output/"
-    config = read_json("../../config/diadem_metric.json")
+    config = read_json("../../config/ssd_metric.json")
     # length metric
     # metric_results = test_template(func_method=ssd_metric,
     #                                func_args=(config, ),
     #                                gold_dir=gold_dir,
     #                                test_dir=test_dir,
     #                                # generate_method="delete")
-    #                                generate_method="volume_move")
-    # metric_results = test_template(func_method=volume_metric,
+    #                                generate_method="move")
+    # # metric_results = test_template(func_method=volume_metric,
     #                                func_args=(config, ),
     #                                gold_dir=gold_dir,
     #                                test_dir=test_dir,
@@ -181,9 +181,9 @@ if __name__=='__main__':
     #            csv_path=os.path.join(out_dir, "csv_dir"),
     #            pic_path=None,
     #            method=method,
-    #            concern_list=[2],
-    #            label_list=label_list_volume)
+    #            concern_list=[0, 1, 2],
+    #            label_list=label_list_ssd)
     csv_to_pic_single(csv_path=os.path.join(out_dir, "csv_dir//adiadem.csv"),
                       pic_path=os.path.join(out_dir, "pic_dir"),
-                      label_list=label_list_diadem)
+                      label_list=label_list_ssd)
 
