@@ -18,6 +18,8 @@ from pyneval.io.read_json import read_json
 from pyneval.io.swc_writer import swc_save
 from pyneval.io.read_swc import adjust_swcfile
 from pyneval.metric.utils import point_match_utils
+import jsonschema
+
 
 # thresholds
 g_terminal_threshold = 0
@@ -937,11 +939,9 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
         for k in g_weight_dict:
             print("id = {} wt = {}".format(k.data.get_id(), g_weight_dict[k]))
 
-    if config['detail_path'] is not None:
+    if config['debug'] is True:
         print_result()
-        swc_save(swc_tree=swc_gold_tree, out_path=config["detail_path"])
-    else:
-        color_tree_only()
+
     return tuple([g_weight_sum, g_score_sum, g_final_score])
 
 
@@ -983,10 +983,17 @@ if __name__ == "__main__":
     goldTree.load("../../data/test_data/topo_metric_data/gold_fake_data4.swc")
     testTree.load("../../data/test_data/topo_metric_data/test_fake_data4.swc")
     config_utils.get_default_threshold(goldTree)
+    config = read_json("../../config/diadem_metric.json")
+    config_schema = read_json("../../config/schemas/diadem_metric_schema.json")
+
+    try:
+        jsonschema.validate(config, config_schema)
+    except Exception as e:
+        raise Exception("[Error: ]Error in analyzing config json file")
 
     ans = diadem_metric(swc_test_tree=testTree,
                         swc_gold_tree=goldTree,
-                        config=read_json("../../config/diadem_metric.json"))
+                        config=config)
     print("matched weight = {}\n"
           "total weight   = {}\n"
           "diadem score   = {}\n".format(ans[1], ans[0], ans[2]))

@@ -1,0 +1,12 @@
+{
+  "title": "ssd metric schema",
+  "type": "object",
+  "required": [
+      "ssd_threshold",
+      "debug"
+  ],
+  "properties": {
+    "ssd_threshold": {"type": "number", "exclusiveMinimum": 0},
+    "debug": {"type": "boolean"}
+  }
+}

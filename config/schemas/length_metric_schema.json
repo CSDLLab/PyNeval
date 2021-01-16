@@ -1,0 +1,16 @@
+{
+  "title": "length metric schema",
+  "type": "object",
+  "required": [
+      "rad_mode",
+      "rad_threshold",
+      "len_threshold",
+      "debug"
+  ],
+  "properties": {
+    "rad_mode": {"type": "number", "enum": [1,2]},
+    "rad_threshold": {"type": "number", "exclusiveMinimum": 0},
+    "len_threshold": {"type": "number", "exclusiveMinimum": 0},
+    "debug": {"type": "boolean"}
+  }
+}

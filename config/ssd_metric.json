@@ -1,5 +1,4 @@
 {
-  "detail_path": "..//..//output//ssd_output//ssd_detail.swc",
-  "min_threshold": 2,
+  "ssd_threshold": 2,
   "debug": false
 }

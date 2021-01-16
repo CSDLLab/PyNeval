@@ -1,4 +1,5 @@
 {
-  "thres_length": 1.0,
-  "thres_intensity": 1
+  "length_threshold": 1.0,
+  "intensity_threshold": 1.0,
+  "debug": false
 }

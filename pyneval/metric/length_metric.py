@@ -1,4 +1,5 @@
 import sys
+import jsonschema
 
 from pyneval.model.swc_node import SwcTree
 from pyneval.metric.utils.edge_match_utils import get_match_edges
@@ -9,7 +10,7 @@ from pyneval.io.swc_writer import swc_save
 
 
 def length_metric_run(gold_swc_tree=None, test_swc_tree=None,
-                      rad_threshold=-1.0, len_threshold=0.2, detail_path=None, debug=False):
+                      rad_threshold=-1.0, len_threshold=0.2, debug=False):
     """
     Description: Detail of length metric, get best edge for each edge and calculate final scores
     Input: gold/test swc tree, and parsed configs
@@ -57,27 +58,24 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
     Input: gold/test swc tree, config
     Output: recall(int) and precision(int)
     """
-    # remove old pot mark
-    # gold_swc_tree.type_clear(5)
-    # test_swc_tree.type_clear(4)
-
     # read config
-    rad_threshold = read_float_config(config=config, config_name="rad_threshold", default=-1.0)
-    len_threshold = read_float_config(config=config, config_name="len_threshold", default=0.2)
-    detail_path = read_path_config(config=config, config_name="detail", default=None)
-    debug = read_bool_config(config=config, config_name="debug", default=True)
+    rad_mode = config["rad_mode"]
+    rad_threshold = config["rad_threshold"]
+    len_threshold = config["len_threshold"]
+    debug = config["debug"]
 
+    if rad_mode == 1:
+        rad_threshold *= -1
     # check every edge in test, if it is overlap with any edge in gold three
     recall, precision, vertical_tree = length_metric_run(gold_swc_tree=gold_swc_tree,
                                                          test_swc_tree=test_swc_tree,
                                                          rad_threshold=rad_threshold,
                                                          len_threshold=len_threshold,
-                                                         detail_path=detail_path,
                                                          debug=debug)
 
-    if detail_path:
-        swc_save(gold_swc_tree, detail_path[:-4]+"_gold.swc")
-        swc_save(test_swc_tree, detail_path[:-4]+"_test.swc")
+    if "detail_path" in config:
+        swc_save(gold_swc_tree, config["detail_path"][:-4]+"_gold.swc")
+        swc_save(test_swc_tree, config["detail_path"][:-4]+"_test.swc")
     if debug:
         print("Recall = {}, Precision = {}".format(recall, precision))
     # return tuple([recall, precision, "".join(vertical_tree)])
@@ -119,8 +117,15 @@ if __name__ == "__main__":
     goldTree.load("..\\..\\data\\test_data\\geo_metric_data\\gold_34_23_10.swc")
     testTree.load("..\\..\\data\\test_data\\geo_metric_data\\test_34_23_10.swc")
 
-    config = read_json("..\\..\\config\\length_metric.json")
-    config["detail"] = "..\\..\\output\\length_output\\length_metric_detail.swc"
+    config = read_json("..\\..\\config\\volume_metric.json")
+    config_schema = read_json("..\\..\\config\\schemas\\volume_metric_schema.json")
+
+    try:
+        jsonschema.validate(config, config_schema)
+    except Exception as e:
+        raise Exception("[Error: ]Error in analyzing config json file")
+    config["detail_path"] = "..\\..\\output\\length_output\\length_metric_detail.swc"
+
     lm_res = length_metric(gold_swc_tree=goldTree,
                            test_swc_tree=testTree,
                            config=config)

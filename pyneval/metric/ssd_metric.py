@@ -18,6 +18,8 @@ Todos:
 """
 import sys
 
+import jsonschema
+
 from pyneval.io import swc_writer
 from pyneval.model import swc_node
 from pyneval.io import read_json
@@ -26,7 +28,7 @@ from pyneval.metric.utils import point_match_utils
 from pyneval.io import read_config
 
 
-def get_mse(src_tree, tar_tree, min_threshold):
+def get_mse(src_tree, tar_tree, ssd_threshold):
     """ calculate the minimum square error of two trees
     find the closest node on the tar_tree for each node on the src tree, calculate the average
     distance of these node pairs.
@@ -34,11 +36,11 @@ def get_mse(src_tree, tar_tree, min_threshold):
     Args:
         src_tree(SwcTree):
         tar_tree(SwcTree):
-        min_threshold(float): distance will be count into the res
+        ssd_threshold(float): distance will be count into the res
             only if two nodes' distance is larger than this threshold.
 
     Returns:
-        dis(float): average minimum distance of node, distance must be larger than min_threshold
+        dis(float): average minimum distance of node, distance must be larger than ssd_threshold
         num(float): The number of pairs of nodes that are counted when calculating distance
 
     Raise:
@@ -53,7 +55,7 @@ def get_mse(src_tree, tar_tree, min_threshold):
         target_node = pos_node_dict[tuple(target_pos[0].data)]
 
         cur_dis = target_node.distance(node)
-        if cur_dis >= min_threshold:
+        if cur_dis >= ssd_threshold:
             node._type = 9
             dis += cur_dis
             num += 1
@@ -92,15 +94,15 @@ def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree,
     if debug:
         print("[Debug: ] In ssd metric")
 
-    u_gold_swc_tree = re_sample.up_sample_swc_tree(gold_swc_tree, thres_length=1.0)
-    u_test_swc_tree = re_sample.up_sample_swc_tree(test_swc_tree, thres_length=1.0)
+    u_gold_swc_tree = re_sample.up_sample_swc_tree(gold_swc_tree, length_threshold=1.0)
+    u_test_swc_tree = re_sample.up_sample_swc_tree(test_swc_tree, length_threshold=1.0)
     u_gold_swc_tree.set_node_type_by_topo(root_id=1)
     u_test_swc_tree.set_node_type_by_topo(root_id=5)
 
-    g2t_score, g2t_num = get_mse(u_gold_swc_tree, u_test_swc_tree, config["min_threshold"])
-    t2g_score, t2g_num = get_mse(u_test_swc_tree, u_gold_swc_tree, config["min_threshold"])
+    g2t_score, g2t_num = get_mse(u_gold_swc_tree, u_test_swc_tree, config["ssd_threshold"])
+    t2g_score, t2g_num = get_mse(u_test_swc_tree, u_gold_swc_tree, config["ssd_threshold"])
 
-    if config["detail_path"] is not None:
+    if "detail_path" in config:
         swc_writer.swc_save(u_gold_swc_tree, config["detail_path"][:-4] + "_gold_upsampled.swc")
         swc_writer.swc_save(u_test_swc_tree, config["detail_path"][:-4] + "_test_upsampled.swc")
 
@@ -123,6 +125,13 @@ if __name__ == "__main__":
     test_tree.load("..\\..\\data\\test_data\\geo_metric_data\\test_34_23_10.swc")
 
     config = read_json.read_json("..\\..\\config\\ssd_metric.json")
+    config_schema = read_json.read_json("..\\..\\config\\schemas\\ssd_metric_schema.json")
+
+    try:
+        jsonschema.validate(config, config_schema)
+    except Exception as e:
+        raise Exception("[Error: ]Error in analyzing config json file")
+    config["detail_path"] = "..//..//output//ssd_output//ssd_detail.swc"
 
     score, recall, precision = ssd_metric(gold_swc_tree=gold_tree,
                                           test_swc_tree=test_tree,

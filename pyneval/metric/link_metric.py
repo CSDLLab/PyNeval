@@ -1,6 +1,8 @@
 import sys
 import time
 
+import jsonschema
+
 from pyneval.metric.utils.config_utils import DINF
 from pyneval.model.swc_node import SwcTree
 from pyneval.metric.utils.km_utils import KM, get_dis_graph
@@ -89,5 +91,12 @@ if __name__ == "__main__":
     test_swc_tree.load("..\\..\\data\\test_data\\topo_metric_data\\gold_fake_data4.swc")
     gold_swc_tree.load("..\\..\\data\\test_data\\topo_metric_data\\test_fake_data4.swc")
     config = read_json("..\\..\\config\\link_metric.json")
+    config_schema = read_json("..\\..\\config\\schemas\\link_metric_schema.json")
+
+    try:
+        jsonschema.validate(config, config_schema)
+    except Exception as e:
+        raise Exception("[Error: ]Error in analyzing config json file")
+
     edge_loss, tree_dis_loss = link_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
     print(edge_loss, tree_dis_loss)

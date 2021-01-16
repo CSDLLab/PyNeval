@@ -1,11 +1,11 @@
 import argparse
 import sys
 import os
-import platform
+import jsonschema
 import pyneval
 from pyneval.io.read_swc import read_swc_trees
 from pyneval.io.read_json import read_json
-from pyneval.io.save_swc import swc_save
+from pyneval.io.swc_writer import swc_save
 from pyneval.io.read_tiff import read_tiffs
 from pyneval.metric.diadem_metric import diadem_metric
 from pyneval.metric.length_metric import length_metric
@@ -85,6 +85,10 @@ config_dir = os.path.join(os.path.dirname(pyneval.__file__), '../config', )
 
 def get_metric_config_path(metric, root_dir):
     return os.path.join(config_dir, get_metric_config(metric)['config'])
+
+def get_metric_config_schema_path(metric, root_dir):
+    schema_dir = os.path.join(config_dir, "schemas")
+    return os.path.join(schema_dir, get_metric_config(metric)['config'][:-5]+"_schema.json")
 
 def read_parameters():
     parser = argparse.ArgumentParser(
@@ -180,9 +184,16 @@ def run(DEBUG=True):
         output_dest = os.path.join(abs_dir, output_dest)
 
     # config
-    config = args.config
-    if config is None:
-        config = get_metric_config_path(metric, abs_dir)
+    config_path = args.config
+    if config_path is None:
+        config_path = get_metric_config_path(metric, abs_dir)
+    config_schema_path = get_metric_config_schema_path(metric, abs_dir)
+    config = read_json(config_path)
+    config_schema = read_json(config_schema_path)
+    try:
+        jsonschema.validate(config, config_schema)
+    except Exception:
+        raise Exception("[Error: ]Error in analyzing config json file")
 
     test_swc_trees, test_tiffs = [], []
     # read test trees, gold trees and configs
@@ -194,7 +205,6 @@ def run(DEBUG=True):
             test_swc_trees += read_swc_trees(file)
 
     gold_swc_trees = read_swc_trees(gold_swc_file)
-    config = read_json(config)
 
     # info: how many trees read
     print("There are {} test image(s) and {} gold image(s)".format(len(test_swc_trees), len(gold_swc_trees)))
@@ -257,7 +267,7 @@ def run(DEBUG=True):
                                                       branch_result[3], branch_result[4], branch_result[5],
                                                       branch_result[6], branch_result[7], branch_result[8]))
             print("----------------End-----------------")
-            if os.path.exists(output_dest):
+            if output_dest and os.path.exists(output_dest):
                 swc_save(test_swc_treeroot, os.path.join(output_dest,
                                                          "branch_metric",
                                                          "{}{}".format(gold_file_name[:-4], "_test.swc")))
@@ -281,8 +291,6 @@ if __name__ == "__main__":
 
 # pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\194444.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\194444.swc --metric matched_length --reverse true
 
-# python ./pyneval/cli/pyneval.py --test D:\gitProject\mine\PyNeval\test\data_example\test\194444.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\194444.swc --metric matched_length --reverse true
-
 # pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem1.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem1.swc --metric diadem_metric
 
 # pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem7.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem7.swc --metric diadem_metric
@@ -293,4 +301,4 @@ if __name__ == "__main__":
 
 # pyneval --gold .\\data\\test_data\\ssd_data\\gold\\a.swc --test .\\data\\test_data\\ssd_data\\test\\a.swc --metric branch_metric
 
-# pyneval --gold .\\data\test_data\geo_metric_data\gold_34_23_10.swc --test .\data\test_data\geo_metric_data\test_34_23_10.swc --metric ssd_metric
+# pyneval --gold .\\data\test_data\geo_metric_data\gold_34_23_10.swc --test .\data\test_data\geo_metric_data\test_34_23_10.swc --metric branch_metric

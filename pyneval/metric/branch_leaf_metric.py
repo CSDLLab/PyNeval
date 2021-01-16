@@ -5,6 +5,7 @@ from pyneval.metric.utils.km_utils import KM, get_dis_graph
 from pyneval.io.read_json import read_json
 from pyneval.metric.utils.point_match_utils import get_swc2swc_dicts
 from pyneval.io.read_config import *
+import jsonschema
 
 
 def debug_out_list(swc_list, _str):
@@ -170,6 +171,12 @@ if __name__ == "__main__":
     gold_swc_tree.load("../../data/test_data/topo_metric_data/test_fake_data4.swc")
 
     config = read_json("..\\..\\config\\branch_metric.json")
+    config_schema = read_json("..\\..\\config\\schemas\\branch_metric_schema.json")
+    try:
+        jsonschema.validate(config, config_schema)
+    except Exception as e:
+        raise Exception("[Error: ]Error in analyzing config json file")
+
     config["metric_mode"] = 2
     config["threshold_dis"] = 1
     config["threshold_mode"] = 2

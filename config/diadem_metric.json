@@ -1,6 +1,5 @@
 {
-  "WEIGHT_MODE": "WEIGHT_DEGREE",
-  "detail_path": null,
+  "weight_mode": 1,
   "remove_spur": false,
   "count_excess_nodes": true,
   "align_tree_by_root": false,
