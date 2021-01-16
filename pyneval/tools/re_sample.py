@@ -108,18 +108,18 @@ def down_sample_swc_tree(swc_tree, rad_mul=1.50, center_dis=None, stage=0):
     return new_swc_tree
 
 
-def re_sample(swc_tree, son, pa, thres_length):
+def re_sample(swc_tree, son, pa, length_threshold):
     '''
     self recursive function, add node on the middle of edge son, pa
     :param swc_tree:
     :param son:
     :param pa:
-    :param thres_length: control how many nodes to add
+    :param length_threshold: control how many nodes to add
     :param tiff_file: optional, adjust to fit tiff if exist
     :return: True/False, it dose not matter
     '''
     dis = son.distance(pa)
-    if dis - (son.radius() + pa.radius()) < thres_length:
+    if dis - (son.radius() + pa.radius()) < length_threshold:
         return False
 
     new_pos = EuclideanPoint(center=[(son.get_x() + pa.get_x()) / 2,
@@ -136,20 +136,20 @@ def re_sample(swc_tree, son, pa, thres_length):
     if not swc_tree.link_child(new_node, son):
         raise Exception("[Error: ] add child fail type of pa :{}, type of son".format(type(new_node, son)))
 
-    re_sample(swc_tree=swc_tree, son=new_node, pa=pa, thres_length=thres_length)
-    re_sample(swc_tree=swc_tree, son=son, pa=new_node, thres_length=thres_length)
+    re_sample(swc_tree=swc_tree, son=new_node, pa=pa, length_threshold=length_threshold)
+    re_sample(swc_tree=swc_tree, son=son, pa=new_node, length_threshold=length_threshold)
     return True
 
 
 def up_sample_swc_tree_command_line(swc_tree, config=None):
-    thres_length = float(config['thres_length'])
-    return up_sample_swc_tree(swc_tree=swc_tree, thres_length=thres_length)
+    length_threshold = float(config['length_threshold'])
+    return up_sample_swc_tree(swc_tree=swc_tree, length_threshold=length_threshold)
 
 
-def up_sample_swc_tree(swc_tree, thres_length=1.0):
+def up_sample_swc_tree(swc_tree, length_threshold=1.0):
     '''
     :param swc_tree: the tree need to add node(dense)
-    :param thres_length: control how many nodes to add
+    :param length_threshold: control how many nodes to add
     :return: swc_tree has changed in this function
     '''
     up_sampled_swc_tree = swc_tree.get_copy()
@@ -160,7 +160,7 @@ def up_sample_swc_tree(swc_tree, thres_length=1.0):
             continue
 
         re_sample(swc_tree=up_sampled_swc_tree, son=node, pa=node.parent,
-                  thres_length=thres_length)
+                  length_threshold=length_threshold)
 
     # 're_sample' will change the structure of the tree. Update is required after using
     up_sampled_swc_tree.get_node_list(update=True)
@@ -171,6 +171,6 @@ if __name__ == "__main__":
     file_name = "6144_12288_17664"
     swc_tree = SwcTree()
     swc_tree.load("D:\\02_project\\00_neural_tracing\\01_project\PyNeval\data\swc_cut_data\\{}.swc".format(file_name))
-    up_sampled_swc_tree = up_sample_swc_tree(swc_tree=swc_tree, thres_length=1.0)
+    up_sampled_swc_tree = up_sample_swc_tree(swc_tree=swc_tree, length_threshold=1.0)
     # up_sampled_swc_tree = down_sample_swc_tree(swc_tree=swc_tree)
     swc_save(up_sampled_swc_tree, "D:\\02_project\\00_neural_tracing\\01_project\PyNeval\output\\resample\\{}.swc".format(file_name))

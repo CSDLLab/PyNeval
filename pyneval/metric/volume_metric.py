@@ -1,10 +1,13 @@
-from pyneval.metric.utils.klib.TiffFile import imread
-from pyneval.model.swc_node import SwcTree
-from pyneval.io.swc_writer import swc_save
-from pyneval.tools.re_sample import up_sample_swc_tree
-from pyneval.metric.utils.tiff_utils import front_expend_step
+import jsonschema
 import queue
 import math
+
+from pyneval.io import read_json
+from pyneval.io.swc_writer import swc_save
+from pyneval.metric.utils.klib.TiffFile import imread
+from pyneval.metric.utils.tiff_utils import front_expend_step
+from pyneval.model.swc_node import SwcTree
+from pyneval.tools.re_sample import up_sample_swc_tree
 
 
 def adjust_swc_tree(swc_tree, tiff_file, thres_intensity, max_step=4):
@@ -68,7 +71,7 @@ def cal_label(node, test_tiff, thres_intensity, max_step=0):
     return None
 
 
-def cal_volume_recall(test_tiff, gold_swc, thres_intensity):
+def cal_volume_recall(test_tiff, gold_swc, intensity_threshold, debug):
     swc_node_list = gold_swc.get_node_list()
     tot_front, tot_back = 0, 0
 
@@ -76,38 +79,43 @@ def cal_volume_recall(test_tiff, gold_swc, thres_intensity):
         if node.is_virtual():
             continue
         if (len(node.children) == 0 or node.parent.is_virtual()) and\
-                cal_label(node, test_tiff, thres_intensity, 0) is not None:
+                cal_label(node, test_tiff, intensity_threshold, 0) is not None:
             tot_front += 1
-        elif cal_label(node, test_tiff, thres_intensity, 1) is not None:
+        elif cal_label(node, test_tiff, intensity_threshold, 1) is not None:
             tot_front += 1
         else:
-            try:
+            if debug:
                 print("[Info: ] fail: {} {} {} {} {}".format(
                     node.get_id(), round(node.get_x()), round(node.get_y()), round(node.get_z()),
                     test_tiff[round(node.get_z())][round(node.get_y())][round(node.get_x())]
                 ))
-            except:
-                continue
+
         tot_back += 1
-    print(tot_front, tot_back)
     return tot_front/tot_back
 
 
 def volume_metric(swc_gold, tiff_test, config=None):
-    thres_length = config['thres_length']
-    thres_intensity = config['thres_intensity']
-    densed_swc_tree = up_sample_swc_tree(swc_tree=swc_gold, thres_length=thres_length)
-    recall = cal_volume_recall(tiff_test, densed_swc_tree, thres_intensity)
-    return recall, 0
+    length_threshold = config['length_threshold']
+    intensity_threshold = config['intensity_threshold']
+    debug = config['debug']
+    densed_swc_tree = up_sample_swc_tree(swc_tree=swc_gold, length_threshold=length_threshold)
+    recall = cal_volume_recall(tiff_test, densed_swc_tree, intensity_threshold, debug)
+    return recall
 
 
 if __name__ == "__main__":
-    swc_path = "D:\\03_backup\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\example_selected\g.swc"
-    tiff_path = "D:\\03_backup\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\example_selected\g.tif"
+    swc_path = "..\\..\\data\example_selected\g.swc"
+    tiff_path = "..\\..\\data\example_selected\g.tif"
     test_tiff = imread(tiff_path)
     swc_tree = SwcTree()
     swc_tree.load(swc_path)
+    config = read_json.read_json("..\\..\\config\\volume_metric.json")
+    config_schema = read_json.read_json("..\\..\\config\\schemas\\volume_metric_schema.json")
 
-    # adjust_swc_tree(swc_tree=densed_swc_tree, tiff_file=test_tiff, thres_intensity=128, max_step=4)
-    recall = cal_volume_recall(test_tiff=test_tiff, gold_swc=swc_tree, thres_intensity=1)
+    try:
+        jsonschema.validate(config, config_schema)
+    except Exception as e:
+        raise Exception("[Error: ]Error in analyzing config json file")
+
+    recall = volume_metric(tiff_test=test_tiff, swc_gold=swc_tree, config=config)
     print(recall)
