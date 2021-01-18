@@ -217,30 +217,32 @@ def run(DEBUG=True):
     gold_swc_treeroot = gold_swc_trees[0]
     for test_tiff in test_tiffs:
         if metric == "volume_metric":
-            recall = volume_metric(tiff_test=test_tiff, swc_gold=gold_swc_treeroot, config=config)
-            print(recall)
+            volume_result = volume_metric(tiff_test=test_tiff, swc_gold=gold_swc_treeroot, config=config)
+            print(volume_result["recall"])
 
     for test_swc_treeroot in test_swc_trees:
         if metric == "diadem_metric":
-            ans = diadem_metric(swc_test_tree=test_swc_treeroot,
-                                swc_gold_tree=gold_swc_treeroot,
-                                config=config)
-            print("score = {}".format(ans[2]))
+            diadem_res = diadem_metric(swc_test_tree=test_swc_treeroot,
+                                       swc_gold_tree=gold_swc_treeroot,
+                                       config=config)
+            print("score = {}".format(diadem_res["final_score"]))
             if reverse:
-                ans_rev = diadem_metric(swc_test_tree=gold_swc_treeroot,
-                                        swc_gold_tree=test_swc_treeroot,
-                                        config=config)
-                print("rev_score = {}".format(ans_rev[2]))
+                rev_diadem_res = diadem_metric(swc_test_tree=gold_swc_treeroot,
+                                               swc_gold_tree=test_swc_treeroot,
+                                               config=config)
+                print("rev_score = {}".format(rev_diadem_res["final_score"]))
 
         if metric == "ssd_metric":
             ssd_res = ssd_metric.ssd_metric(gold_swc_treeroot, test_swc_treeroot, config)
-            print("ssd_score = {}\n"
-                  "recall    = {}\n"
-                  "precision = {}\n".format(ssd_res[0], ssd_res[1], ssd_res[2]))
+            print("ssd score = {}\n"
+                  "recall    = {}%\n"
+                  "precision = {}%".format(round(ssd_res["avg_score"], 2),
+                                           round(ssd_res["recall"] * 100, 2),
+                                           round(ssd_res["precision"] * 100, 2)))
 
         if metric == "length_metric":
             lm_res = length_metric(gold_swc_treeroot, test_swc_treeroot, config)
-            print("Recall = {} Precision = {}".format(lm_res[0], lm_res[1]))
+            print("Recall = {} Precision = {}".format(lm_res["recall"], lm_res["precision"]))
 
             if output_dest:
                 swc_save(test_swc_treeroot, output_dest)
@@ -248,13 +250,13 @@ def run(DEBUG=True):
                 if "detail" in config:
                     config["detail"] = config["detail"][:-4] + "_reverse.swc"
                 lm_res = length_metric(test_swc_treeroot, gold_swc_treeroot, config)
-                print("Recall = {} Precision = {}".format(lm_res[0], lm_res[1]))
+                print("Recall = {} Precision = {}".format(lm_res["recall"], lm_res["precision"]))
                 if output_dest:
                     swc_save(gold_swc_treeroot, output_dest[:-4]+"_reverse.swc")
         if metric == "branch_metric":
-            branch_result = branch_leaf_metric(gold_swc_tree=gold_swc_treeroot,
-                                               test_swc_tree=test_swc_treeroot,
-                                               config=config)
+            branch_res = branch_leaf_metric(gold_swc_tree=gold_swc_treeroot,
+                                            test_swc_tree=test_swc_treeroot,
+                                            config=config)
             print("---------------Result---------------")
             print("gole_branch_num = {}, test_branch_num = {}\n"
                   "true_positive_number  = {}\n"
@@ -263,9 +265,10 @@ def run(DEBUG=True):
                   "matched_mean_distance = {}\n"
                   "matched_sum_distance  = {}\n"
                   "pt_score              = {}\n"
-                  "isolated node number  = {}".format(branch_result[0], branch_result[1], branch_result[2],
-                                                      branch_result[3], branch_result[4], branch_result[5],
-                                                      branch_result[6], branch_result[7], branch_result[8]))
+                  "isolated node number  = {}".
+                  format(branch_res["gold_len"], branch_res["test_len"], branch_res["true_pos_num"],
+                         branch_res["false_neg_num"], branch_res["false_pos_num"], branch_res["mean_dis"],
+                         branch_res["tot_dis"], branch_res["pt_cost"], branch_res["iso_node_num"]))
             print("----------------End-----------------")
             if output_dest and os.path.exists(output_dest):
                 swc_save(test_swc_treeroot, os.path.join(output_dest,
@@ -275,12 +278,12 @@ def run(DEBUG=True):
                                                          "branch_metric",
                                                          "{}{}".format(gold_file_name[:-4], "_gold.swc")))
         if metric == "link_metric" or metric == "LM":
-            edge_loss, tree_dis_loss = link_metric(test_swc_tree=test_swc_treeroot,
-                                                   gold_swc_tree=gold_swc_treeroot,
-                                                   config=config)
+            link_res = link_metric(test_swc_tree=test_swc_treeroot,
+                                   gold_swc_tree=gold_swc_treeroot,
+                                   config=config)
             print("---------------Result---------------")
             print("edge_loss     = {}\n"
-                  "tree_dis_loss = {}\n".format(edge_loss, tree_dis_loss))
+                  "tree_dis_loss = {}\n".format(link_res["edge_loss"], link_res["tree_dis_loss"]))
             print("---------------End---------------")
 
 
@@ -295,10 +298,11 @@ if __name__ == "__main__":
 
 # pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\diadem\diadem7.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\diadem\diadem7.swc --metric diadem_metric
 
-# pyneval --gold D:\gitProject\mine\PyNeval\test\data_example\gold\vol_metric\6656_gold.swc --test D:\gitProject\mine\PyNeval\test\data_example\test\vol_metric\6656_2304_22016.pro.tif --metric volume_metric --output D:\gitProject\mine\PyNeval\output\volume_metric\volume_out.swc
+# pyneval --gold .\\data\example_selected\g.swc --test .\\data\example_selected\g.tif --metric volume_metric --output D:\gitProject\mine\PyNeval\output\volume_metric\volume_out.swc
 
 # pyneval --gold .\\data\test_data\topo_metric_data\gold_fake_data1.swc --test .\data\test_data\topo_metric_data\test_fake_data1.swc --metric link_metric
 
 # pyneval --gold .\\data\\test_data\\ssd_data\\gold\\a.swc --test .\\data\\test_data\\ssd_data\\test\\a.swc --metric branch_metric
 
 # pyneval --gold .\\data\test_data\geo_metric_data\gold_34_23_10.swc --test .\data\test_data\geo_metric_data\test_34_23_10.swc --metric branch_metric
+

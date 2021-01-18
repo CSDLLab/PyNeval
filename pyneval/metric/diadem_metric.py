@@ -942,7 +942,12 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
     if config['debug'] is True:
         print_result()
 
-    return tuple([g_weight_sum, g_score_sum, g_final_score])
+    res = {
+        "weight_sum": g_weight_sum,
+        "score_sum": g_score_sum,
+        "final_score": g_final_score
+    }
+    return res
 
 
 def pyneval_diadem_metric(gold_swc, test_swc, config):
@@ -991,9 +996,10 @@ if __name__ == "__main__":
     except Exception as e:
         raise Exception("[Error: ]Error in analyzing config json file")
 
-    ans = diadem_metric(swc_test_tree=testTree,
-                        swc_gold_tree=goldTree,
-                        config=config)
+    diadem_result = diadem_metric(swc_test_tree=testTree,
+                                  swc_gold_tree=goldTree,
+                                  config=config)
     print("matched weight = {}\n"
           "total weight   = {}\n"
-          "diadem score   = {}\n".format(ans[1], ans[0], ans[2]))
+          "diadem score   = {}\n".
+          format(diadem_result["weight_sum"], diadem_result["score_sum"], diadem_result["final_score"]))

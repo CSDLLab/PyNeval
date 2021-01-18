@@ -1,6 +1,5 @@
 import sys
 import time
-
 import jsonschema
 
 from pyneval.metric.utils.config_utils import DINF
@@ -8,6 +7,7 @@ from pyneval.model.swc_node import SwcTree
 from pyneval.metric.utils.km_utils import KM, get_dis_graph
 from pyneval.io.read_json import read_json
 from pyneval.metric.utils.point_match_utils import get_swc2swc_dicts
+
 
 def get_neighbors(node):
     neighbors = list(node.children)
@@ -80,7 +80,11 @@ def link_metric(gold_swc_tree, test_swc_tree, config):
         km.solve()
         tree_dis_loss += -km.get_max_dis()
 
-    return edge_loss, tree_dis_loss
+    res = {
+        "edge_loss": edge_loss,
+        "tree_dis_loss": tree_dis_loss
+    }
+    return res
 
 
 if __name__ == "__main__":
@@ -98,5 +102,6 @@ if __name__ == "__main__":
     except Exception as e:
         raise Exception("[Error: ]Error in analyzing config json file")
 
-    edge_loss, tree_dis_loss = link_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
-    print(edge_loss, tree_dis_loss)
+    link_res = link_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
+    print("edge loss     = {}\n"
+          "tree_dis_loss = {}".format(link_res["edge_loss"], link_res["tree_dis_loss"]))
