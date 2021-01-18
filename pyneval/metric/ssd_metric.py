@@ -106,14 +106,17 @@ def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree,
         swc_writer.swc_save(u_gold_swc_tree, config["detail_path"][:-4] + "_gold_upsampled.swc")
         swc_writer.swc_save(u_test_swc_tree, config["detail_path"][:-4] + "_test_upsampled.swc")
 
-    avg_score = (g2t_score + t2g_score) / 2
-    recall = 1 - g2t_num/u_gold_swc_tree.size()
-    precision = 1 - t2g_num/u_test_swc_tree.size()
     if debug:
         print("recall_num = {}, pre_num = {}, gold_tot_num = {}, test_tot_num = {} {} {}".format(
             g2t_num, t2g_num, u_gold_swc_tree.size(), u_test_swc_tree.size(), gold_swc_tree.length(), test_swc_tree.length()
         ))
-    return avg_score, recall, precision
+
+    res = {
+        "avg_score": (g2t_score + t2g_score) / 2,
+        "recall": 1 - g2t_num/u_gold_swc_tree.size(),
+        "precision": 1 - t2g_num/u_test_swc_tree.size()
+    }
+    return res
 
 
 if __name__ == "__main__":
@@ -133,11 +136,14 @@ if __name__ == "__main__":
         raise Exception("[Error: ]Error in analyzing config json file")
     config["detail_path"] = "..//..//output//ssd_output//ssd_detail.swc"
 
-    score, recall, precision = ssd_metric(gold_swc_tree=gold_tree,
-                                          test_swc_tree=test_tree,
-                                          config=config)
+    ssd_res = ssd_metric(gold_swc_tree=gold_tree,
+                         test_swc_tree=test_tree,
+                         config=config)
+
     print("ssd score = {}\n"
           "recall    = {}%\n"
           "precision = {}%".
-          format(round(score, 2), round(recall*100, 2), round(precision*100, 2)))
+          format(round(ssd_res["avg_score"], 2),
+                 round(ssd_res["recall"]*100, 2),
+                 round(ssd_res["precision"]*100, 2)))
 

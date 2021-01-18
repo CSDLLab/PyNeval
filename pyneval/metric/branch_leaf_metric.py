@@ -142,23 +142,27 @@ def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
     # debug_out_list(test_leaf_swc_list, "test_leaf_swc_list")
     # debug_out_list(gold_leaf_swc_list, "gold_leaf_swc_list")
 
-    # result[0]:gold_len
-    # result[1]:test_len
-    # result[2]:true_pos_num
-    # result[3]:false_pos_num
-    # result[4]:true_neg_num
-    # result[5]:mean_dis
-    # result[6]:tot_dis
-    # result[7]:pt_cost
-    branch_result = score_point_distance(gold_tree=gold_swc_tree,
-                                         test_tree=test_swc_tree,
-                                         test_node_list=test_branch_swc_list,
-                                         gold_node_list=gold_branch_swc_list,
-                                         test_gold_dict=test_gold_dict,
-                                         threshold_dis=threshold_dis,
-                                         color=color,
-                                         metric_mode=metric_mode)
-    return branch_result
+    branch_result_tuple = score_point_distance(gold_tree=gold_swc_tree,
+                                               test_tree=test_swc_tree,
+                                               test_node_list=test_branch_swc_list,
+                                               gold_node_list=gold_branch_swc_list,
+                                               test_gold_dict=test_gold_dict,
+                                               threshold_dis=threshold_dis,
+                                               color=color,
+                                               metric_mode=metric_mode)
+
+    res = {
+        "gold_len": branch_result_tuple[0],
+        "test_len": branch_result_tuple[1],
+        "true_pos_num": branch_result_tuple[2],
+        "false_neg_num": branch_result_tuple[3],
+        "false_pos_num": branch_result_tuple[4],
+        "mean_dis": branch_result_tuple[5],
+        "tot_dis": branch_result_tuple[6],
+        "pt_cost": branch_result_tuple[7],
+        "iso_node_num": branch_result_tuple[8]
+    }
+    return res
 
 
 if __name__ == "__main__":
@@ -190,9 +194,10 @@ if __name__ == "__main__":
           "matched_mean_distance = {}\n"
           "matched_sum_distance  = {}\n"
           "pt_score              = {}\n"
-          "isolated node number  = {}".format(branch_result[0], branch_result[1], branch_result[2],
-                                              branch_result[3], branch_result[4], branch_result[5],
-                                              branch_result[6], branch_result[7], branch_result[8]))
+          "isolated node number  = {}".
+          format(branch_result["gold_len"], branch_result["test_len"], branch_result["true_pos_num"],
+                 branch_result["false_neg_num"], branch_result["false_pos_num"], branch_result["mean_dis"],
+                 branch_result["tot_dis"], branch_result["pt_cost"], branch_result["iso_node_num"]))
     print("----------------End-----------------")
     # with open("../../output/branch_metric/{}_gold.swc".format(file_name), 'w') as f:
     #     f.write(gold_swc_tree.to_str_list())

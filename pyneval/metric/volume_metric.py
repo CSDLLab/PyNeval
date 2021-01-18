@@ -100,7 +100,11 @@ def volume_metric(swc_gold, tiff_test, config=None):
     debug = config['debug']
     densed_swc_tree = up_sample_swc_tree(swc_tree=swc_gold, length_threshold=length_threshold)
     recall = cal_volume_recall(tiff_test, densed_swc_tree, intensity_threshold, debug)
-    return recall
+
+    res = {
+        "recall": recall
+    }
+    return res
 
 
 if __name__ == "__main__":
@@ -117,5 +121,5 @@ if __name__ == "__main__":
     except Exception as e:
         raise Exception("[Error: ]Error in analyzing config json file")
 
-    recall = volume_metric(tiff_test=test_tiff, swc_gold=swc_tree, config=config)
-    print(recall)
+    res = volume_metric(tiff_test=test_tiff, swc_gold=swc_tree, config=config)
+    print("recall = {}".format(res["recall"]))
