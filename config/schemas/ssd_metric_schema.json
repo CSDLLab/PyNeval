@@ -2,11 +2,15 @@
   "title": "ssd metric schema",
   "type": "object",
   "required": [
+      "threshold_mode",
       "ssd_threshold",
+      "up_sample_threshold",
       "debug"
   ],
   "properties": {
+    "threshold_mode": {"type": "integer", "enum": [1,2]},
     "ssd_threshold": {"type": "number", "exclusiveMinimum": 0},
+    "up_sample_threshold": {"type": "number", "exclusiveMinimum": 0},
     "debug": {"type": "boolean"}
   }
 }

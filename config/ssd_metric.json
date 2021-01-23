@@ -1,4 +1,6 @@
 {
+  "threshold_mode": 1,
   "ssd_threshold": 2,
+  "up_sample_threshold": 1.0,
   "debug": false
 }
