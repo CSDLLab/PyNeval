@@ -28,7 +28,7 @@ from pyneval.metric.utils import point_match_utils
 from pyneval.io import read_config
 
 
-def get_mse(src_tree, tar_tree, ssd_threshold):
+def get_mse(src_tree, tar_tree, ssd_threshold=2.0, mode=1):
     """ calculate the minimum square error of two trees
     find the closest node on the tar_tree for each node on the src tree, calculate the average
     distance of these node pairs.
@@ -38,6 +38,9 @@ def get_mse(src_tree, tar_tree, ssd_threshold):
         tar_tree(SwcTree):
         ssd_threshold(float): distance will be count into the res
             only if two nodes' distance is larger than this threshold.
+        mode(1 or 2):
+            1 means static threshold, equal to ssd_threshold.
+            2 means dynamic threshold, equal to ssd_threshold * src_node.threshold
 
     Returns:
         dis(float): average minimum distance of node, distance must be larger than ssd_threshold
@@ -55,7 +58,13 @@ def get_mse(src_tree, tar_tree, ssd_threshold):
         target_node = pos_node_dict[tuple(target_pos[0].data)]
 
         cur_dis = target_node.distance(node)
-        if cur_dis >= ssd_threshold:
+
+        if mode == 1:
+            threshold = ssd_threshold
+        else:
+            threshold = ssd_threshold * node.radius()
+
+        if cur_dis >= threshold:
             node._type = 9
             dis += cur_dis
             num += 1
@@ -90,17 +99,25 @@ def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree,
     Raises:
         None
     """
-    debug = read_config.read_bool_config(config=config, config_name="debug", default=False)
+    debug = config["debug"]
+    threshold_mode = config["threshold_mode"]
+    ssd_threshold = config["ssd_threshold"]
+    up_sample_threshold = config["up_sample_threshold"]
+
     if debug:
         print("[Debug: ] In ssd metric")
 
-    u_gold_swc_tree = re_sample.up_sample_swc_tree(gold_swc_tree, length_threshold=1.0)
-    u_test_swc_tree = re_sample.up_sample_swc_tree(test_swc_tree, length_threshold=1.0)
+    u_gold_swc_tree = re_sample.up_sample_swc_tree(swc_tree=gold_swc_tree,
+                                                   length_threshold=up_sample_threshold)
+    u_test_swc_tree = re_sample.up_sample_swc_tree(swc_tree=test_swc_tree,
+                                                   length_threshold=up_sample_threshold)
     u_gold_swc_tree.set_node_type_by_topo(root_id=1)
     u_test_swc_tree.set_node_type_by_topo(root_id=5)
 
-    g2t_score, g2t_num = get_mse(u_gold_swc_tree, u_test_swc_tree, config["ssd_threshold"])
-    t2g_score, t2g_num = get_mse(u_test_swc_tree, u_gold_swc_tree, config["ssd_threshold"])
+    g2t_score, g2t_num = get_mse(src_tree=u_gold_swc_tree, tar_tree=u_test_swc_tree,
+                                 ssd_threshold=ssd_threshold, mode=threshold_mode)
+    t2g_score, t2g_num = get_mse(src_tree=u_test_swc_tree, tar_tree=u_gold_swc_tree,
+                                 ssd_threshold=ssd_threshold, mode=threshold_mode)
 
     if "detail_path" in config:
         swc_writer.swc_save(u_gold_swc_tree, config["detail_path"][:-4] + "_gold_upsampled.swc")
