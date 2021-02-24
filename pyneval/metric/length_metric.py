@@ -1,30 +1,37 @@
 import sys
 import jsonschema
 
-from pyneval.model.swc_node import SwcTree
-from pyneval.metric.utils.edge_match_utils import get_match_edges
-from pyneval.io.read_json import read_json
-from pyneval.io.read_swc import adjust_swcfile
-from pyneval.io.read_config import read_float_config, read_path_config, read_bool_config
-from pyneval.io.swc_writer import swc_save
+from pyneval.model import swc_node
+from pyneval.metric.utils import edge_match_utils
+from pyneval.io import read_json
+from pyneval.io import read_swc
+from pyneval.io import swc_writer
 
 
 def length_metric_run(gold_swc_tree=None, test_swc_tree=None,
                       rad_threshold=-1.0, len_threshold=0.2, debug=False):
     """
-    Description: Detail of length metric, get best edge for each edge and calculate final scores
-    Input: gold/test swc tree, and parsed configs
-    Output: recall(int), precision(int) and vertical Auxiliary line between swc trees
+    get matched edge set and calculate recall and precision
+    Args:
+        gold_swc_tree(SwcTree):
+        test_swc_tree(SwcTree):
+        rad_threshold(float): threshold of key point radius
+        len_threshold(float): threshold of length of the matching edges
+        debug(bool): list debug info ot not
+    Returns:
+        tuple: contain two values to demonstrate metric result
+            precision(float): percentage of total length of edges that are matched compared to test tree
+            recall(float): percentage of total length of edges that are matched compared to gold tree
+    Raises:
+        None
     """
-    vertical_tree = []
-
-    match_edges, test_match_length = get_match_edges(gold_swc_tree=gold_swc_tree,
-                                                     test_swc_tree=test_swc_tree,  # tree data
-                                                     vertical_tree=vertical_tree,  # a empty Auxiliary line tree
-                                                     rad_threshold=rad_threshold,
-                                                     len_threshold=len_threshold,
-                                                     debug=debug)  # configs
-
+    # get matched edge set
+    match_edges, test_match_length = edge_match_utils.get_match_edges(gold_swc_tree=gold_swc_tree,
+                                                                      test_swc_tree=test_swc_tree,
+                                                                      rad_threshold=rad_threshold,
+                                                                      len_threshold=len_threshold,
+                                                                      debug=debug)
+    # calculate the sum of matched length and total length of gold and test tree
     match_length = 0.0
     for line_tuple in match_edges:
         match_length += line_tuple[0].parent_distance()
@@ -37,7 +44,7 @@ def length_metric_run(gold_swc_tree=None, test_swc_tree=None,
     if debug:
         print("match_length = {}, test_match_length = {}, gold_total_length = {}, test_total_length = {}"
               .format(match_length, test_match_length, gold_total_length, test_total_length))
-
+    # calculate recall and precision
     if gold_total_length != 0:
         recall = round(match_length/gold_total_length, 8)
     else:
@@ -48,16 +55,35 @@ def length_metric_run(gold_swc_tree=None, test_swc_tree=None,
     else:
         precision = 0
 
-    return min(recall, 1.0), min(precision, 1.0), vertical_tree
+    return min(recall, 1.0), min(precision, 1.0)
 
 
 # @do_cprofile("./mkm_run.prof")
 def length_metric(gold_swc_tree, test_swc_tree, config):
+    """Main function of length metric.
+    unpack config and run the matching function
+    Args:
+        gold_swc_tree(SwcTree):
+        test_swc_tree(SwcTree):
+        config(Dict):
+            keys: the name of configs
+            items: config values
+    Example:
+        test_tree = swc_node.SwcTree()
+        gold_tree = swc_node.SwcTree()
+        gold_tree.load("..\\..\\data\\test_data\\geo_metric_data\\gold_fake_data1.swc")
+        test_tree.load("..\\..\\data\\test_data\\geo_metric_data\\test_fake_data1.swc")
+        score, recall, precision = length_metric(gold_swc_tree=gold_tree,
+                                                 test_swc_tree=test_tree,
+                                                 config=config)
+    Returns:
+        tuple: contain two values to demonstrate metric result
+            precision(float): percentage of total length of edges that are matched compared to test tree
+            recall(float): percentage of total length of edges that are matched compared to gold tree
+    Raises:
+        None
     """
-    Description: Main function of length metric, parse configs and preprocess data
-    Input: gold/test swc tree, config
-    Output: recall(int) and precision(int)
-    """
+
     # read config
     rad_mode = config["rad_mode"]
     rad_threshold = config["rad_threshold"]
@@ -67,15 +93,15 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
     if rad_mode == 1:
         rad_threshold *= -1
     # check every edge in test, if it is overlap with any edge in gold three
-    recall, precision, vertical_tree = length_metric_run(gold_swc_tree=gold_swc_tree,
-                                                         test_swc_tree=test_swc_tree,
-                                                         rad_threshold=rad_threshold,
-                                                         len_threshold=len_threshold,
-                                                         debug=debug)
+    recall, precision = length_metric_run(gold_swc_tree=gold_swc_tree,
+                                          test_swc_tree=test_swc_tree,
+                                          rad_threshold=rad_threshold,
+                                          len_threshold=len_threshold,
+                                          debug=debug)
 
     if "detail_path" in config:
-        swc_save(gold_swc_tree, config["detail_path"][:-4]+"_gold.swc")
-        swc_save(test_swc_tree, config["detail_path"][:-4]+"_test.swc")
+        swc_writer.swc_save(gold_swc_tree, config["detail_path"][:-4]+"_gold.swc")
+        swc_writer.swc_save(test_swc_tree, config["detail_path"][:-4]+"_test.swc")
     if debug:
         print("Recall = {}, Precision = {}".format(recall, precision))
 
@@ -86,16 +112,51 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
     return res
 
 
-# length metric interface connect to webmets
-def pyneval_length_metric(gold_swc, test_swc, method, rad_threshold, len_threshold):
-    gold_tree = SwcTree()
-    test_tree = SwcTree()
+def web_length_metric(gold_swc, test_swc, mode, rad_threshold, len_threshold):
+    """
+        length metric interface connect to webmets
+        (https://github.com/bennieHan/webmets)
+        which is not used nowadays
+    Args:
+        gold_swc(SwcTree):
+        test_swc(SwcTree):
+        mode(int) 1 or 2, same as "mode" in config
+        rad_threshold(float): threshold of key point radius
+        len_threshold(float): threshold of length of the matching edges
+    Example:
+        # in Flask:
+        def geometry():
+            gold_swc = request.form.get('gold_txt')
+            test_swc = request.form.get('test_txt')
+            method = request.form.get('method')
+            rad_threshold = request.form.get('rad_threshold')
+            len_threshold = request.form.get('len_threshold')
+            result = web_length_metric(gold_swc=gold_swc,
+                                       test_swc=test_swc,
+                                       method=int(method),
+                                       rad_threshold=rad_threshold,
+                                       len_threshold=len_threshold)
+            # result['gold_swc'] = adjust_radius_work(result['gold_swc'], 0.1)
+            # result['test_swc'] = adjust_radius_work(result['test_swc'], 0.1)
+            return jsonify(result=result)
+    Returns:
+        tuple: contain five values to demonstrate metric result
+            precision(float): percentage of total length of edges that are matched compared to test tree
+            recall(float): percentage of total length of edges that are matched compared to gold tree
+            gold_swc(Swc Tree):
+            test_swc(Swc Tree):
+            vertical_swc(Swc Tree): vertical edge between gold and test swc tree.
+    Raises:
+        None
+    """
+    gold_tree = swc_node.SwcTree()
+    test_tree = swc_node.SwcTree()
 
-    gold_tree.load_list(adjust_swcfile(gold_swc))
-    test_tree.load_list(adjust_swcfile(test_swc))
+    gold_tree.load_list(read_swc.adjust_swcfile(gold_swc))
+    test_tree.load_list(read_swc.adjust_swcfile(test_swc))
 
     config = {
-        'method': method,
+        'method': mode,
         'len_threshold': len_threshold,
         'rad_threshold': rad_threshold
     }
@@ -115,24 +176,24 @@ def pyneval_length_metric(gold_swc, test_swc, method, rad_threshold, len_thresho
 
 
 if __name__ == "__main__":
-    goldTree = SwcTree()
-    testTree = SwcTree()
+    goldTree = swc_node.SwcTree()
+    testTree = swc_node.SwcTree()
     sys.setrecursionlimit(10000000)
     goldTree.load("..\\..\\data\\test_data\\geo_metric_data\\gold_34_23_10.swc")
     testTree.load("..\\..\\data\\test_data\\geo_metric_data\\test_34_23_10.swc")
 
-    config = read_json("..\\..\\config\\volume_metric.json")
-    config_schema = read_json("..\\..\\config\\schemas\\volume_metric_schema.json")
+    config = read_json.read_json("..\\..\\config\\length_metric.json")
+    config_schema = read_json.read_json("..\\..\\config\\schemas\\length_metric_schema.json")
 
     try:
         jsonschema.validate(config, config_schema)
     except Exception as e:
         raise Exception("[Error: ]Error in analyzing config json file")
-    config["detail_path"] = "..\\..\\output\\length_output\\length_metric_detail.swc"
-
+    # config["detail_path"] = "..\\..\\output\\length_output\\length_metric_detail.swc"
+    
     lm_res = length_metric(gold_swc_tree=goldTree,
                            test_swc_tree=testTree,
                            config=config)
 
     print("recall    = {}\n"
-          "precision = {}\n".format(lm_res[0], lm_res[1]))
+          "precision = {}\n".format(lm_res["recall"], lm_res["precision"]))
