@@ -1,0 +1,12 @@
+This fold contains several raw gold swc data files.
+These data are renamed to meet the requirement of pyneval paper.
+
+a: 091201c1
+b: 34_23_10
+c: AL_GNG_LH_neuron
+d: Recon112012no2-2
+e: 30_18_10
+f: 140918c7
+g: from LiuChao
+Some of them are selected from BigNeuron(https://github.com/BigNeuron/Data/releases) program.
+While others are our personal data.

@@ -1,3 +1,4 @@
 libspatialindex>=1.8
 rtree>=0.8
 anytree>=2.7.2
+jsonschema>=3.2.0
