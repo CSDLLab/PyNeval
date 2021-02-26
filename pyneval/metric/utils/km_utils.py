@@ -1,8 +1,17 @@
 import numpy as np
-from pyneval.metric.utils.config_utils import EPS, DINF
+from pyneval.metric.utils import config_utils
 
 
 def get_simple_lca_length(std_tree, test_gold_dict, node1, node2, switch):
+    """
+    get the corresponding node of node1 and node2 on std tree.
+    calculate the lca distance between them
+    Exception:
+        Exception("[Error: ] std has not been lca initialized yet")
+        std tree need to be initialized before running this function
+        example:
+            std_tree.get_lca_preprocess()
+    """
     if std_tree.depth_array is None:
         raise Exception("[Error: ] std has not been lca initialized yet")
     std_id_node_dict = std_tree.get_id_node_dict()
@@ -27,8 +36,26 @@ def get_dis_graph(gold_tree, test_tree, test_node_list, gold_node_list,
     """
     We use KM algorithm to get the minimum full match between gold and test branch&leaf nodes
     Since KM is used for calculating maximum match, we use the opposite value of distance
-    mode = 1: distance between nodes are calculated as euclidean distance
-    mode = 2: distance between nodes are calculated as distance on the gold tree
+    Args:
+        gold_tree(Swc_Tree):
+        test_tree(Swc_Tree):
+        gold_node_list(List): one list to calculate distance matrix
+        test_node_list(List): the other list to calculate distance matrix
+        test_gold_dict:
+            corresponding relation ship between gold and test node list
+        threshold_dis: if the distance of two node are larger than this threshold,
+                       they are considered unlimited far
+        metric_mode:
+            mode = 1: distance between nodes are calculated as euclidean distance
+            mode = 2: distance between nodes are calculated as distance on the gold tree
+    Return:
+        dis_graph(List):
+            The distance matrix between nodes in gold and test node list.
+            The first dimension of the graph need to be larger than the second.
+        switch(bool):
+            if switch is true, gold node list, test node list and corresponding length has been changed
+        gold_len(integer):
+        test_len(integer):
     """
     std_tree = gold_tree
 
@@ -92,7 +119,7 @@ class KM:
             if self.visy[y]:
                 continue
             tmp_delta = self.lx[x] + self.ly[y] - self.G[x][y]
-            if tmp_delta < EPS:
+            if tmp_delta < config_utils.EPS:
                 self.visy[y] = True
                 if self.match[y] == -1 or self.find_path(self.match[y]):
                     self.match[y] = x
