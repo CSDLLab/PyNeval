@@ -6,12 +6,17 @@ from pyneval.metric.utils.config_utils import get_default_threshold
 from pyneval.metric.utils.config_utils import SAME_POS_TH
 
 
-# for length metric (unused)
-def get_kdtree_data(kd_node):
-    return kd_node[0].data
-
-
 def create_kdtree(node_list):
+    """
+    construct a kd-tree using nodes in the node list.
+    Args:
+        node_list(List): a list of Swc Nodes
+    Return:
+        my_kdtree(KD tree)
+        pos_node_dict(Dict):
+            key: tuple of (x, y, z) coordinate
+            value: Swc node corresponds to the key's position
+    """
     pos_node_dict = {}
     center_list = []
 
@@ -26,8 +31,15 @@ def create_kdtree(node_list):
 
 def get_swc2swc_dicts(src_node_list, tar_node_list):
     '''
-    get a dict mapping nodes from node list source to node list target
-    if two nodes are mapped if they are on the same position
+    get a dict mapping nodes from the source node list to the target node list
+    two nodes are mapped if they are on the exactly same position (dis < SAME_POS_TH)
+    Args:
+        src_node_list(List): a list of Swc Nodes. find a match for each node in this list if possible.
+        tar_node_list(List): a list of Swc Nodes. for src node list to search for matching target.
+    Return:
+        src_tar_dict(Dict):
+            keys: node in src
+            value: node in tar
     '''
     target_kd, pos_node_dict = create_kdtree(tar_node_list)
 

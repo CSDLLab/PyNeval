@@ -73,9 +73,9 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
         gold_tree = swc_node.SwcTree()
         gold_tree.load("..\\..\\data\\test_data\\geo_metric_data\\gold_fake_data1.swc")
         test_tree.load("..\\..\\data\\test_data\\geo_metric_data\\test_fake_data1.swc")
-        score, recall, precision = length_metric(gold_swc_tree=gold_tree,
-                                                 test_swc_tree=test_tree,
-                                                 config=config)
+        lm_res = length_metric(gold_swc_tree=gold_tree,
+                               test_swc_tree=test_tree,
+                               config=config)
     Returns:
         tuple: contain two values to demonstrate metric result
             precision(float): percentage of total length of edges that are matched compared to test tree

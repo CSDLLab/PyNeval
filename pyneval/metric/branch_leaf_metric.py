@@ -1,18 +1,10 @@
 import sys
-
-from pyneval.model.swc_node import SwcTree
-from pyneval.metric.utils.km_utils import KM, get_dis_graph
-from pyneval.io.read_json import read_json
-from pyneval.metric.utils.point_match_utils import get_swc2swc_dicts
-from pyneval.io.read_config import *
 import jsonschema
 
-
-def debug_out_list(swc_list, _str):
-    print("[debug_out_list ]" + _str + str(len(swc_list)))
-    for node in swc_list:
-        print(node.get_id(), end=" ")
-    print("")
+from pyneval.io import read_json
+from pyneval.model import swc_node
+from pyneval.metric.utils import km_utils
+from pyneval.metric.utils import point_match_utils
 
 
 def get_result(test_len, gold_len, switch, km, threshold_dis):
@@ -72,19 +64,47 @@ def get_colored_tree(test_node_list, gold_node_list, switch, km, color):
                 node._type = color[1]
 
 
-def score_point_distance(gold_tree, test_tree, test_node_list, gold_node_list,
-                         test_gold_dict, threshold_dis, color, metric_mode):
-    # disgraph is a 2D ndarray store the distance of nodes in gold and test
+def score_point_distance(gold_tree: swc_node.SwcTree, test_tree: swc_node.SwcTree,
+                         test_node_list: list, gold_node_list: list,
+                         threshold_dis: float, color: list, metric_mode: int):
+    """
+    get minimum matching distance by running KM algorithm
+    than calculte the return value according to matching result
+    Args:
+        gold_tree(Swc Tree)
+        test_tree(Swc Tree)
+        gold_node_list(List): contains only branch nodes
+        test_node_list(List): contains only branch nodes
+        threshold_dis: if the distance of two node are larger than this threshold,
+                       they are considered unlimited far
+        color(List): color id of tp, fn, fp nodes
+        metric_mode(1 or 2):
+            mode = 1: distance between nodes are calculated as euclidean distance
+            mode = 2: distance between nodes are calculated as distance on the gold tree
+    Returns:
+        gold_len(int): length of gold_node_list
+        test_len(int): length of test_node_list
+        true_pos_num(int): number of nodes in both gold and test tree
+        false_neg_num(int): number of nodes in gold but not test tree
+        false_pos_num(int): number of nodes in test but not gold tree
+        mean_dis: mean distance of nodes that are successfully matched(true positive)
+        tot_dis: total distance of nodes that are successfully matched(true positive)
+        pt_cost: a composite value calculated by tp, fn, fp and threshold
+        iso_node_num: number of nodes in test tree without parents or children
+    """
+    test_gold_dict = point_match_utils.get_swc2swc_dicts(src_node_list=test_swc_tree.get_node_list(),
+                                                         tar_node_list=gold_swc_tree.get_node_list())
+    # disgraph is a 2D ndarray store the distance between nodes in gold and test
     # test_node_list contains only branch or leaf nodes
-    dis_graph, switch, test_len, gold_len = get_dis_graph(gold_tree=gold_tree,
-                                                          test_tree=test_tree,
-                                                          test_node_list=test_node_list,
-                                                          gold_node_list=gold_node_list,
-                                                          test_gold_dict=test_gold_dict,
-                                                          threshold_dis=threshold_dis,
-                                                          metric_mode=metric_mode)
+    dis_graph, switch, test_len, gold_len = km_utils.get_dis_graph(gold_tree=gold_tree,
+                                                                   test_tree=test_tree,
+                                                                   test_node_list=test_node_list,
+                                                                   gold_node_list=gold_node_list,
+                                                                   test_gold_dict=test_gold_dict,
+                                                                   threshold_dis=threshold_dis,
+                                                                   metric_mode=metric_mode)
     # create a KM object and calculate the minimum match
-    km = KM(maxn=max(test_len, gold_len)+10, nx=test_len, ny=gold_len, G=dis_graph)
+    km = km_utils.KM(maxn=max(test_len, gold_len)+10, nx=test_len, ny=gold_len, G=dis_graph)
     km.solve()
     # calculate the result
     true_pos_num, false_neg_num, false_pos_num, \
@@ -101,57 +121,65 @@ def score_point_distance(gold_tree, test_tree, test_node_list, gold_node_list,
     # get a colored tree with
     get_colored_tree(test_node_list=test_node_list, gold_node_list=gold_node_list,
                      switch=switch, km=km, color=color)
-    return gold_len, test_len, true_pos_num, false_neg_num, false_pos_num, mean_dis, tot_dis, pt_cost, iso_node_num
+    return gold_len, test_len, true_pos_num, false_neg_num, false_pos_num, \
+           mean_dis, tot_dis, pt_cost, iso_node_num
 
 
 def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
     """
-    calculate branch metric value of two swc trees
-    :param gold_swc_tree(Swc Tree) gold standard tree
-    :param test_swc_tree(Swc Tree) reconstructed Swc Tree object
-    :param config(dict) dict read by json object
-
-    :return branch_result(tuple) a tuple of 9 metric results
+    branch metric calculates the minimum distance match between branches of two swc trees
+    This function is used for unpacking configs and packaging return values
+    Args:
+        gold_swc_tree(Swc Tree) gold standard tree
+        test_swc_tree(Swc Tree) reconstructed tree
+        config(dict):
+            keys: the name of configs
+            items: config values
+    Example:
+        test_tree = swc_node.SwcTree()
+        gold_tree = swc_node.SwcTree()
+        gold_tree.load("..\\..\\data\\test_data\\topo_metric_data\\gold_fake_data1.swc")
+        test_tree.load("..\\..\\data\\test_data\\topo_metric_data\\test_fake_data1.swc")
+        branch_result = length_metric(gold_swc_tree=gold_tree,
+                                      test_swc_tree=test_tree,
+                                      config=config)
+        print(branch_result["mean_dis"])
+        ...
+    Return:
+         branch_result(tuple) a tuple of 9 metric results
     """
-    threshold_dis = read_float_config(config=config, config_name="threshold_dis", default=2)
-    metric_mode = read_int_config(config=config, config_name="metric_mode", default=1)
-    threshold_mode = read_int_config(config=config, config_name="threshold_mode", default=1)
+    # read configs
+    threshold_dis = config["threshold_dis"]
+    metric_mode = config["metric_mode"]
+    threshold_mode = config["threshold_mode"]
 
+    # in threshold mode 2, threshold is a multiple of the average length of edges
     if threshold_mode == 2:
         # length of the entire gold swc forest
         tot_dis = gold_swc_tree.length()
         # number of edges in the forest
         edge_num = len(gold_swc_tree.get_node_list())-1-len(gold_swc_tree.root().children)
         threshold_dis = threshold_dis * tot_dis / edge_num
+    # denote the color id of different type of nodes.
     color = [
-        read_int_config(config=config, config_name="true_positive_type", default=1),
-        read_int_config(config=config, config_name="false_negative_type", default=1),
-        read_int_config(config=config, config_name="false_positive_type", default=1)
+        config["true_positive_type"],
+        config["false_negative_type"],
+        config["false_positive_type"]
     ]
     gold_swc_tree.type_clear(0, 0)
     test_swc_tree.type_clear(0, 0)
     test_branch_swc_list = test_swc_tree.get_branch_swc_list()
     gold_branch_swc_list = gold_swc_tree.get_branch_swc_list()
 
-    test_gold_dict = get_swc2swc_dicts(src_node_list=test_swc_tree.get_node_list(),
-                                       tar_node_list=gold_swc_tree.get_node_list())
-
-    # debug output
-    # debug_out_list(test_branch_swc_list, "test_branch_swc_list")
-    # debug_out_list(gold_branch_swc_list, "gold_branch_swc_list")
-    # debug_out_list(test_leaf_swc_list, "test_leaf_swc_list")
-    # debug_out_list(gold_leaf_swc_list, "gold_leaf_swc_list")
-
     branch_result_tuple = score_point_distance(gold_tree=gold_swc_tree,
                                                test_tree=test_swc_tree,
                                                test_node_list=test_branch_swc_list,
                                                gold_node_list=gold_branch_swc_list,
-                                               test_gold_dict=test_gold_dict,
                                                threshold_dis=threshold_dis,
                                                color=color,
                                                metric_mode=metric_mode)
 
-    res = {
+    branch_result = {
         "gold_len": branch_result_tuple[0],
         "test_len": branch_result_tuple[1],
         "true_pos_num": branch_result_tuple[2],
@@ -162,20 +190,20 @@ def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
         "pt_cost": branch_result_tuple[7],
         "iso_node_num": branch_result_tuple[8]
     }
-    return res
+    return branch_result
 
 
 if __name__ == "__main__":
     sys.setrecursionlimit(1000000)
     file_name = "fake_data11"
-    gold_swc_tree = SwcTree()
-    test_swc_tree = SwcTree()
+    gold_swc_tree = swc_node.SwcTree()
+    test_swc_tree = swc_node.SwcTree()
 
     test_swc_tree.load("../../data/test_data/topo_metric_data/gold_fake_data4.swc")
     gold_swc_tree.load("../../data/test_data/topo_metric_data/test_fake_data4.swc")
 
-    config = read_json("..\\..\\config\\branch_metric.json")
-    config_schema = read_json("..\\..\\config\\schemas\\branch_metric_schema.json")
+    config = read_json.read_json("..\\..\\config\\branch_metric.json")
+    config_schema = read_json.read_json("..\\..\\config\\schemas\\branch_metric_schema.json")
     try:
         jsonschema.validate(config, config_schema)
     except Exception as e:
