@@ -1,24 +1,18 @@
-import os
 import queue
 import time
 import math
 import numpy as np
-from anytree import PreOrderIter
-from pyneval.metric.utils import config_utils
-from pyneval.io import read_config
-from pyneval.model.binary_node import RIGHT
-from pyneval.model.swc_node import SwcTree, SwcNode, get_nearby_swc_node_list
-from pyneval.model.euclidean_point import EuclideanPoint
-from pyneval.metric.utils.diadam_match_utils import \
-    get_match_path_length_difference, get_nearby_node_list, \
-    get_end_node_XY_dis_diff, get_end_node_Z_dis_diff, get_trajectory_for_path, \
-    path_length_matches,is_within_dis_match_threshold, LCA
-from pyneval.metric.utils.bin_utils import convert_to_binarytrees
-from pyneval.io.read_json import read_json
-from pyneval.io.swc_writer import swc_save
-from pyneval.io.read_swc import adjust_swcfile
-from pyneval.metric.utils import point_match_utils
 import jsonschema
+
+from anytree import PreOrderIter
+from pyneval.io import read_json
+from pyneval.io import read_swc
+from pyneval.model import binary_node
+from pyneval.model import swc_node
+from pyneval.metric.utils import config_utils
+from pyneval.metric.utils import diadam_match_utils
+from pyneval.metric.utils import bin_utils
+from pyneval.metric.utils import point_match_utils
 
 
 # thresholds
@@ -78,7 +72,7 @@ def remove_spurs(bin_root, threshold):
             if distance < threshold and not (node in g_matches):
                 both_children_spur = False
                 spur_set.add(node)
-                if node.get_side() == RIGHT:
+                if node.get_side() == binary_node.RIGHT:
                     l_node = node.parent.left_son
                     if not l_node.has_children and \
                             l_node.data.path_length < threshold and \
@@ -156,7 +150,10 @@ def generate_node_weights(bin_root, bin_subroot, spur_set, DEBUG=False):
 
 
 def is_diadem_match(gold_node, nearby_node, bin_gold_list, bin_test_list, DEBUG=False):
-    length_diff = get_match_path_length_difference(gold_node, nearby_node, bin_gold_list, bin_test_list)
+    length_diff = diadam_match_utils.get_match_path_length_difference(gold_node,
+                                                                      nearby_node,
+                                                                      bin_gold_list,
+                                                                      bin_test_list)
     if DEBUG:
         print("gold_node = {}, test_node = {}, length_diff = {}".format(
             gold_node.data.get_id(), nearby_node.data.get_id(), length_diff
@@ -179,11 +176,11 @@ def get_best_match(match_list, gold_node, bin_test_list,DEBUG=False):
     if gold_node.has_children():
         nearby_list = []
         path_length_map = {}
-        path_length_map[gold_node] = SwcNode()
+        path_length_map[gold_node] = swc_node.SwcNode()
 
         target_dis_list = []
         for test_node in match_list:
-            target_distances = SwcNode()
+            target_distances = swc_node.SwcNode()
             target_distances.xy_path_length = gold_node.data.distance(test_node.data, _2D)
             target_distances.z_path_length = gold_node.data.distance(test_node.data, _2D)
             target_dis_list.append(target_distances)
@@ -197,14 +194,13 @@ def get_best_match(match_list, gold_node, bin_test_list,DEBUG=False):
         trajactory_map[gold_node.right_son] = gold_node.data.right_trajectory
         des_branch_left[gold_node.right_son] = False
 
-        target_tra = EuclideanPoint
         while len(current_list) > 0 and len(confirm_list) == 0:
             next_list = []
             for des_node in current_list:
                 target_tra = trajactory_map[des_node]
 
                 if target_tra.get_x() == -1.0 or target_tra.get_z() == -1.0:
-                    tmp_tra = get_trajectory_for_path(gold_node, des_node)
+                    tmp_tra = diadam_match_utils.get_trajectory_for_path(gold_node, des_node)
                     if target_tra.get_x() == -1.0:
                         target_tra.set_x(tmp_tra.get_x())
                         target_tra.set_y(tmp_tra.get_y())
@@ -218,19 +214,22 @@ def get_best_match(match_list, gold_node, bin_test_list,DEBUG=False):
                     trajactory_map[des_node.left_son] = target_tra
                     trajactory_map[des_node.right_son] = target_tra
 
-                gold_path_length = SwcNode()
+                gold_path_length = swc_node.SwcNode()
                 gold_path_length.add_length(des_node.data)
                 parent_path_length = path_length_map[des_node.parent]
                 gold_path_length.add_length(parent_path_length)
                 path_length_map[des_node] = gold_path_length
 
-                nearby_list = get_nearby_node_list(des_node, bin_test_list, check_previous_use=True, g_matches=g_matches)
+                nearby_list = diadam_match_utils.get_nearby_node_list(des_node,
+                                                                      bin_test_list,
+                                                                      check_previous_use=True,
+                                                                      g_matches=g_matches)
 
                 for test_node in nearby_list:
                     test_des_node = test_node
-                    test_path_length = SwcNode()
+                    test_path_length = swc_node.SwcNode()
 
-                    des_dis = SwcNode()
+                    des_dis = swc_node.SwcNode()
                     des_dis.xy_path_length = des_node.data.distance(test_node.data, _2D)
                     des_dis.z_path_length = math.fabs(des_node.data.get_z() - test_node.data.get_z())
 
@@ -241,13 +240,15 @@ def get_best_match(match_list, gold_node, bin_test_list,DEBUG=False):
                         for match in match_list:
                             if test_node == match:
                                 test_XY_path_length = test_path_length.xy_path_length + \
-                                                      get_end_node_XY_dis_diff(gold_data, target_tra, test_node.data) + \
-                                                      get_end_node_XY_dis_diff(des_node.data, des_tra, test_des_node.data)
+                                                      diadam_match_utils.get_end_node_XY_dis_diff(gold_data, target_tra, test_node.data) + \
+                                                      diadam_match_utils.get_end_node_XY_dis_diff(des_node.data, des_tra, test_des_node.data)
                                 test_Z_path_length = test_path_length.z_path_length + \
-                                                     get_end_node_Z_dis_diff(gold_data, target_tra, test_node.data) + \
-                                                     get_end_node_Z_dis_diff(des_node.data, des_tra, test_des_node.data)
+                                                     diadam_match_utils.get_end_node_Z_dis_diff(gold_data, target_tra, test_node.data) + \
+                                                     diadam_match_utils.get_end_node_Z_dis_diff(des_node.data, des_tra, test_des_node.data)
 
-                                if path_length_matches(gold_path_length, test_XY_path_length, test_Z_path_length) < 1:
+                                if diadam_match_utils.path_length_matches(gold_path_length,
+                                                                          test_XY_path_length,
+                                                                          test_Z_path_length) < 1:
                                     confirm_list.append(match)
                                     tmp_list.append(match)
 
@@ -282,9 +283,10 @@ def get_closest_match(gold_node,
     best_match = None
 
     # Step1: find node within threshold
-    nearby_list = get_nearby_node_list(gold_node=gold_node, bin_test_list=bin_test_list,
-                                       check_previous_use=True,
-                                       g_matches=g_matches)
+    nearby_list = diadam_match_utils.get_nearby_node_list(gold_node=gold_node,
+                                                          bin_test_list=bin_test_list,
+                                                          check_previous_use=True,
+                                                          g_matches=g_matches)
     if DEBUG:
         print("nearby list of {}:".format(gold_node.data.get_id()))
         for node in nearby_list:
@@ -328,17 +330,19 @@ def get_des_in_for_continuation(first_node, ancestor_node, ancestor_match,
         if gold_node in g_matches:
             test_matches.append(g_matches[gold_node])
         else:
-            test_matches = get_nearby_node_list(gold_node, bin_test_list, check_previous_use=False)
+            test_matches = diadam_match_utils.get_nearby_node_list(gold_node,
+                                                                   bin_test_list,
+                                                                   check_previous_use=False)
 
         prev_path_length = path_length_map[gold_node.parent]
-        gold_path_length = SwcNode()
+        gold_path_length = swc_node.SwcNode()
         gold_path_length.path_length = gold_node.data.path_length + prev_path_length.path_length
         gold_path_length.xy_path_length = gold_node.data.xy_path_length + prev_path_length.xy_path_length
         gold_path_length.z_path_length = gold_node.data.z_path_length + prev_path_length.z_path_length
         path_length_map[gold_node] = gold_path_length
 
         for child_match in test_matches:
-            test_path_length = SwcNode()
+            test_path_length = swc_node.SwcNode()
             test_path_length.add_data(child_match.data)
             tmp_node = child_match.parent
             # print("child match id = {}".format(
@@ -364,7 +368,7 @@ def get_des_in_for_continuation(first_node, ancestor_node, ancestor_match,
             else:
                 path_length_map[child_match] = test_path_length
                 if ancestor_trajectory.get_x() == -1.0 or ancestor_trajectory.get_z() == -1.0:
-                    spe_ancestor_trajectory = get_trajectory_for_path(ancestor_node, gold_node)
+                    spe_ancestor_trajectory = diadam_match_utils.get_trajectory_for_path(ancestor_node, gold_node)
                     if ancestor_trajectory.get_x != -1.0:
                         spe_ancestor_trajectory.set_x(ancestor_trajectory.get_x())
                         spe_ancestor_trajectory.set_y(ancestor_trajectory.get_y())
@@ -372,13 +376,23 @@ def get_des_in_for_continuation(first_node, ancestor_node, ancestor_match,
                         spe_ancestor_trajectory.set_z(ancestor_trajectory.get_z())
 
                 test_xy_path_length = test_path_length.xy_path_length \
-                                      + get_end_node_XY_dis_diff(ancestor_node.data, spe_ancestor_trajectory, ancestor_match.data) \
-                                      + get_end_node_XY_dis_diff(gold_node.data, des_tra, child_match.data)
+                                      + diadam_match_utils.get_end_node_XY_dis_diff(ancestor_node.data,
+                                                                                    spe_ancestor_trajectory,
+                                                                                    ancestor_match.data) \
+                                      + diadam_match_utils.get_end_node_XY_dis_diff(gold_node.data,
+                                                                                    des_tra,
+                                                                                    child_match.data)
                 test_z_path_length = test_path_length.z_path_length \
-                                      + get_end_node_Z_dis_diff(ancestor_node.data, spe_ancestor_trajectory, ancestor_match.data) \
-                                      + get_end_node_Z_dis_diff(gold_node.data, des_tra, child_match.data)
+                                      + diadam_match_utils.get_end_node_Z_dis_diff(ancestor_node.data,
+                                                                                   spe_ancestor_trajectory,
+                                                                                   ancestor_match.data) \
+                                      + diadam_match_utils.get_end_node_Z_dis_diff(gold_node.data,
+                                                                                   des_tra,
+                                                                                   child_match.data)
 
-                if path_length_matches(gold_path_length, test_xy_path_length, test_z_path_length) < 1:
+                if diadam_match_utils.path_length_matches(gold_path_length,
+                                                          test_xy_path_length,
+                                                          test_z_path_length) < 1:
                     return child_match
 
         if gold_node.has_children() and gold_node not in g_matches:
@@ -396,7 +410,6 @@ def is_sub_continuation(gold_node, ancestor_node, ancestor_match,
     path_length_map = {}
     path_length_map[gold_node] = gold_path_length
 
-    ancestor_tra = EuclideanPoint()
     if is_left:
         ancestor_tra = ancestor_node.data.left_trajectory
     else:
@@ -410,8 +423,8 @@ def is_sub_continuation(gold_node, ancestor_node, ancestor_match,
     )
 
     if left_child_match is not None and right_child_match is not None:
-        common_ancestor = LCA(left_child_match, right_child_match, ancestor_match)
-        if common_ancestor is not None and is_within_dis_match_threshold(common_ancestor, gold_node):
+        common_ancestor = diadam_match_utils.LCA(left_child_match, right_child_match, ancestor_match)
+        if common_ancestor is not None and diadam_match_utils.is_within_dis_match_threshold(common_ancestor, gold_node):
             g_matches[gold_node] = common_ancestor
             g_matches[common_ancestor] = gold_node
             if add_to_list:
@@ -431,7 +444,7 @@ def is_continuation(gold_node, bin_test_list, add_to_list=True, DEBUG=False):
         return False
 
     ancestor_node_matches = []
-    gold_path_length = SwcNode()
+    gold_path_length = swc_node.SwcNode()
 
     # find the first matched ancestor of the gold_node
     ancestor_match = None
@@ -456,9 +469,9 @@ def is_continuation(gold_node, bin_test_list, add_to_list=True, DEBUG=False):
                                    gold_path_length, bin_test_list, add_to_list):
                 return True
             ancestor_match = True
-        ancestor_node_matches = get_nearby_node_list(ancestor_gold, bin_test_list, check_previous_use=True, g_matches=g_matches)
+        ancestor_node_matches = diadam_match_utils.get_nearby_node_list(ancestor_gold, bin_test_list, check_previous_use=True, g_matches=g_matches)
         for a_n_node in ancestor_node_matches:
-            if is_sub_continuation(gold_node, ancestor_gold, ancestor_match,is_left,
+            if is_sub_continuation(gold_node, ancestor_gold, ancestor_match, is_left,
                                    gold_path_length, bin_test_list, add_to_list):
                 return True
 
@@ -540,7 +553,8 @@ def weight_excess(bin_gold_subroot, bin_test_subroot, DEBUG=False):
                 excess_weight = get_excess_weight(num_excess_node, node, direct_term_excess)
 
                 if not node in g_matches.keys() and \
-                        len(get_nearby_node_list(node, gold_bin_list, check_previous_use=True, g_matches=g_matches)) == 0 and \
+                        len(diadam_match_utils.get_nearby_node_list(node, gold_bin_list,
+                                                                    check_previous_use=True, g_matches=g_matches)) == 0 and \
                         not is_continuation(node, gold_bin_list, add_to_list=False):
                     g_excess_nodes[node] = excess_weight
                     if not node in g_spur_set:
@@ -553,7 +567,8 @@ def weight_excess(bin_gold_subroot, bin_test_subroot, DEBUG=False):
                 excess_weight = 0
 
                 if node not in g_spur_set and node not in g_matches.keys() and node.parent not in g_matches.keys():
-                    nearby_nodes = get_nearby_node_list(node, gold_bin_list, check_previous_use=True, g_matches = g_matches)
+                    nearby_nodes = diadam_match_utils.get_nearby_node_list(node, gold_bin_list,
+                                                                           check_previous_use=True, g_matches = g_matches)
                     if len(nearby_nodes) > 0:
                         remove_nearest_node(node, nearby_nodes, gold_bin_list)
                     else:
@@ -689,6 +704,13 @@ def score_trees(bin_gold_root, bin_test_root, bin_gold_subroots, bin_test_subroo
 
 
 def config_init(config):
+    """
+    Read data in config to global
+    Args:
+        None
+    Returns:
+        None
+    """
     global g_remove_spur
     global g_align_tree_by_root
     global g_count_excess_nodes
@@ -714,6 +736,44 @@ def config_init(config):
         g_list_continuations = config["list_continuations"]
     if "find_proper_root" in config.keys():
         g_find_proper_root = config["find_proper_root"]
+
+
+def diadem_init():
+    """
+    init global parameters of diadem metric
+    Args:
+        None
+    Returns:
+        None
+    """
+    global g_weight_sum
+    global g_score_sum
+    global g_quantity_score_sum
+    global g_quantity_score
+    global g_direct_match_score
+    global g_final_score
+    global g_miss
+    global g_spur_set
+    global g_matches
+    global g_weight_dict
+    global g_excess_nodes
+    global g_distance_match
+    global g_continuation
+
+    g_weight_sum = 0
+    g_score_sum = 0
+    g_quantity_score_sum = 0
+    g_quantity_score = 0
+    g_direct_match_score = 0
+    g_final_score = -1
+
+    g_miss = set()
+    g_spur_set = set()
+    g_matches = {}
+    g_weight_dict = {}
+    g_excess_nodes = {}
+    g_distance_match = []
+    g_continuation = []
 
 
 def color_tree_only():
@@ -807,39 +867,22 @@ def print_result():
             print("Distant Matches: none")
 
 
-def diadem_init():
-    global g_weight_sum
-    global g_score_sum
-    global g_quantity_score_sum
-    global g_quantity_score
-    global g_direct_match_score
-    global g_final_score
-    global g_miss
-    global g_spur_set
-    global g_matches
-    global g_weight_dict
-    global g_excess_nodes
-    global g_distance_match
-    global g_continuation
-
-    g_weight_sum = 0
-    g_score_sum = 0
-    g_quantity_score_sum = 0
-    g_quantity_score = 0
-    g_direct_match_score = 0
-    g_final_score = -1
-
-    g_miss = set()
-    g_spur_set = set()
-    g_matches = {}
-    g_weight_dict = {}
-    g_excess_nodes = {}
-    g_distance_match = []
-    g_continuation = []
-
-
 def adjust_root(swc_gold_tree, swc_test_tree,
                 test_kdtree, test_pos_node_dict, t_matches):
+    """
+    find a common root for both gold and test trees
+    Args:
+        swc_gold_tree(Swc_Tree):
+        swc_test_tree(Swc_Tree):
+        test_kdtree(kd tree established based on test tree)
+        test_pos_node_dict(Dict): a dict of test tree
+            keys: tuple(x, y, z)
+            value: Swc_Node in position of tuple
+        t_matches(Dict):
+            A match Dict of nodes in gold test
+            key: Swc Node in gold tree
+            value: Swc Node in test tree
+    """
     swc_gold_list = swc_gold_tree.get_node_list()
     swc_test_list = swc_test_tree.get_node_list()
 
@@ -849,8 +892,8 @@ def adjust_root(swc_gold_tree, swc_test_tree,
     for node in swc_gold_list:
         if node.is_virtual():
             continue
-        nearby_nodes = get_nearby_swc_node_list(gold_node=node, threshold=node.radius() / 2,
-                                                test_kdtree=test_kdtree, test_pos_node_dict=test_pos_node_dict)
+        nearby_nodes = swc_node.get_nearby_swc_node_list(gold_node=node, threshold=node.radius() / 2,
+                                                         test_kdtree=test_kdtree, test_pos_node_dict=test_pos_node_dict)
         for t_node in nearby_nodes:
             if not gold_vis_list[node.get_id()] and not test_vis_list[t_node.get_id()]:
                 t_matches[node] = t_node
@@ -894,9 +937,7 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
     global g_weight_dict
     swc_gold_tree.type_clear(0)
     swc_test_tree.type_clear(1)
-    # initialize diadem global parameter
     diadem_init()
-    # initialize diadem configs
     config_init(config)
 
     test_kdtree, test_pos_node_dict = point_match_utils.create_kdtree(swc_test_tree.get_node_list())
@@ -908,17 +949,17 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
                     test_kdtree=test_kdtree, test_pos_node_dict=test_pos_node_dict,
                     t_matches=t_matches)
     if g_align_tree_by_root:
-        swc_test_tree.align_roots(swc_gold_tree, t_matches)
+        swc_test_tree.align_roots(gold_tree=swc_gold_tree, t_matches=t_matches)
 
     # the id of root here is always -1, so we need to figure out first level sons of root
     for sub_gold_root in swc_gold_tree.root().children:
         if sub_gold_root in t_matches.keys():
             sub_test_root = t_matches[sub_gold_root]
-            bin_test_root, bin_test_list = convert_to_binarytrees(sub_test_root)
+            bin_test_root, bin_test_list = bin_utils.convert_to_binarytrees(sub_test_root)
         else:
             bin_test_root, bin_test_list = None, []
 
-        bin_gold_root, bin_gold_list = convert_to_binarytrees(sub_gold_root)
+        bin_gold_root, bin_gold_list = bin_utils.convert_to_binarytrees(sub_gold_root)
 
         if g_remove_spur > 0:
             g_spur_set = remove_spurs(bin_gold_root, 1.0)
@@ -960,11 +1001,11 @@ def pyneval_diadem_metric(gold_swc, test_swc, config):
     Return:
         result(Dict): contain several metric results
     """
-    gold_tree = SwcTree()
-    test_tree = SwcTree()
+    gold_tree = swc_node.SwcTree()
+    test_tree = swc_node.SwcTree()
 
-    gold_tree.load_list(adjust_swcfile(gold_swc))
-    test_tree.load_list(adjust_swcfile(test_swc))
+    gold_tree.load_list(read_swc.adjust_swcfile(gold_swc))
+    test_tree.load_list(read_swc.adjust_swcfile(test_swc))
 
     diadem_res= diadem_metric(swc_gold_tree=gold_tree,
                               swc_test_tree=test_tree,
@@ -983,13 +1024,13 @@ def pyneval_diadem_metric(gold_swc, test_swc, config):
 
 if __name__ == "__main__":
     start_time = time.time()
-    testTree = SwcTree()
-    goldTree = SwcTree()
+    testTree = swc_node.SwcTree()
+    goldTree = swc_node.SwcTree()
     goldTree.load("../../data/test_data/topo_metric_data/gold_fake_data4.swc")
     testTree.load("../../data/test_data/topo_metric_data/test_fake_data4.swc")
     config_utils.get_default_threshold(goldTree)
-    config = read_json("../../config/diadem_metric.json")
-    config_schema = read_json("../../config/schemas/diadem_metric_schema.json")
+    config = read_json.read_json("../../config/diadem_metric.json")
+    config_schema = read_json.read_json("../../config/schemas/diadem_metric_schema.json")
 
     try:
         jsonschema.validate(config, config_schema)
