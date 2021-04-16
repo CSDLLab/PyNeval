@@ -17,8 +17,10 @@ setup(name='pyneval',
                   ("config/schemas", glob.glob('config/schemas/*.json'))],
       install_requires=[
             'anytree>=2.7.2',
-            'numpy>=1.17.3',
-            'rtree>=0.8'
+            'kdtree>=0.16',
+            'numpy>=1.0',
+            'rtree>=0.8',
+            'jsonschema>=3.2.0'
       ],
       entry_points={
           'console_scripts': [
