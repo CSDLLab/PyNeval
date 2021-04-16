@@ -179,17 +179,16 @@ if __name__ == "__main__":
     goldTree = swc_node.SwcTree()
     testTree = swc_node.SwcTree()
     sys.setrecursionlimit(10000000)
-    goldTree.load("..\\..\\data\\test_data\\geo_metric_data\\gold_34_23_10.swc")
-    testTree.load("..\\..\\data\\test_data\\geo_metric_data\\test_34_23_10.swc")
+    testTree.load("E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\example_selected\\a.swc")
+    goldTree.load("E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\output\\random_data\move\\a\\020\move_00.swc")
 
     config = read_json.read_json("..\\..\\config\\length_metric.json")
     config_schema = read_json.read_json("..\\..\\config\\schemas\\length_metric_schema.json")
-
     try:
         jsonschema.validate(config, config_schema)
     except Exception as e:
         raise Exception("[Error: ]Error in analyzing config json file")
-    # config["detail_path"] = "..\\..\\output\\length_output\\length_metric_detail.swc"
+    config["detail_path"] = "..\\..\\output\\length_output\\length_metric_detail.swc"
     
     lm_res = length_metric(gold_swc_tree=goldTree,
                            test_swc_tree=testTree,

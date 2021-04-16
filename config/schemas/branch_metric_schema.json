@@ -4,7 +4,6 @@
   "required": [
       "threshold_dis",
       "threshold_mode",
-      "metric_mode",
       "true_positive_type",
       "false_negative_type",
       "false_positive_type"
@@ -12,7 +11,6 @@
   "properties": {
     "threshold_dis": {"type": "number", "exclusiveMinimum": 0},
     "threshold_mode": {"type": "number", "enum": [1, 2]},
-    "metric_mode": {"type": "number", "enum": [1, 2]},
     "true_positive_type": {"type": "integer", "exclusiveMinimum": 0},
     "false_negative_type": {"type": "integer", "exclusiveMinimum": 0},
     "false_positive_type": {"type": "integer", "exclusiveMinimum": 0}

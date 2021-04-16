@@ -49,7 +49,7 @@ def swc_random_delete(swc_tree, move_percentage=None, move_num=None):
 def swc_random_move(swc_tree, move_percentage=None, move_num=None, move_range=1.0, tendency=(1, 1, 1)):
     '''
     :param swc_tree: standard swc tree
-    :param percentage: percentage of nodes to move_5 (range:[0,1])
+    :param percentage: percentage of nodes to move (range:[0,1])
     :param range:stard range is the averange length of edge.
     :param tendency: a tuple to change the direction of the movement
     :return: modified swc tree(different object from the input one)

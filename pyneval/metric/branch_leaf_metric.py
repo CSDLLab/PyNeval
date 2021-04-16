@@ -66,7 +66,7 @@ def get_colored_tree(test_node_list, gold_node_list, switch, km, color):
 
 def score_point_distance(gold_tree: swc_node.SwcTree, test_tree: swc_node.SwcTree,
                          test_node_list: list, gold_node_list: list,
-                         threshold_dis: float, color: list, metric_mode: int):
+                         threshold_dis: float, color: list):
     """
     get minimum matching distance by running KM algorithm
     than calculte the return value according to matching result
@@ -78,9 +78,6 @@ def score_point_distance(gold_tree: swc_node.SwcTree, test_tree: swc_node.SwcTre
         threshold_dis: if the distance of two node are larger than this threshold,
                        they are considered unlimited far
         color(List): color id of tp, fn, fp nodes
-        metric_mode(1 or 2):
-            mode = 1: distance between nodes are calculated as euclidean distance
-            mode = 2: distance between nodes are calculated as distance on the gold tree
     Returns:
         gold_len(int): length of gold_node_list
         test_len(int): length of test_node_list
@@ -92,8 +89,8 @@ def score_point_distance(gold_tree: swc_node.SwcTree, test_tree: swc_node.SwcTre
         pt_cost: a composite value calculated by tp, fn, fp and threshold
         iso_node_num: number of nodes in test tree without parents or children
     """
-    test_gold_dict = point_match_utils.get_swc2swc_dicts(src_node_list=test_swc_tree.get_node_list(),
-                                                         tar_node_list=gold_swc_tree.get_node_list())
+    test_gold_dict = point_match_utils.get_swc2swc_dicts(src_node_list=test_tree.get_node_list(),
+                                                         tar_node_list=gold_tree.get_node_list())
     # disgraph is a 2D ndarray store the distance between nodes in gold and test
     # test_node_list contains only branch or leaf nodes
     dis_graph, switch, test_len, gold_len = km_utils.get_dis_graph(gold_tree=gold_tree,
@@ -102,7 +99,7 @@ def score_point_distance(gold_tree: swc_node.SwcTree, test_tree: swc_node.SwcTre
                                                                    gold_node_list=gold_node_list,
                                                                    test_gold_dict=test_gold_dict,
                                                                    threshold_dis=threshold_dis,
-                                                                   metric_mode=metric_mode)
+                                                                   metric_mode=1)
     # create a KM object and calculate the minimum match
     km = km_utils.KM(maxn=max(test_len, gold_len)+10, nx=test_len, ny=gold_len, G=dis_graph)
     km.solve()
@@ -150,7 +147,6 @@ def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
     """
     # read configs
     threshold_dis = config["threshold_dis"]
-    metric_mode = config["metric_mode"]
     threshold_mode = config["threshold_mode"]
 
     # in threshold mode 2, threshold is a multiple of the average length of edges
@@ -176,8 +172,7 @@ def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
                                                test_node_list=test_branch_swc_list,
                                                gold_node_list=gold_branch_swc_list,
                                                threshold_dis=threshold_dis,
-                                               color=color,
-                                               metric_mode=metric_mode)
+                                               color=color)
 
     branch_result = {
         "gold_len": branch_result_tuple[0],
@@ -199,8 +194,8 @@ if __name__ == "__main__":
     gold_swc_tree = swc_node.SwcTree()
     test_swc_tree = swc_node.SwcTree()
 
-    test_swc_tree.load("../../data/test_data/topo_metric_data/gold_fake_data4.swc")
-    gold_swc_tree.load("../../data/test_data/topo_metric_data/test_fake_data4.swc")
+    gold_swc_tree.load("../../data/example_selected/a.swc")
+    test_swc_tree.load("../../output/random_data/move/a/010/move_03.swc")
 
     config = read_json.read_json("..\\..\\config\\branch_metric.json")
     config_schema = read_json.read_json("..\\..\\config\\schemas\\branch_metric_schema.json")
@@ -209,9 +204,6 @@ if __name__ == "__main__":
     except Exception as e:
         raise Exception("[Error: ]Error in analyzing config json file")
 
-    config["metric_mode"] = 2
-    config["threshold_dis"] = 1
-    config["threshold_mode"] = 2
     branch_result = \
         branch_leaf_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
     print("---------------Result---------------")

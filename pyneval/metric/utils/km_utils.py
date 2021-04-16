@@ -26,7 +26,7 @@ def get_simple_lca_length(std_tree, test_gold_dict, node1, node2, switch):
 
     lca_id = std_tree.get_lca(tmp_node1.get_id(), tmp_node2.get_id())
     if lca_id == -1:
-        return DINF
+        return config_utils.DINF
     lca_node = std_id_node_dict[lca_id]
     return tmp_node1.root_length + tmp_node2.root_length - 2 * lca_node.root_length
 
