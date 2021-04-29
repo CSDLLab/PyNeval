@@ -1,13 +1,16 @@
-from pyneval.io import read_json
+import os
+
+from pyneval.tools.optimize.SA import SAFast
 from pyneval.metric import ssd_metric
-from test.data_builder import dbuilder
 from pyneval.model import swc_node
+from pyneval.io import read_json
 from scipy import stats as st
+
+import copy
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import axes3d
 import numpy as np
-from sko.SA import SABoltzmann
 import pandas as pd
+import time
 
 g_score = -1
 g_gold_tree = None
@@ -16,111 +19,218 @@ g_rcn_method = None
 g_metric_method = None
 g_metric_configs = None
 
+NEUTU_PATH = "../../../../../00_program_file/00_neutu/bin/neutu"
+ORIGIN_PATH = "../../../data/optimation/test1/test1_test.tif"
+GOLD_PATH = "../../../data/optimation/test1/test1_gold.swc"
+TEST_PATH = "../../../data/optimation/output/test1_test.swc"
+CONFIG_PATH = "../../../config/fake_reconstruction_configs/test.json"
+METRIC_CONFIG_PATH = "../../../config/ssd_metric.json"
+LOG_PATH = "../../../output/optimization/neutu_log.txt"
 
-def fake_gaussian(mean=[0.0, 0.0], cov=[[0.0, 1.0], [1.0, 0.0]], pos=(0,0)):
-    rv = st.multivariate_normal(mean=[1.5, -1], cov=[[0.5, 0],[0, 0.5]])
-    rv2 = st.multivariate_normal(mean=[-0.1, 0.5], cov=[[1, 0],[0, 1]])
-    x = np.empty(shape=(1, 1, 2))
-    x[0,0,0] = pos[0]
-    x[0,0,1] = pos[1]
-    return rv.pdf(x) + rv2.pdf(x)
-
-
-def fake_reconstruction(gold_tree,  rcn_config):
-    res_tree = dbuilder.swc_random_move(swc_tree=gold_tree,
-                                        move_percentage=rcn_config[0],
-                                        move_range=rcn_config[1])
-    return res_tree
-
-
-def metric(gold_tree, test_tree, method, configs):
-    return method(gold_tree, test_tree, configs)
+# def fake_gaussian(mean=[0.0, 0.0], cov=[[0.0, 1.0], [1.0, 0.0]], pos=(0,0)):
+#     rv = st.multivariate_normal(mean=[1.5, -1], cov=[[0.5, 0],[0, 0.5]])
+#     rv2 = st.multivariate_normal(mean=[-0.1, 0.5], cov=[[1, 0],[0, 1]])
+#     x = np.empty(shape=(1, 1, 2))
+#     x[0,0,0] = pos[0]
+#     x[0,0,1] = pos[1]
+#     return rv.pdf(x) + rv2.pdf(x)
 
 
-def naive_optimize(gold_tree, rcn_method, rcn_configs, current_config, metric_method, metric_configs):
-    """
-    A naive optimization, test every combination of test parameters
-    recursive parameter searching is used for traversing all the combinations.
-    """
-    clen = len(current_config)
-    if clen == len(rcn_configs):
-        # metric and get results
-        # res_tree = fake_reconstruction(gold_tree=gold_tree, method=rcn_method, rcn_config=current_config)
-        # main_score = metric(gold_tree=gold_tree, test_tree=res_tree, method=metric_method, configs=metric_configs)
-        main_score = fake_gaussian(mean=[0.5, -0.3], cov=[[1, 0],[0, 1]], pos=current_config)
-        global g_score
-        if main_score > g_score:
-            g_score = main_score
-            print("max_score = {}, current_score = {}, x = {}, y = {}".format(
-                g_score, main_score, current_config[0], current_config[1])
-            )
-        return None
+# def naive_optimize(gold_tree, rcn_configs, current_config, metric_method, metric_configs):
+#     """
+#     A naive optimization, test every combination of test parameters
+#     recursive parameter searching is used for traversing all the combinations.
+#     """
+#     clen = len(current_config)
+#     if clen == len(rcn_configs):
+#         # metric and get results
+#         # # check the value of configs
+#         # res = fake_gaussian(pos=configs)
+#         rec_config = read_json.read_json(json_file_path=CONFIG_PATH)
+#         current_config[0] = max(current_config[0], 0)
+#         current_config[1] = max(current_config[1], 0)
+#         print("[Info: ] minimalScoreAuto = {} minimalScoreSeed = {}".format(
+#             current_config[0], current_config[1])
+#         )
+#         rec_config["trace"]["default"]["minimalScoreAuto"] = rcn_configs[0]
+#         rec_config["trace"]["default"]["minimalScoreSeed"] = rcn_configs[1]
+#
+#         # save new configs
+#         read_json.save_json(json_file_path=CONFIG_PATH, data=rec_config)
+#         REC_CMD = "{} --command --trace {} -o {} --config {}".format(
+#             NEUTU_PATH, ORIGIN_PATH, TEST_PATH, CONFIG_PATH
+#         )
+#         print(REC_CMD)
+#         try:
+#             print("[Info: ] start tracing")
+#             os.system(REC_CMD)
+#             print("[Info: ] end tracing")
+#         except:
+#             raise Exception("[Error: ] error executing reconstruction")
+#
+#         res_tree = swc_node.SwcTree()
+#         gold_tree = swc_node.SwcTree()
+#         res_tree.load(TEST_PATH)
+#         gold_tree.load(GOLD_PATH)
+#
+#         main_score = g_metric_method(gold_tree, res_tree, g_metric_configs)
+#         # main_score = fake_gaussian(mean=[0.5, -0.3], cov=[[1, 0],[0, 1]], pos=current_config)
+#         global g_score
+#         if main_score > g_score:
+#             g_score = main_score
+#             print("max_score = {}, current_score = {}, x = {}, y = {}".format(
+#                 g_score, main_score, current_config[0], current_config[1])
+#             )
+#         return None
+#
+#     for item in rcn_configs[clen]:
+#         current_config.append(item)
+#         naive_optimize(gold_tree=gold_tree,
+#                        rcn_method=rcn_method,
+#                        rcn_configs=rcn_configs,
+#                        current_config=current_config,
+#                        metric_method=metric_method,
+#                        metric_configs=metric_configs)
+#         current_config.pop()
+#     return None
 
-    for item in rcn_configs[clen]:
-        current_config.append(item)
-        naive_optimize(gold_tree=gold_tree,
-                       rcn_method=rcn_method,
-                       rcn_configs=rcn_configs,
-                       current_config=current_config,
-                       metric_method=metric_method,
-                       metric_configs=metric_configs)
-        current_config.pop()
-    return None
+
+# def naive_main():
+#     global g_metric_configs
+#     global g_metric_method
+#     g_metric_method = ssd_metric.ssd_metric
+#     g_metric_configs = read_json.read_json(METRIC_CONFIG_PATH)
+#
+#     z = np.zeros(shape=(50, 50))
+#     for i in range(50):
+#         for j in range(50):
+#             rec_config = read_json.read_json(json_file_path=CONFIG_PATH)
+#             rec_config["trace"]["default"]["minimalScoreAuto"] = 0.02 * i
+#             rec_config["trace"]["default"]["minimalScoreSeed"] = 0.02 * j
+#             read_json.save_json(json_file_path=CONFIG_PATH, data=rec_config)
+#             REC_CMD = "{} --command --trace {} -o {} --config {}".format(
+#                 NEUTU_PATH, ORIGIN_PATH, TEST_PATH, CONFIG_PATH
+#             )
+#             print(REC_CMD)
+#             try:
+#                 print("[Info: ] start tracing")
+#                 os.system(REC_CMD)
+#                 print("[Info: ] end tracing")
+#             except:
+#                 raise Exception("[Error: ] error executing reconstruction")
+#
+#             res_tree = swc_node.SwcTree()
+#             gold_tree = swc_node.SwcTree()
+#             res_tree.load(TEST_PATH)
+#             gold_tree.load(GOLD_PATH)
+#
+#             main_score = g_metric_method(gold_tree, res_tree, g_metric_configs)
+#             print("[Info: ] call = {} minimalScoreAuto = {} minimalScoreSeed = {}".format(
+#                 main_score["recall"], 0.02 * i, 0.02 * j
+#             ))
+#             z[i][j] = main_score["recall"]
+#
+#     # print(z)
+#     x = np.linspace(0, 0.48, 50)
+#     y = np.linspace(0, 0.48, 50)
+#     X, Y = np.meshgrid(x, y)
+#
+#     fig = plt.figure()
+#     # 创建一个三维坐标轴
+#     ax = plt.axes(projection='3d')
+#     ax.contour3D(X, Y, z, 50, cmap='binary')
+#     ax.set_xlabel('x')
+#     ax.set_ylabel('y')
+#     ax.set_zlabel('z')
+#     ax.plot_surface(X, Y, z, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
+#     ax.set_title('surface')
+#     plt.show()
+#     print(X.shape)
 
 
-def SA_optimize(configs):
+def SA_optimize(configs, lock=None):
     global g_gold_tree
     global g_metric_method
     global g_metric_configs
 
-    res = fake_gaussian(pos=configs)
-    # print("res = {} x = {} y = {}".format(res, configs[0], configs[1]))
-    res_tree = fake_reconstruction(gold_tree=g_gold_tree, rcn_config=configs)
-    main_score = metric(gold_tree=g_tar_tree, test_tree=res_tree, method=g_metric_method, configs=g_metric_configs)
-    print("res = {} x = {} y = {}".format(main_score["recall"], configs[0], configs[1]))
-    return -main_score["recall"]
+    # # check the value of configs
+    # res = fake_gaussian(pos=configs)
+
+    rec_config = copy.deepcopy(g_metric_configs)
+
+    for i in range(len(configs)):
+        configs[i] = max(configs[i], 0)
+        configs[i] = min(configs[i], 1)
+
+    rec_config["trace"]["default"]["minimalScoreAuto"] = configs[0]
+    rec_config["trace"]["default"]["minimalScoreManual"] = configs[1]
+    rec_config["trace"]["default"]["minimalScoreSeed"] = configs[2]
+    rec_config["trace"]["default"]["minimalScore2d"] = configs[3]
+
+    # save new configs
+    if lock is not None:
+        lock.acquire()
+    try:
+        read_json.save_json(json_file_path=CONFIG_PATH, data=rec_config)
+    finally:
+        if lock is not None:
+            lock.release()
+    REC_CMD = "{} --command --trace {} -o {} --config {} > {}".format(
+        NEUTU_PATH, ORIGIN_PATH, TEST_PATH, CONFIG_PATH, LOG_PATH
+    )
+    try:
+        os.system(REC_CMD)
+    except:
+        raise Exception("[Error: ] error executing reconstruction")
+
+    res_tree = swc_node.SwcTree()
+    gold_tree = swc_node.SwcTree()
+    res_tree.load(TEST_PATH)
+    gold_tree.load(GOLD_PATH)
+
+    if lock is not None:
+        lock.acquire()
+    try:
+        main_score = g_metric_method(gold_tree, res_tree, g_metric_configs)
+    finally:
+        if lock is not None:
+            lock.release()
+
+    print("[Info: ] ssd loss = {}".format(
+        (main_score["recall"] + main_score["precision"])/2)
+    )
+
+    return -(main_score["recall"] + main_score["precision"])/2
 
 
-def run_opt(rcn_method, metric_method):
-    global g_gold_tree
-    global g_tar_tree
-    global g_rcn_method
-    global g_metric_method
+def main():
     global g_metric_configs
-
-    g_gold_tree = swc_node.SwcTree()
-    g_tar_tree = swc_node.SwcTree()
-    g_gold_tree.load("..\\..\\..\\data\\example_selected\\c.swc")
-    g_tar_tree.load("..\\..\\..\\output\\random_data\move_r\c\\020\move_00.swc")
-    # rcn_configs = read_json.read_json("..\\..\\..\\config\\fake_reconstruction_configs\\branch_metric.json")
-    g_metric_configs = read_json.read_json("..\\..\\..\\config\\ssd_metric.json")
+    global g_metric_method
     g_metric_method = ssd_metric.ssd_metric
-    # cfgs = []
-    # for cfg_name in rcn_configs:
-    #     cfg = rcn_configs[cfg_name]
-    #     cfgs.append(np.linspace(cfg[0], cfg[1], cfg[2]))
-    #
-    # naive_optimize(gold_tree=gold_tree,
-    #                rcn_method=rcn_method,
-    #                rcn_configs=cfgs,
-    #                current_config=[],
-    #                metric_method=metric_method,
-    #                metric_configs=metric_configs)
-    configs = [0, 0]
-    sa_boltzmann = SABoltzmann(func=SA_optimize,
-                               x0=configs, T_max=0.1, T_min=1e-6, q=0.96, L=30, max_stay_counter=150)
-    sa_boltzmann.run()
-    plt.plot(pd.DataFrame(sa_boltzmann.best_y_history).cummin(axis=0))
+    g_metric_configs = read_json.read_json(METRIC_CONFIG_PATH)
+    # optimize with SA
+    # configs here is the config of the reconstruction
+    configs = (0.3, 0.3, 0.35, 0.5)
+    start = time.time()
+    sa_fast = SAFast(func=SA_optimize,
+                     x0=configs, T_max=0.01, T_min=1e-5, q=0.96, L=30, max_stay_counter=20, upper=1, lower=0)
+    best_configs, best_value = sa_fast.run()
+    print("[Info: ]best configs:\n"
+          "        origin minimalScoreAuto = {}\n"
+          "        minimalScoreManual = {}\n"
+          "        minimalScoreSeed = {}\n"
+          "        minimalScore2d = {}\n"
+          "        best value = {}\n"
+          "        time = {}\n" .format(
+        best_configs[0], best_configs[1], best_configs[2], best_configs[3], best_value, time.time() - start
+    ))
+    # plot the result.
+    plt.plot(pd.DataFrame(sa_fast.best_y_history).cummin(axis=0))
     plt.xlabel("iterations")
     plt.ylabel("score(opposite value)")
     plt.show()
+    return 0
 
 
 if __name__ == "__main__":
-    # run_opt(fake_reconstruction, ssd_metric.ssd_metric)
-    # print(np.round(g_score, 4))
-    import os
-    cmd = "pyneval --gold ..\\..\\..\\data\\test_data\geo_metric_data\gold_34_23_10.swc --test ..\\..\\..\\data\\test_data\geo_metric_data\\test_34_23_10.swc --metric branch_metric"
-    # ans = os.system("chdir")
-    ans = os.system(cmd)
-    print(type(ans))
+    main()
