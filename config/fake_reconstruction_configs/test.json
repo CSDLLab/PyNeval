@@ -1,0 +1,1 @@
+{"trace": {"tag": "trace configuration", "default": {"minimalScoreAuto": 0.909970122661639, "minimalScoreManual": 1.0, "minimalScoreSeed": 0.9494785696149678, "minimalScore2d": 0.5304879686303995, "refit": false, "spTest": false, "crossoverTest": false, "tuneEnd": true, "edgePath": false, "enhanceMask": true, "seedMethod": 1, "recover": 1, "maxEucDist": 10}}}

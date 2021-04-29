@@ -1,6 +1,9 @@
 import sys
 from pyneval.model.swc_node import SwcNode, SwcTree
-from pyneval.io.save_swc import swc_save
+from pyneval.io import swc_writer
+
+SWC_PATH = "../../data/optimation/gold.swc"
+OUTPUT_PATH = "../../data/optimation/test3_gold.swc"
 
 
 def cut_swc_rectangle(swc_tree, LFD_pos, RBT_pos):
@@ -22,17 +25,16 @@ def cut_swc_rectangle(swc_tree, LFD_pos, RBT_pos):
         if not (LFD_pos[0] <= node.get_x() <= RBT_pos[0] and \
                 LFD_pos[1] <= node.get_y() <= RBT_pos[1] and \
                 LFD_pos[2] <= node.get_z() <= RBT_pos[2]):
-            swc_tree.remove_node(node.parent, node)
+            swc_tree.remove_node(node)
                             
 
 if __name__ == "__main__":
     sys.setrecursionlimit(100000)
-    file_name = "194444"
     swc_tree = SwcTree()
     # load origin swc file
-    swc_tree.load("../../data/swc_cut_data/{}.swc".format(file_name))
+    swc_tree.load(SWC_PATH)
 
-    cut_swc_rectangle(swc_tree, (7000, 950, 6700), (7300, 1300, 7000))
+    cut_swc_rectangle(swc_tree, (0, 0, 0), (256, 256, 256))
     swc_tree.get_node_list(update=True)
     # the result will be saved in:
-    swc_save(swc_tree=swc_tree, out_path="../../output/swc_cut/{}_cut.swc".format(file_name))
+    swc_writer.swc_save(swc_tree=swc_tree, out_path=OUTPUT_PATH)

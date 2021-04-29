@@ -141,11 +141,11 @@ if __name__ == "__main__":
     gold_tree = swc_node.SwcTree()
 
     sys.setrecursionlimit(10000000)
-    gold_tree.load("E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\example_selected\\a.swc")
-    test_tree.load("E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\output\\random_data\move\\a\\020\move_00.swc")
+    gold_tree.load("/home/zhanghan/01_project/Pyneval/data/optimation/temp_gold.swc")
+    test_tree.load("/home/zhanghan/01_project/Pyneval/data/optimation/output/temp_test.swc")
 
-    config = read_json.read_json("..\\..\\config\\ssd_metric.json")
-    config_schema = read_json.read_json("..\\..\\config\\schemas\\ssd_metric_schema.json")
+    config = read_json.read_json("../../config/ssd_metric.json")
+    config_schema = read_json.read_json("../../config/schemas/ssd_metric_schema.json")
 
     try:
         jsonschema.validate(config, config_schema)
