@@ -3,7 +3,7 @@ from pyneval.model.swc_node import SwcNode, SwcTree
 from pyneval.io import swc_writer
 
 SWC_PATH = "../../data/optimation/gold.swc"
-OUTPUT_PATH = "../../data/optimation/test3_gold.swc"
+OUTPUT_PATH = "../../data/optimation/test4_gold.swc"
 
 
 def cut_swc_rectangle(swc_tree, LFD_pos, RBT_pos):
@@ -34,7 +34,11 @@ if __name__ == "__main__":
     # load origin swc file
     swc_tree.load(SWC_PATH)
 
-    cut_swc_rectangle(swc_tree, (0, 0, 0), (256, 256, 256))
+    cut_swc_rectangle(swc_tree, (260, 30, 125), (324, 94, 189))
     swc_tree.get_node_list(update=True)
+    for node in swc_tree.get_node_list():
+        node.set_x(node.get_x()-260)
+        node.set_y(node.get_y()-30)
+        node.set_z(node.get_z()-125)
     # the result will be saved in:
     swc_writer.swc_save(swc_tree=swc_tree, out_path=OUTPUT_PATH)

@@ -2,10 +2,10 @@
   "trace": {
     "tag": "trace configuration",
     "default": {
-      "minimalScoreAuto": 0.3,
-      "minimalScoreManual": 0.3,
-      "minimalScoreSeed": 0.35,
-      "minimalScore2d": 0.5,
+      "minimalScoreAuto": 0.39791192,
+      "minimalScoreManual": 1,
+      "minimalScoreSeed": 98459854,
+      "minimalScore2d": 0.263612,
       "refit": false,
       "spTest": false,
       "crossoverTest": false,
