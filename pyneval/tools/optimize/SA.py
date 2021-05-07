@@ -76,7 +76,8 @@ class SimulatedAnnealingBase(SkoBase):
         stay_counter = 0
         while True:
             # loop L times under the same Temperature
-            for i in range(self.L):
+            i = 0
+            while i < self.L:
                 pool = mp.Pool(processes=CPU_CORE_NUM)
                 res_y = []
                 res_x = []
@@ -95,6 +96,7 @@ class SimulatedAnnealingBase(SkoBase):
                 pool.close()
                 pool.join()
                 for it in range(len(res_x)):
+                    i += 1
                     x_new, y_new = res_y[it].get()
                     print(x_new)
                     print(y_new)

@@ -35,7 +35,7 @@ def itp_ok(node=None, son=None, pa=None,
     return True
 
 
-def down_sample(swc_tree=None, rad_mul=1.50, center_dis=None, stage=0):
+def down_sample(swc_tree=None, rad_mul=1.50, center_dis=None, stage=0, k=1.0):
     stack = queue.LifoQueue()
     stack.put(swc_tree.root())
     down_pa = {}
@@ -62,9 +62,9 @@ def down_sample(swc_tree=None, rad_mul=1.50, center_dis=None, stage=0):
         son_dis, pa_dis, grand_dis = son.parent_distance(), node.distance(down_pa[node]), son.distance(pa)
 
         # 确保针对采样率高的情况
-        if stage == 0 and (son_dis > son.radius() + node.radius() or pa_dis > pa.radius() + node.radius()):
+        if stage == 0 and (son_dis > k*(son.radius() + node.radius()) or pa_dis > k*(pa.radius() + node.radius())):
             continue
-        if stage == 1 and (son_dis > son.radius() + node.radius() and pa_dis > pa.radius() + node.radius()):
+        if stage == 1 and (son_dis > k*(son.radius() + node.radius()) and pa_dis > k*(pa.radius() + node.radius())):
             continue
         if itp_ok(node=node, son=son, pa=pa, rad_mul=rad_mul, center_dis=center_dis):
             is_active[node.get_id()] = False
@@ -77,18 +77,18 @@ def down_sample_swc_tree_command_line(swc_tree, config=None):
     rad_mul = config['rad_mul']
     center_dis = config['center_dis']
     stage = config['stage']
-    return down_sample_swc_tree(swc_tree=swc_tree, rad_mul=rad_mul, center_dis=center_dis, stage=stage)
+    return down_sample_swc_tree_stage(swc_tree=swc_tree, rad_mul=rad_mul, center_dis=center_dis, stage=stage)
 
 
-def down_sample_swc_tree(swc_tree, rad_mul=1.50, center_dis=None, stage=0):
+def down_sample_swc_tree_stage(swc_tree, rad_mul=1.50, center_dis=None, stage=0, k=1.0):
     '''
     :param swc_tree: the tree need to delete node
     :param rad_mul: defult=1.5
     :param center_dis: defult=None
-    :param stage: 0: for 2 degree node, delete if one side is two close, 1: for 2 degree node, delete if two sides are two close
+    :param stage: 0: for 2 degree node, delete if one side is too close, 1: for 2 degree node, delete if two sides are two close
     :return: swc_tree has changed in this function
     '''
-    down_pa, is_activate = down_sample(swc_tree=swc_tree, rad_mul=rad_mul, center_dis=center_dis, stage=stage)
+    down_pa, is_activate = down_sample(swc_tree=swc_tree, rad_mul=rad_mul, center_dis=center_dis, stage=stage, k=k)
     new_swc_tree = SwcTree()
     node_list = [node for node in PreOrderIter(swc_tree.root())]
     id_node_map = {-1: new_swc_tree.root()}
@@ -106,6 +106,12 @@ def down_sample_swc_tree(swc_tree, rad_mul=1.50, center_dis=None, stage=0):
             id_node_map[node.get_id()] = tmp_node
             new_swc_tree.id_set.add(tmp_node._id)
     return new_swc_tree
+
+
+def down_sample_swc_tree(swc_tree, rad_mul=1.50, center_dis=None, k=1.0):
+    res1 = down_sample_swc_tree_stage(swc_tree, rad_mul=rad_mul, center_dis=center_dis, stage=1, k=k)
+    res2 = down_sample_swc_tree_stage(res1, rad_mul=rad_mul, center_dis=center_dis, stage=0, k=k)
+    return res2
 
 
 def re_sample(swc_tree, son, pa, length_threshold):
@@ -168,9 +174,8 @@ def up_sample_swc_tree(swc_tree, length_threshold=1.0):
 
 
 if __name__ == "__main__":
-    file_name = "6144_12288_17664"
     swc_tree = SwcTree()
-    swc_tree.load("D:\\02_project\\00_neural_tracing\\01_project\PyNeval\data\swc_cut_data\\{}.swc".format(file_name))
-    up_sampled_swc_tree = up_sample_swc_tree(swc_tree=swc_tree, length_threshold=1.0)
-    # up_sampled_swc_tree = down_sample_swc_tree(swc_tree=swc_tree)
-    swc_save(up_sampled_swc_tree, "D:\\02_project\\00_neural_tracing\\01_project\PyNeval\output\\resample\\{}.swc".format(file_name))
+    swc_tree.load("/home/zhanghan/01_project/Pyneval/data/raw/1-8.swc")
+
+    res_swc = down_sample_swc_tree(swc_tree=swc_tree, k=3)
+    swc_save(res_swc, out_path="/home/zhanghan/01_project/Pyneval/output/down_sample.swc")
