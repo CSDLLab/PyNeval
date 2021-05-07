@@ -16,14 +16,15 @@ g_score = -1
 g_gold_tree = None
 g_tar_tree = None
 g_rcn_method = None
+g_rcn_config = None
 g_metric_method = None
 g_metric_configs = None
 
 NEUTU_PATH = "../../../../../00_program_file/00_neutu/bin/neutu"
 ORIGIN_PATH = "../../../data/optimation/test1/test1_test.tif"
 GOLD_PATH = "../../../data/optimation/test1/test1_gold.swc"
-TEST_PATH = "../../../data/optimation/output/test1_test.swc"
-CONFIG_PATH = "../../../config/fake_reconstruction_configs/test.json"
+TEST_PATH = "../../../data/optimation/output/"
+CONFIG_PATH = "../../../config/fake_reconstruction_configs/"
 METRIC_CONFIG_PATH = "../../../config/ssd_metric.json"
 LOG_PATH = "../../../output/optimization/neutu_log.txt"
 
@@ -148,35 +149,25 @@ LOG_PATH = "../../../output/optimization/neutu_log.txt"
 #     print(X.shape)
 
 
-def SA_optimize(configs, lock=None):
-    global g_gold_tree
+def SA_optimize(configs=None, test_name=None, lock=None):
     global g_metric_method
     global g_metric_configs
+    global g_rcn_config
 
-    # # check the value of configs
-    # res = fake_gaussian(pos=configs)
+    LOC_CONFIG_PATH = os.path.join(CONFIG_PATH, test_name+".json")
+    LOC_TEST_PATH = os.path.join(TEST_PATH, test_name+".swc")
+    rec_config = copy.deepcopy(g_rcn_config)
 
-    rec_config = copy.deepcopy(g_metric_configs)
+    if configs is not None:
+        rec_config["trace"]["default"]["minimalScoreAuto"] = configs[0]
+        rec_config["trace"]["default"]["minimalScoreManual"] = configs[1]
+        rec_config["trace"]["default"]["minimalScoreSeed"] = configs[2]
+        rec_config["trace"]["default"]["minimalScore2d"] = configs[3]
 
-    for i in range(len(configs)):
-        configs[i] = max(configs[i], 0)
-        configs[i] = min(configs[i], 1)
+        read_json.save_json(LOC_CONFIG_PATH, rec_config)
 
-    rec_config["trace"]["default"]["minimalScoreAuto"] = configs[0]
-    rec_config["trace"]["default"]["minimalScoreManual"] = configs[1]
-    rec_config["trace"]["default"]["minimalScoreSeed"] = configs[2]
-    rec_config["trace"]["default"]["minimalScore2d"] = configs[3]
-
-    # save new configs
-    if lock is not None:
-        lock.acquire()
-    try:
-        read_json.save_json(json_file_path=CONFIG_PATH, data=rec_config)
-    finally:
-        if lock is not None:
-            lock.release()
     REC_CMD = "{} --command --trace {} -o {} --config {} > {}".format(
-        NEUTU_PATH, ORIGIN_PATH, TEST_PATH, CONFIG_PATH, LOG_PATH
+        NEUTU_PATH, ORIGIN_PATH, LOC_TEST_PATH, LOC_CONFIG_PATH, LOG_PATH
     )
     try:
         os.system(REC_CMD)
@@ -185,7 +176,7 @@ def SA_optimize(configs, lock=None):
 
     res_tree = swc_node.SwcTree()
     gold_tree = swc_node.SwcTree()
-    res_tree.load(TEST_PATH)
+    res_tree.load(os.path.join(TEST_PATH, test_name+".swc"))
     gold_tree.load(GOLD_PATH)
 
     if lock is not None:
@@ -195,25 +186,26 @@ def SA_optimize(configs, lock=None):
     finally:
         if lock is not None:
             lock.release()
+    score = (main_score["recall"] + main_score["precision"])/2
+    print("[Info: ] ssd loss = {}".format(score))
 
-    print("[Info: ] ssd loss = {}".format(
-        (main_score["recall"] + main_score["precision"])/2)
-    )
-
-    return -(main_score["recall"] + main_score["precision"])/2
+    return configs, -score
 
 
 def main():
     global g_metric_configs
     global g_metric_method
+    global g_rcn_config
     g_metric_method = ssd_metric.ssd_metric
     g_metric_configs = read_json.read_json(METRIC_CONFIG_PATH)
+    g_rcn_config = read_json.read_json(os.path.join(CONFIG_PATH, "test.json"))
+
     # optimize with SA
     # configs here is the config of the reconstruction
     configs = (0.3, 0.3, 0.35, 0.5)
     start = time.time()
     sa_fast = SAFast(func=SA_optimize,
-                     x0=configs, T_max=0.01, T_min=1e-5, q=0.96, L=30, max_stay_counter=20, upper=1, lower=0)
+                     x0=configs, T_max=0.01, T_min=1e-5, q=0.96, L=20, max_stay_counter=30, upper=1, lower=0)
     best_configs, best_value = sa_fast.run()
     print("[Info: ]best configs:\n"
           "        origin minimalScoreAuto = {}\n"
@@ -224,6 +216,11 @@ def main():
           "        time = {}\n" .format(
         best_configs[0], best_configs[1], best_configs[2], best_configs[3], best_value, time.time() - start
     ))
+    g_rcn_config["trace"]["default"]["minimalScoreAuto"] = best_configs[0]
+    g_rcn_config["trace"]["default"]["minimalScoreManual"] = best_configs[1]
+    g_rcn_config["trace"]["default"]["minimalScoreSeed"] = best_configs[2]
+    g_rcn_config["trace"]["default"]["minimalScore2d"] = best_configs[3]
+    read_json.save_json(os.path.join(CONFIG_PATH, "best_x_{}.json".format(time.time())), g_rcn_config)
     # plot the result.
     plt.plot(pd.DataFrame(sa_fast.best_y_history).cummin(axis=0))
     plt.xlabel("iterations")
@@ -234,3 +231,9 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+    # g_metric_method = ssd_metric.ssd_metric
+    # g_metric_configs = read_json.read_json(METRIC_CONFIG_PATH)
+    # g_rcn_config = read_json.read_json(os.path.join(CONFIG_PATH, "test3best.json"))
+    #
+    # SA_optimize(test_name="test3best")
