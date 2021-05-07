@@ -28,126 +28,6 @@ CONFIG_PATH = "../../../config/fake_reconstruction_configs/"
 METRIC_CONFIG_PATH = "../../../config/ssd_metric.json"
 LOG_PATH = "../../../output/optimization/neutu_log.txt"
 
-# def fake_gaussian(mean=[0.0, 0.0], cov=[[0.0, 1.0], [1.0, 0.0]], pos=(0,0)):
-#     rv = st.multivariate_normal(mean=[1.5, -1], cov=[[0.5, 0],[0, 0.5]])
-#     rv2 = st.multivariate_normal(mean=[-0.1, 0.5], cov=[[1, 0],[0, 1]])
-#     x = np.empty(shape=(1, 1, 2))
-#     x[0,0,0] = pos[0]
-#     x[0,0,1] = pos[1]
-#     return rv.pdf(x) + rv2.pdf(x)
-
-
-# def naive_optimize(gold_tree, rcn_configs, current_config, metric_method, metric_configs):
-#     """
-#     A naive optimization, test every combination of test parameters
-#     recursive parameter searching is used for traversing all the combinations.
-#     """
-#     clen = len(current_config)
-#     if clen == len(rcn_configs):
-#         # metric and get results
-#         # # check the value of configs
-#         # res = fake_gaussian(pos=configs)
-#         rec_config = read_json.read_json(json_file_path=CONFIG_PATH)
-#         current_config[0] = max(current_config[0], 0)
-#         current_config[1] = max(current_config[1], 0)
-#         print("[Info: ] minimalScoreAuto = {} minimalScoreSeed = {}".format(
-#             current_config[0], current_config[1])
-#         )
-#         rec_config["trace"]["default"]["minimalScoreAuto"] = rcn_configs[0]
-#         rec_config["trace"]["default"]["minimalScoreSeed"] = rcn_configs[1]
-#
-#         # save new configs
-#         read_json.save_json(json_file_path=CONFIG_PATH, data=rec_config)
-#         REC_CMD = "{} --command --trace {} -o {} --config {}".format(
-#             NEUTU_PATH, ORIGIN_PATH, TEST_PATH, CONFIG_PATH
-#         )
-#         print(REC_CMD)
-#         try:
-#             print("[Info: ] start tracing")
-#             os.system(REC_CMD)
-#             print("[Info: ] end tracing")
-#         except:
-#             raise Exception("[Error: ] error executing reconstruction")
-#
-#         res_tree = swc_node.SwcTree()
-#         gold_tree = swc_node.SwcTree()
-#         res_tree.load(TEST_PATH)
-#         gold_tree.load(GOLD_PATH)
-#
-#         main_score = g_metric_method(gold_tree, res_tree, g_metric_configs)
-#         # main_score = fake_gaussian(mean=[0.5, -0.3], cov=[[1, 0],[0, 1]], pos=current_config)
-#         global g_score
-#         if main_score > g_score:
-#             g_score = main_score
-#             print("max_score = {}, current_score = {}, x = {}, y = {}".format(
-#                 g_score, main_score, current_config[0], current_config[1])
-#             )
-#         return None
-#
-#     for item in rcn_configs[clen]:
-#         current_config.append(item)
-#         naive_optimize(gold_tree=gold_tree,
-#                        rcn_method=rcn_method,
-#                        rcn_configs=rcn_configs,
-#                        current_config=current_config,
-#                        metric_method=metric_method,
-#                        metric_configs=metric_configs)
-#         current_config.pop()
-#     return None
-
-
-# def naive_main():
-#     global g_metric_configs
-#     global g_metric_method
-#     g_metric_method = ssd_metric.ssd_metric
-#     g_metric_configs = read_json.read_json(METRIC_CONFIG_PATH)
-#
-#     z = np.zeros(shape=(50, 50))
-#     for i in range(50):
-#         for j in range(50):
-#             rec_config = read_json.read_json(json_file_path=CONFIG_PATH)
-#             rec_config["trace"]["default"]["minimalScoreAuto"] = 0.02 * i
-#             rec_config["trace"]["default"]["minimalScoreSeed"] = 0.02 * j
-#             read_json.save_json(json_file_path=CONFIG_PATH, data=rec_config)
-#             REC_CMD = "{} --command --trace {} -o {} --config {}".format(
-#                 NEUTU_PATH, ORIGIN_PATH, TEST_PATH, CONFIG_PATH
-#             )
-#             print(REC_CMD)
-#             try:
-#                 print("[Info: ] start tracing")
-#                 os.system(REC_CMD)
-#                 print("[Info: ] end tracing")
-#             except:
-#                 raise Exception("[Error: ] error executing reconstruction")
-#
-#             res_tree = swc_node.SwcTree()
-#             gold_tree = swc_node.SwcTree()
-#             res_tree.load(TEST_PATH)
-#             gold_tree.load(GOLD_PATH)
-#
-#             main_score = g_metric_method(gold_tree, res_tree, g_metric_configs)
-#             print("[Info: ] call = {} minimalScoreAuto = {} minimalScoreSeed = {}".format(
-#                 main_score["recall"], 0.02 * i, 0.02 * j
-#             ))
-#             z[i][j] = main_score["recall"]
-#
-#     # print(z)
-#     x = np.linspace(0, 0.48, 50)
-#     y = np.linspace(0, 0.48, 50)
-#     X, Y = np.meshgrid(x, y)
-#
-#     fig = plt.figure()
-#     # 创建一个三维坐标轴
-#     ax = plt.axes(projection='3d')
-#     ax.contour3D(X, Y, z, 50, cmap='binary')
-#     ax.set_xlabel('x')
-#     ax.set_ylabel('y')
-#     ax.set_zlabel('z')
-#     ax.plot_surface(X, Y, z, rstride=1, cstride=1, cmap='viridis', edgecolor='none')
-#     ax.set_title('surface')
-#     plt.show()
-#     print(X.shape)
-
 
 def SA_optimize(configs=None, test_name=None, lock=None):
     global g_metric_method
@@ -205,7 +85,7 @@ def main():
     configs = (0.3, 0.3, 0.35, 0.5)
     start = time.time()
     sa_fast = SAFast(func=SA_optimize,
-                     x0=configs, T_max=0.01, T_min=1e-5, q=0.96, L=20, max_stay_counter=30, upper=1, lower=0)
+                     x0=configs, T_max=0.01, T_min=1e-5, q=0.96, L=20, max_stay_counter=50, upper=1, lower=0)
     best_configs, best_value = sa_fast.run()
     print("[Info: ]best configs:\n"
           "        origin minimalScoreAuto = {}\n"
