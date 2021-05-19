@@ -3,13 +3,13 @@
 # @Time    : 2019/8/17
 # @Author  : github.com/guofei9987
 import copy
-
+import os
 import numpy as np
+import multiprocessing as mp
 from sko.base import SkoBase
 from sko.operators import mutation
-import multiprocessing as mp
 
-CPU_CORE_NUM = 12
+CPU_CORE_NUM = 15
 
 
 class SimulatedAnnealingBase(SkoBase):
@@ -53,7 +53,7 @@ class SimulatedAnnealingBase(SkoBase):
         self.n_dims = len(x0)
 
         self.best_x = np.array(x0)  # initial solution
-        self.best_y = self.func(self.best_x, "test_init.swc")[1]
+        self.best_y = self.func(self.best_x, "test_init")[1]
         self.T = self.T_max
         self.iter_cycle = 0
         self.generation_best_X, self.generation_best_Y = [self.best_x], [self.best_y]
@@ -88,7 +88,7 @@ class SimulatedAnnealingBase(SkoBase):
                         x_new[k] = max(x_new[k], 0)
                         x_new[k] = min(x_new[k], 1)
                     res_y.append(
-                        pool.apply_async(self.func, args=tuple([x_new, "test256_{}".format(j), lock]))
+                        pool.apply_async(self.func, args=tuple([x_new, os.path.join("tmp", "tmp_res_{}".format(j)), lock]))
                     )
                     res_x.append(x_new)
 
@@ -98,8 +98,6 @@ class SimulatedAnnealingBase(SkoBase):
                 for it in range(len(res_x)):
                     i += 1
                     x_new, y_new = res_y[it].get()
-                    print(x_new)
-                    print(y_new)
                     # Metropolis
                     df = y_new - y_current
                     if df < 0 or np.exp(-df / self.T) > np.random.rand():
@@ -110,17 +108,15 @@ class SimulatedAnnealingBase(SkoBase):
                             self.best_x = copy.deepcopy(x_new)
                             self.best_y = y_new
                         break
-                    print("[Info: ] best x = {}".format(self.best_x))
-                    print("[Info: ] best y = {}".format(self.best_y))
+            print("[Info: ] best x = {}".format(self.best_x))
+            print("[Info: ] best y = {}".format(self.best_y))
 
             print("[Info: ] iter_cycle = {} T = {} stay_counter = {}".format(
                 self.iter_cycle, self.T, stay_counter
             ))
             print("[Info: ]origin minimalScoreAuto = {}\n"
-                  "        minimalScoreManual = {}\n"
-                  "        minimalScoreSeed = {}\n"
-                  "        minimalScore2d = {}".format(
-                self.best_x[0], self.best_x[1], self.best_x[2], self.best_x[3]
+                  "        minimalScoreSeed = {}".format(
+                self.best_x[0], self.best_x[1]
             ))
             self.iter_cycle += 1
             self.cool_down()
