@@ -4,14 +4,14 @@ import os
 import jsonschema
 import pyneval
 from pyneval.io.read_swc import read_swc_trees
-from pyneval.io.read_json import read_json
+from pyneval.io import read_json
 from pyneval.io.swc_writer import swc_save
 from pyneval.io.read_tiff import read_tiffs
-from pyneval.metric.diadem_metric import diadem_metric
-from pyneval.metric.length_metric import length_metric
-from pyneval.metric.volume_metric import volume_metric
-from pyneval.metric.branch_leaf_metric import branch_leaf_metric
-from pyneval.metric.link_metric import link_metric
+from pyneval.metric import diadem_metric
+from pyneval.metric import length_metric
+from pyneval.metric import volume_metric
+from pyneval.metric import branch_leaf_metric
+from pyneval.metric import link_metric
 from pyneval.metric import ssd_metric
 
 METRICS = {
@@ -19,36 +19,42 @@ METRICS = {
         'config': "diadem_metric.json",
         'description': "DIADEM metric (https://doi.org/10.1007/s12021-011-9117-y)",
         'alias': ['DM'],
+        'method': diadem_metric.diadem_metric,
         'public': True
     },
     'ssd_metric': {
         'config': "ssd_metric.json",
         'description': "minimum square error between up-sampled gold and test trees",
         'alias': ['SM'],
+        'method': ssd_metric.ssd_metric,
         'public': True
     },
     'length_metric': {
         'config': "length_metric.json",
         'description': "length of matched branches and fibers",
         'alias': ['ML'],
+        'method': length_metric.length_metric,
         'public': True
     },
     'volume_metric': {
         'config': "volume_metric.json",
         'description': "volume overlap",
         'alias': ['VM'],
+        'method': volume_metric.volume_metric,
         'public': False
     },
     'branch_metric': {
         'config': "branch_metric.json",
         'description': "quality of critical points",
         'alias': ['BM'],
+        'method': branch_leaf_metric.branch_leaf_metric,
         'public': True
     },
     'link_metric': {
         'config': "link_metric.json",
         'description': "",
         'alias': ['LM'],
+        'method': link_metric.link_metric,
         'public': False
     },
 }
@@ -90,23 +96,26 @@ def get_metric_config_schema_path(metric, root_dir):
     schema_dir = os.path.join(config_dir, "schemas")
     return os.path.join(schema_dir, get_metric_config(metric)['config'][:-5]+"_schema.json")
 
+def get_metric_method(metric):
+    return get_metric_config(metric)['method']
+
 def read_parameters():
     parser = argparse.ArgumentParser(
         description="pyneval 1.0"
     )
 
     parser.add_argument(
-        "--test",
-        "-T",
-        help="a list of SWC files for evaluation",
-        required=False,
-        nargs='*',
-    )
-    parser.add_argument(
         "--gold",
         "-G",
         help="path to the gold-standard SWC file",
         required=True
+    )
+    parser.add_argument(
+        "--test",
+        "-T",
+        help="a list of SWC files for evaluation",
+        required=True,
+        nargs='*',
     )
     parser.add_argument(
         "--metric",
@@ -117,7 +126,13 @@ def read_parameters():
     parser.add_argument(
         "--output",
         "-O",
-        help="path to the output file (output to screen if not specified)",
+        help="metric output path, including different scores of the metric",
+        required=False
+    )
+    parser.add_argument(
+        "--detail",
+        "-D",
+        help="detail \"type\" marked for gold/test SWC file, including marked swc trees",
         required=False
     )
     parser.add_argument(
@@ -127,50 +142,28 @@ def read_parameters():
         required=False
     )
     parser.add_argument(
-        "--reverse",
-        "-R",
-        help="output the answer when we switch the gold and test tree",
-        required=False
-    )
-    parser.add_argument(
         "--debug",
-        "-D",
         help="print debug info or not",
         required=False
     )
     return parser.parse_args()
 
 
-# command program
-def run(DEBUG=True):
-    # init path parameter
-    abs_dir = os.path.abspath("")
+def init(abs_dir):
     sys.path.append(abs_dir)
     sys.path.append(os.path.join(abs_dir, "src"))
     sys.path.append(os.path.join(abs_dir, "test"))
     sys.setrecursionlimit(1000000)
 
-    # read parameter
-    try:
-        args = read_parameters()
-    except:
-        return 1
 
-    # set config
-    # gold/test files
-    if args.test is None:
-        test_swc_files = []
-    else:
-        test_swc_files = [os.path.join(abs_dir, path) for path in args.test]
-    gold_swc_file = os.path.join(abs_dir, args.gold)
-    gold_file_name = os.path.basename(gold_swc_file)
+def set_configs(abs_dir, args):
+    # argument: gold
+    gold_swc_path = os.path.join(abs_dir, args.gold)
+    if not (os.path.isfile(gold_swc_path) and gold_swc_path[-4:] == ".swc"):
+        raise Exception("[Error: ] gold standard file is not a swc file")
+    gold_swc_tree = read_swc_trees(gold_swc_path)[0]  # SwcTree
 
-    # reverse
-    reverse = args.reverse
-    if reverse is None:
-        reverse = True
-
-    # metric
+    # argument: metric
     metric = get_root_metric(args.metric)
     if not metric:
         print("\nERROR: The metric '{}' is not supported.".format(args.metric))
@@ -178,113 +171,92 @@ def run(DEBUG=True):
         print(get_metric_summary(True))
         return 1
 
-    # output path
-    output_dest = args.output
-    if output_dest is not None:
-        output_dest = os.path.join(abs_dir, output_dest)
+    # argument: test
+    test_swc_paths = [os.path.join(abs_dir, path) for path in args.test]
+    test_swc_trees = []
+    # read test trees
+    if metric in ['volume_metric', 'VM']:
+        for file in test_swc_paths:
+            test_swc_trees += read_tiffs(file)
+    else:
+        for file in test_swc_paths:
+            test_swc_trees += read_swc_trees(file)
 
-    # config
+    # info: how many trees read
+    print("There are {} test image(s)".format(len(test_swc_trees)))
+
+    # argument: output
+    output_dir = None
+    if args.output:
+        output_dir = os.path.join(abs_dir, args.output)
+
+    # argument: detail
+    detail_dir = None
+    if args.detail:
+        detail_dir = os.path.join(abs_dir, args.detail)
+
+    # argument: config
     config_path = args.config
     if config_path is None:
         config_path = get_metric_config_path(metric, abs_dir)
     config_schema_path = get_metric_config_schema_path(metric, abs_dir)
-    config = read_json(config_path)
-    config_schema = read_json(config_schema_path)
+
+    config = read_json.read_json(config_path)
+    config_schema = read_json.read_json(config_schema_path)
     try:
         jsonschema.validate(config, config_schema)
     except Exception:
         raise Exception("[Error: ]Error in analyzing config json file")
 
-    test_swc_trees, test_tiffs = [], []
-    # read test trees, gold trees and configs
-    if metric in ['volume_metric', 'VM']:
-        for file in test_swc_files:
-            test_tiffs += read_tiffs(file)
+    # argument: debug
+    is_debug = args.debug
+
+    return gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug
+
+
+def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir, file_name_extra=""):
+    metric_method = get_metric_method(metric)
+    test_swc_name = test_swc_tree.get_name()
+    gold_swc_name = gold_swc_tree.get_name()
+
+    result = metric_method(gold_swc_tree=gold_swc_tree, test_swc_tree=test_swc_tree, config=config)
+
+    print("---------------Result---------------")
+    for key in result:
+        print("{} = {}".format(key.ljust(15, ' '), result[key]))
+    print("----------------End-----------------\n")
+
+    if file_name_extra == "reverse":
+        file_name = gold_swc_name[:-4] + "_" + metric + "_" + file_name_extra + ".swc"
     else:
-        for file in test_swc_files:
-            test_swc_trees += read_swc_trees(file)
+        file_name = test_swc_name[:-4] + "_" + metric + "_" + file_name_extra + ".swc"
 
-    gold_swc_trees = read_swc_trees(gold_swc_file)
+    if detail_dir:
+        swc_save(swc_tree=gold_swc_tree,
+                 out_path=os.path.join(detail_dir, file_name))
 
-    # info: how many trees read
-    print("There are {} test image(s) and {} gold image(s)".format(len(test_swc_trees), len(gold_swc_trees)))
-    if len(gold_swc_trees) == 0:
-        raise Exception("[Error:  ] No gold image detected")
-    if len(gold_swc_trees) > 1:
-        print("[Warning:  ] More than one gold image detected, only the first one will be used")
+    if output_dir:
+        read_json.save_json(data=result,
+                            json_file_path=os.path.join(output_dir, file_name))
 
-    # entries to different metrics
-    gold_swc_treeroot = gold_swc_trees[0]
-    for test_tiff in test_tiffs:
-        if metric == "volume_metric":
-            volume_result = volume_metric(tiff_test=test_tiff, swc_gold=gold_swc_treeroot, config=config)
-            print(volume_result["recall"])
 
-    for test_swc_treeroot in test_swc_trees:
-        if metric == "diadem_metric":
-            diadem_res = diadem_metric(swc_test_tree=test_swc_treeroot,
-                                       swc_gold_tree=gold_swc_treeroot,
-                                       config=config)
-            print("score = {}".format(diadem_res["final_score"]))
-            if reverse:
-                rev_diadem_res = diadem_metric(swc_test_tree=gold_swc_treeroot,
-                                               swc_gold_tree=test_swc_treeroot,
-                                               config=config)
-                print("rev_score = {}".format(rev_diadem_res["final_score"]))
+# command program
+def run():
+    abs_dir = os.path.abspath("")
+    init(abs_dir)
 
-        if metric == "ssd_metric":
-            ssd_res = ssd_metric.ssd_metric(gold_swc_treeroot, test_swc_treeroot, config)
-            print("ssd score = {}\n"
-                  "recall    = {}%\n"
-                  "precision = {}%".format(round(ssd_res["avg_score"], 2),
-                                           round(ssd_res["recall"] * 100, 2),
-                                           round(ssd_res["precision"] * 100, 2)))
+    try:
+        args = read_parameters()
+    except:
+        raise Exception("[Error: ] Error in reading parameters")
+    gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug = set_configs(abs_dir, args)
 
-        if metric == "length_metric":
-            lm_res = length_metric(gold_swc_treeroot, test_swc_treeroot, config)
-            print("Recall = {} Precision = {}".format(lm_res["recall"], lm_res["precision"]))
-
-            if output_dest:
-                swc_save(test_swc_treeroot, output_dest)
-            if reverse:
-                if "detail" in config:
-                    config["detail"] = config["detail"][:-4] + "_reverse.swc"
-                lm_res = length_metric(test_swc_treeroot, gold_swc_treeroot, config)
-                print("Recall = {} Precision = {}".format(lm_res["recall"], lm_res["precision"]))
-                if output_dest:
-                    swc_save(gold_swc_treeroot, output_dest[:-4]+"_reverse.swc")
-        if metric == "branch_metric":
-            branch_res = branch_leaf_metric(gold_swc_tree=gold_swc_treeroot,
-                                            test_swc_tree=test_swc_treeroot,
-                                            config=config)
-            print("---------------Result---------------")
-            print("gole_branch_num = {}, test_branch_num = {}\n"
-                  "true_positive_number  = {}\n"
-                  "false_negative_num    = {}\n"
-                  "false_positive_num    = {}\n"
-                  "matched_mean_distance = {}\n"
-                  "matched_sum_distance  = {}\n"
-                  "pt_score              = {}\n"
-                  "isolated node number  = {}".
-                  format(branch_res["gold_len"], branch_res["test_len"], branch_res["true_pos_num"],
-                         branch_res["false_neg_num"], branch_res["false_pos_num"], branch_res["mean_dis"],
-                         branch_res["tot_dis"], branch_res["pt_cost"], branch_res["iso_node_num"]))
-            print("----------------End-----------------")
-            if output_dest and os.path.exists(output_dest):
-                swc_save(test_swc_treeroot, os.path.join(output_dest,
-                                                         "branch_metric",
-                                                         "{}{}".format(gold_file_name[:-4], "_test.swc")))
-                swc_save(gold_swc_treeroot, os.path.join(output_dest,
-                                                         "branch_metric",
-                                                         "{}{}".format(gold_file_name[:-4], "_gold.swc")))
-        if metric == "link_metric" or metric == "LM":
-            link_res = link_metric(test_swc_tree=test_swc_treeroot,
-                                   gold_swc_tree=gold_swc_treeroot,
-                                   config=config)
-            print("---------------Result---------------")
-            print("edge_loss     = {}\n"
-                  "tree_dis_loss = {}\n".format(link_res["edge_loss"], link_res["tree_dis_loss"]))
-            print("---------------End---------------")
+    for test_swc_tree in test_swc_trees:
+        excute_metric(metric=metric, gold_swc_tree=gold_swc_tree, test_swc_tree=test_swc_tree,
+                      config=config, detail_dir=detail_dir, output_dir=output_dir)
+        if metric in ["length_metric", "diadem_metric"]:
+            excute_metric(metric=metric, gold_swc_tree=test_swc_tree, test_swc_tree=gold_swc_tree,
+                          config=config, detail_dir=detail_dir, output_dir=output_dir, file_name_extra="reverse")
 
 
 if __name__ == "__main__":
@@ -306,4 +278,4 @@ if __name__ == "__main__":
 
 # pyneval --gold .\\data\test_data\geo_metric_data\gold_34_23_10.swc --test .\data\test_data\geo_metric_data\test_34_23_10.swc --metric branch_metric
 
-# pyneval --gold .\\data\test_data\geo_metric_data\gold_34_23_10.swc --test .\data\test_data\geo_metric_data\test_34_23_10.swc --metric branch_metric
+# pyneval --gold ./data/test_data/geo_metric_data/gold_fake_data1.swc --test ./data/test_data/geo_test/ --metric branch_metric --detail ./output

@@ -3,7 +3,7 @@
 
 from anytree import NodeMixin, iterators, RenderTree
 from pyneval.model.euclidean_point import EuclideanPoint
-from anytree import PreOrderIter
+import os
 
 import math
 import queue
@@ -312,6 +312,7 @@ class SwcTree:
         self._root = Make_Virtual()
         self._size = None
         self._total_length = None
+        self._name = None
 
         self.id_set = set()
         self.depth_array = None
@@ -338,6 +339,9 @@ class SwcTree:
 
     def clear(self):
         self._root = Make_Virtual()
+
+    def get_name(self):
+        return self._name
 
     # warning: slow, don't use in loop
     def node_from_id(self, nid):
@@ -406,6 +410,7 @@ class SwcTree:
 
     def load(self, path):
         self.clear()
+        self._name = os.path.basename(path)
         with open(path, 'r') as fp:
             lines = fp.readlines()
             nodeDict = dict()

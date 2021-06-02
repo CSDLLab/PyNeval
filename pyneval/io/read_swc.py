@@ -4,6 +4,16 @@ from pyneval.model.swc_node import SwcNode, SwcTree
 
 # if path is a fold
 def read_swc_trees(swc_file_paths, tree_name_dict=None):
+    """
+    Read a swc tree or recursively read all the swc trees in a fold
+    Args:
+        swc_file_paths(string): path to read swc
+        tree_name_dict(dict): a map for swc tree and its file name
+            key(SwcTree): SwcTree object
+            value(string): name of the swc tree
+    Output:
+        swc_tree_list(list): a list shaped 1*n, containing all the swc tree in the path
+    """
     swc_tree_list = []
     if os.path.isfile(swc_file_paths):
         if not (swc_file_paths[-4:] == ".swc" or swc_file_paths[-4:] == ".SWC"):

@@ -94,12 +94,12 @@ def cal_volume_recall(test_tiff, gold_swc, intensity_threshold, debug):
     return tot_front/tot_back
 
 
-def volume_metric(swc_gold, tiff_test, config=None):
+def volume_metric(gold_swc_tree, test_swc_tree, config=None):
     length_threshold = config['length_threshold']
     intensity_threshold = config['intensity_threshold']
     debug = config['debug']
-    densed_swc_tree = up_sample_swc_tree(swc_tree=swc_gold, length_threshold=length_threshold)
-    recall = cal_volume_recall(tiff_test, densed_swc_tree, intensity_threshold, debug)
+    densed_swc_tree = up_sample_swc_tree(swc_tree=gold_swc_tree, length_threshold=length_threshold)
+    recall = cal_volume_recall(test_swc_tree, densed_swc_tree, intensity_threshold, debug)
 
     res = {
         "recall": recall
