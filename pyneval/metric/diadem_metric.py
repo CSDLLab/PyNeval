@@ -907,11 +907,11 @@ def adjust_root(swc_gold_tree, swc_test_tree,
                 break
 
 
-def diadem_metric(swc_gold_tree, swc_test_tree, config):
+def diadem_metric(gold_swc_tree, test_swc_tree, config):
     """Main function of diadem metric
     Args:
-        swc_gold_tree(SwcTree):
-        swc_test_tree(SwcTree):
+        gold_swc_tree(SwcTree):
+        test_swc_tree(SwcTree):
         config(Dict):
             The keys of 'config' is the name of configs, and the items are config values
 
@@ -935,24 +935,24 @@ def diadem_metric(swc_gold_tree, swc_test_tree, config):
     """
     global g_spur_set
     global g_weight_dict
-    swc_gold_tree.type_clear(0)
-    swc_test_tree.type_clear(1)
+    gold_swc_tree.type_clear(0)
+    test_swc_tree.type_clear(1)
     diadem_init()
     config_init(config)
 
-    test_kdtree, test_pos_node_dict = point_match_utils.create_kdtree(swc_test_tree.get_node_list())
+    test_kdtree, test_pos_node_dict = point_match_utils.create_kdtree(test_swc_tree.get_node_list())
 
     t_matches = {}
     debug = False
     if g_find_proper_root:
-        adjust_root(swc_gold_tree=swc_gold_tree, swc_test_tree=swc_test_tree,
+        adjust_root(swc_gold_tree=gold_swc_tree, swc_test_tree=test_swc_tree,
                     test_kdtree=test_kdtree, test_pos_node_dict=test_pos_node_dict,
                     t_matches=t_matches)
     if g_align_tree_by_root:
-        swc_test_tree.align_roots(gold_tree=swc_gold_tree, t_matches=t_matches)
+        test_swc_tree.align_roots(gold_tree=gold_swc_tree, t_matches=t_matches)
 
     # the id of root here is always -1, so we need to figure out first level sons of root
-    for sub_gold_root in swc_gold_tree.root().children:
+    for sub_gold_root in gold_swc_tree.root().children:
         if sub_gold_root in t_matches.keys():
             sub_test_root = t_matches[sub_gold_root]
             bin_test_root, bin_test_list = bin_utils.convert_to_binarytrees(sub_test_root)
@@ -1007,8 +1007,8 @@ def pyneval_diadem_metric(gold_swc, test_swc, config):
     gold_tree.load_list(read_swc.adjust_swcfile(gold_swc))
     test_tree.load_list(read_swc.adjust_swcfile(test_swc))
 
-    diadem_res= diadem_metric(swc_gold_tree=gold_tree,
-                              swc_test_tree=test_tree,
+    diadem_res= diadem_metric(gold_swc_tree=gold_tree,
+                              test_swc_tree=test_tree,
                               config=config)
 
     result = {
