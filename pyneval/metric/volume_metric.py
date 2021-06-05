@@ -104,7 +104,7 @@ def volume_metric(gold_swc_tree, test_swc_tree, config=None):
     res = {
         "recall": recall
     }
-    return res
+    return res, None, None
 
 
 if __name__ == "__main__":

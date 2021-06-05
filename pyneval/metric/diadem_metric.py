@@ -780,24 +780,24 @@ def color_tree_only():
     if g_list_miss:
         if len(g_miss) > 0:
             for node in g_miss:
-                # 3 means this node is missed
-                node.data._type = 2
+                # 9 means this node is missed
+                node.data._type = 9
         if len(g_excess_nodes) > 0:
             for node in g_excess_nodes.keys():
-                # 4 means this node is excessive
-                node.data._type = 3
+                # 10 means this node is excessive
+                node.data._type = 10
 
     if g_list_continuations:
         if len(g_continuation) > 0:
             for node in g_continuation:
-                # 5 means this node is a continuation
-                node.data._type = 4
+                # 11 means this node is a continuation
+                node.data._type = 11
 
     if g_list_distant_matches:
         if len(g_distance_match) > 0:
             for node in g_distance_match:
-                # 6 means this node is a distant match
-                node.data._type = 5
+                # 12 means this node is a distant match
+                node.data._type = 12
 
 
 def print_result():
@@ -821,8 +821,8 @@ def print_result():
                 print("node_ID = {} poi = {} weight = {}".format(
                     node.data.get_id(), node.data._pos, g_weight_dict[node]
                 ))
-                # 3 means this node is missed
-                node.data._type = 2
+                # 9 means this node is missed
+                node.data._type = 9
             print("--END--")
         else:
             print("---Nodes that are missed:None---")
@@ -835,8 +835,8 @@ def print_result():
                 print("node_ID = {} poi = {} weight = {}".format(
                     node.data.get_id(), node.data._pos, g_excess_nodes[node]
                 ))
-                # 4 means this node is excessive
-                node.data._type = 3
+                # 10 means this node is excessive
+                node.data._type = 10
         else:
             print("---extra Nodes in test reconstruction: None---")
 
@@ -848,8 +848,8 @@ def print_result():
                 print("node_ID = {} poi = {} weight = {}".format(
                     node.data.get_id(), node.data._pos, g_weight_dict[node]
                 ))
-                # 5 means this node is a continuation
-                node.data._type = 4
+                # 11 means this node is a continuation
+                node.data._type = 11
         else:
             print("---continuation Nodes None---")
 
@@ -861,8 +861,8 @@ def print_result():
                 print("node_ID = {} poi = {} weight = {}".format(
                     node.data.get_id(), node.data._pos, g_weight_dict[node]
                 ))
-                # 6 means this node is a distant match
-                node.data._type = 5
+                # 12 means this node is a distant match
+                node.data._type = 12
         else:
             print("Distant Matches: none")
 
@@ -935,8 +935,8 @@ def diadem_metric(gold_swc_tree, test_swc_tree, config):
     """
     global g_spur_set
     global g_weight_dict
-    gold_swc_tree.type_clear(0)
-    test_swc_tree.type_clear(1)
+    gold_swc_tree.set_node_type_by_topo(root_id=1)
+    test_swc_tree.set_node_type_by_topo(root_id=5)
     diadem_init()
     config_init(config)
     diadam_match_utils.diadem_utils_init(config)
@@ -979,6 +979,7 @@ def diadem_metric(gold_swc_tree, test_swc_tree, config):
                 print('match1 = {}, match2 = {}'.format(
                     key.data.get_id(), g_matches[key].data.get_id()
                 ))
+    color_tree_only()
     if debug:
         for k in g_weight_dict:
             print("id = {} wt = {}".format(k.data.get_id(), g_weight_dict[k]))
@@ -991,7 +992,7 @@ def diadem_metric(gold_swc_tree, test_swc_tree, config):
         "score_sum": g_score_sum,
         "final_score": g_final_score
     }
-    return res
+    return res, gold_swc_tree, test_swc_tree
 
 
 def pyneval_diadem_metric(gold_swc, test_swc, config):
@@ -1010,7 +1011,7 @@ def pyneval_diadem_metric(gold_swc, test_swc, config):
     gold_tree.load_list(read_swc.adjust_swcfile(gold_swc))
     test_tree.load_list(read_swc.adjust_swcfile(test_swc))
 
-    diadem_res= diadem_metric(gold_swc_tree=gold_tree,
+    diadem_res = diadem_metric(gold_swc_tree=gold_tree,
                               test_swc_tree=test_tree,
                               config=config)
 
@@ -1030,8 +1031,8 @@ if __name__ == "__main__":
     testTree = swc_node.SwcTree()
     goldTree = swc_node.SwcTree()
 
-    goldTree.load("../../data/test_data/topo_metric_data/ExampleGoldStandard.swc")
-    testTree.load("../../data/test_data/topo_metric_data/ExampleTest.swc")
+    goldTree.load("../../data/test_data/topo_metric_data/gold_fake_data3.swc")
+    testTree.load("../../data/test_data/topo_metric_data/test_fake_data3.swc")
     config_utils.get_default_threshold(goldTree)
     config = read_json.read_json("../../config/diadem_metric.json")
     config_schema = read_json.read_json("../../config/schemas/diadem_metric_schema.json")
@@ -1041,9 +1042,9 @@ if __name__ == "__main__":
     except Exception as e:
         raise Exception("[Error: ]Error in analyzing config json file")
 
-    diadem_result = diadem_metric(test_swc_tree=testTree,
-                                  gold_swc_tree=goldTree,
-                                  config=config)
+    diadem_result, tmp1, tmp2 = diadem_metric(test_swc_tree=testTree,
+                                              gold_swc_tree=goldTree,
+                                              config=config)
     print("matched weight = {}\n"
           "total weight   = {}\n"
           "diadem score   = {}\n".

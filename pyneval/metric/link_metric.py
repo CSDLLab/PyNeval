@@ -88,7 +88,7 @@ def link_metric(gold_swc_tree, test_swc_tree, config):
         "edge_loss": edge_loss,
         "tree_dis_loss": tree_dis_loss
     }
-    return res
+    return res, None, None
 
 
 if __name__ == "__main__":

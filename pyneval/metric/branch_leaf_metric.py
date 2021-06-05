@@ -188,7 +188,7 @@ def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
         "pt_cost": branch_result_tuple[7],
         "iso_node_num": branch_result_tuple[8]
     }
-    return branch_result
+    return branch_result, gold_swc_tree, test_swc_tree
 
 
 if __name__ == "__main__":
