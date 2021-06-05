@@ -4,16 +4,32 @@ import queue
 from pyneval.model.swc_node import SwcNode,SwcTree
 from pyneval.model.binary_node import BinaryNode
 from pyneval.model.euclidean_point import EuclideanPoint
-from pyneval.metric.utils.bin_utils import calculate_trajectories_xy,calculate_trajectories_z
+from pyneval.metric.utils.bin_utils import calculate_trajectories_xy, calculate_trajectories_z
 
 _2D = "2d"
 
-TRAJECTORY_NONE = -1.0
-g_xy_threshold = 1.2
-g_z_threshold = 0.0
-g_default_xy_path_error_threshold = 0.05
-g_default_z_path_error_threshold = 0.05
-g_local_path_error_threshold = 0.4
+global TRAJECTORY_NONE
+global g_xy_threshold
+global g_z_threshold
+global g_default_xy_path_error_threshold
+global g_default_z_path_error_threshold
+global g_local_path_error_threshold
+
+
+def diadem_utils_init(config):
+    global TRAJECTORY_NONE
+    global g_xy_threshold
+    global g_z_threshold
+    global g_default_xy_path_error_threshold
+    global g_default_z_path_error_threshold
+    global g_local_path_error_threshold
+
+    TRAJECTORY_NONE = config["TRAJECTORY_NONE"]
+    g_xy_threshold = config["xy_threshold"]
+    g_z_threshold = config["z_threshold"]
+    g_default_xy_path_error_threshold = config["default_xy_path_error_threshold"]
+    g_default_z_path_error_threshold = config["default_z_path_error_threshold"]
+    g_local_path_error_threshold = config["local_path_error_threshold"]
 
 
 def to_swc_node(node_a, node_b):

@@ -39,6 +39,10 @@ def get_extra_pos_nodes(big_set, subset):
 
 
 def link_metric(gold_swc_tree, test_swc_tree, config):
+    z_scale = config['z_scale']
+    gold_swc_tree.z_rescale(z_scale)
+    test_swc_tree.z_rescale(z_scale)
+
     gold_list = gold_swc_tree.get_node_list()
     test_list = test_swc_tree.get_node_list()
 
@@ -93,7 +97,7 @@ if __name__ == "__main__":
     gold_swc_tree = SwcTree()
     test_swc_tree = SwcTree()
     test_swc_tree.load("..\\..\\data\\test_data\\topo_metric_data\\gold_fake_data4.swc")
-    gold_swc_tree.load("..\\..\\data\\test_data\\topo_metric_data\\gold_fake_data4.swc")
+    gold_swc_tree.load("..\\..\\data\\test_data\\topo_metric_data\\test_fake_data4.swc")
     config = read_json("..\\..\\config\\link_metric.json")
     config_schema = read_json("..\\..\\config\\schemas\\link_metric_schema.json")
 

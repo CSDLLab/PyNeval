@@ -148,7 +148,10 @@ def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
     # read configs
     threshold_dis = config["threshold_dis"]
     threshold_mode = config["threshold_mode"]
+    z_scale = config["z_scale"]
 
+    gold_swc_tree.z_rescale(z_scale)
+    test_swc_tree.z_rescale(z_scale)
     # in threshold mode 2, threshold is a multiple of the average length of edges
     if threshold_mode == 2:
         # length of the entire gold swc forest

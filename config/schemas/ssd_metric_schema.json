@@ -5,12 +5,14 @@
       "threshold_mode",
       "ssd_threshold",
       "up_sample_threshold",
+      "z_scale",
       "debug"
   ],
   "properties": {
     "threshold_mode": {"type": "integer", "enum": [1,2]},
     "ssd_threshold": {"type": "number", "exclusiveMinimum": 0},
     "up_sample_threshold": {"type": "number", "exclusiveMinimum": 0},
+    "z_scale": {"type":"number", "minimum": 0},
     "debug": {"type": "boolean"}
   }
 }

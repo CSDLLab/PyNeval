@@ -939,7 +939,10 @@ def diadem_metric(gold_swc_tree, test_swc_tree, config):
     test_swc_tree.type_clear(1)
     diadem_init()
     config_init(config)
-
+    diadam_match_utils.diadem_utils_init(config)
+    z_scale = config["z_scale"]
+    gold_swc_tree.z_rescale(z_scale)
+    test_swc_tree.z_rescale(z_scale)
     test_kdtree, test_pos_node_dict = point_match_utils.create_kdtree(test_swc_tree.get_node_list())
 
     t_matches = {}
@@ -1026,8 +1029,9 @@ if __name__ == "__main__":
     start_time = time.time()
     testTree = swc_node.SwcTree()
     goldTree = swc_node.SwcTree()
-    goldTree.load("../../data/test_data/topo_metric_data/gold_fake_data4.swc")
-    testTree.load("../../data/test_data/topo_metric_data/test_fake_data4.swc")
+
+    goldTree.load("../../data/test_data/topo_metric_data/ExampleGoldStandard.swc")
+    testTree.load("../../data/test_data/topo_metric_data/ExampleTest.swc")
     config_utils.get_default_threshold(goldTree)
     config = read_json.read_json("../../config/diadem_metric.json")
     config_schema = read_json.read_json("../../config/schemas/diadem_metric_schema.json")
@@ -1037,8 +1041,8 @@ if __name__ == "__main__":
     except Exception as e:
         raise Exception("[Error: ]Error in analyzing config json file")
 
-    diadem_result = diadem_metric(swc_test_tree=testTree,
-                                  swc_gold_tree=goldTree,
+    diadem_result = diadem_metric(test_swc_tree=testTree,
+                                  gold_swc_tree=goldTree,
                                   config=config)
     print("matched weight = {}\n"
           "total weight   = {}\n"

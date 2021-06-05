@@ -469,6 +469,10 @@ class SwcTree:
         for tn in niter:
             tn.scale(sx, sy, sz, adjusting_radius)
 
+    def z_rescale(self, z_scale):
+        for node in self.get_node_list():
+            node.set_z(node.get_z() * z_scale)
+
     def length(self, force_update=False):
         if self._total_length is not None and force_update == False:
             return self._total_length

@@ -13,6 +13,13 @@
     "list_distant_matches": {"type": "boolean", "default": "false"},
     "list_continuations": {"type": "boolean", "default": "false"},
     "find_proper_root": {"type": "boolean", "default": "true"},
+    "z_scale": {"type": "number", "minimum": 0},
+    "TRAJECTORY_NONE": {"type": "number"},
+    "xy_threshold": {"type": "number", "minimum": 0},
+    "z_threshold": {"type": "number", "minimum": 0},
+    "default_xy_path_error_threshold": {"type": "number", "minimum": 0},
+    "default_z_path_error_threshold": {"type": "number", "minimum": 0},
+    "local_path_error_threshold": {"type": "number", "minimum": 0},
     "debug": {"type": "boolean", "default": "false"}
   }
 }
