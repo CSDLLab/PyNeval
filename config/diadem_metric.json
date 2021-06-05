@@ -7,5 +7,12 @@
   "list_distant_matches": false,
   "list_continuations": false,
   "find_proper_root": true,
+  "z_scale": 1,
+  "TRAJECTORY_NONE": -1.0,
+  "xy_threshold": 1.2,
+  "z_threshold": 0.0,
+  "default_xy_path_error_threshold": 0.05,
+  "default_z_path_error_threshold": 0.05,
+  "local_path_error_threshold": 0.4,
   "debug": false
 }

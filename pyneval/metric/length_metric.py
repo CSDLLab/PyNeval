@@ -88,7 +88,11 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
     rad_mode = config["rad_mode"]
     rad_threshold = config["rad_threshold"]
     len_threshold = config["len_threshold"]
+    z_scale = config["z_scale"]
     debug = config["debug"]
+
+    gold_swc_tree.z_rescale(z_scale)
+    test_swc_tree.z_rescale(z_scale)
 
     if rad_mode == 1:
         rad_threshold *= -1

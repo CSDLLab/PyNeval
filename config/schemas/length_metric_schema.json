@@ -5,12 +5,14 @@
       "rad_mode",
       "rad_threshold",
       "len_threshold",
+      "z_scale",
       "debug"
   ],
   "properties": {
     "rad_mode": {"type": "number", "enum": [1,2]},
     "rad_threshold": {"type": "number", "exclusiveMinimum": 0},
     "len_threshold": {"type": "number", "exclusiveMinimum": 0},
+    "z_scale": {"type": "number", "minimum": 0},
     "debug": {"type": "boolean"}
   }
 }

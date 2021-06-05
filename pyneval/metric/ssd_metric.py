@@ -103,10 +103,10 @@ def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree,
     threshold_mode = config["threshold_mode"]
     ssd_threshold = config["ssd_threshold"]
     up_sample_threshold = config["up_sample_threshold"]
+    z_scale = config["z_scale"]
 
-    if debug:
-        print("[Debug: ] In ssd metric")
-
+    gold_swc_tree.z_rescale(z_scale)
+    test_swc_tree.z_rescale(z_scale)
     u_gold_swc_tree = re_sample.up_sample_swc_tree(swc_tree=gold_swc_tree,
                                                    length_threshold=up_sample_threshold)
     u_test_swc_tree = re_sample.up_sample_swc_tree(swc_tree=test_swc_tree,
@@ -141,8 +141,8 @@ if __name__ == "__main__":
     gold_tree = swc_node.SwcTree()
 
     sys.setrecursionlimit(10000000)
-    gold_tree.load("/home/zhanghan/01_project/Pyneval/data/optimation/temp_gold.swc")
-    test_tree.load("/home/zhanghan/01_project/Pyneval/data/optimation/output/temp_test.swc")
+    gold_tree.load("../../data/test_data/geo_metric_data/gold_fake_data1.swc")
+    test_tree.load("../../data/test_data/geo_metric_data/test_fake_data1.swc")
 
     config = read_json.read_json("../../config/ssd_metric.json")
     config_schema = read_json.read_json("../../config/schemas/ssd_metric_schema.json")

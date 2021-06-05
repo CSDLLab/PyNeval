@@ -1,4 +1,10 @@
 {
   "title": "link metric schema",
-  "type": "object"
+  "type": "object",
+  "required": [
+      "z_scale"
+  ],
+  "properties": {
+    "z_scale": {"type": "number", "minimum": 0}
+  }
 }
