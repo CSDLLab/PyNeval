@@ -93,6 +93,8 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
 
     gold_swc_tree.z_rescale(z_scale)
     test_swc_tree.z_rescale(z_scale)
+    gold_swc_tree.set_node_type_by_topo(root_id=1)
+    test_swc_tree.set_node_type_by_topo(root_id=5)
 
     if rad_mode == 1:
         rad_threshold *= -1
@@ -113,7 +115,7 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
         "recall": recall,
         "precision": precision
     }
-    return res
+    return res, gold_swc_tree, test_swc_tree
 
 
 def web_length_metric(gold_swc, test_swc, mode, rad_threshold, len_threshold):

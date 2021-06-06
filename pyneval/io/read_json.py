@@ -26,7 +26,7 @@ def save_json(json_file_path, data, DEBUG=False):
         raise Exception("[Error: ] \" {} \"  is not a json file. Wrong format".format(json_file_path))
     try:
         with open(json_file_path, 'w') as f:
-            json.dump(data, f)
+            json.dump(data, f, indent=4)
             if DEBUG:
                 print(type(data))
     except:

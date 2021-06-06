@@ -119,10 +119,6 @@ def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree,
     t2g_score, t2g_num = get_mse(src_tree=u_test_swc_tree, tar_tree=u_gold_swc_tree,
                                  ssd_threshold=ssd_threshold, mode=threshold_mode)
 
-    if "detail_path" in config:
-        swc_writer.swc_save(u_gold_swc_tree, config["detail_path"][:-4] + "_gold_upsampled.swc")
-        swc_writer.swc_save(u_test_swc_tree, config["detail_path"][:-4] + "_test_upsampled.swc")
-
     if debug:
         print("recall_num = {}, pre_num = {}, gold_tot_num = {}, test_tot_num = {} {} {}".format(
             g2t_num, t2g_num, u_gold_swc_tree.size(), u_test_swc_tree.size(), gold_swc_tree.length(), test_swc_tree.length()
@@ -133,6 +129,9 @@ def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree,
         "recall": 1 - g2t_num/u_gold_swc_tree.size(),
         "precision": 1 - t2g_num/u_test_swc_tree.size()
     }
+
+    if "detail" in config:
+        return res, u_gold_swc_tree, u_test_swc_tree
     return res
 
 

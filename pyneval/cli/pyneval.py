@@ -185,16 +185,6 @@ def set_configs(abs_dir, args):
     # info: how many trees read
     print("There are {} test image(s)".format(len(test_swc_trees)))
 
-    # argument: output
-    output_dir = None
-    if args.output:
-        output_dir = os.path.join(abs_dir, args.output)
-
-    # argument: detail
-    detail_dir = None
-    if args.detail:
-        detail_dir = os.path.join(abs_dir, args.detail)
-
     # argument: config
     config_path = args.config
     if config_path is None:
@@ -208,36 +198,46 @@ def set_configs(abs_dir, args):
     except Exception:
         raise Exception("[Error: ]Error in analyzing config json file")
 
+    # argument: output
+    output_dir = None
+    if args.output:
+        output_dir = os.path.join(abs_dir, args.output)
+
+    # argument: detail
+    detail_dir = None
+    if args.detail:
+        detail_dir = os.path.join(abs_dir, args.detail)
+        config["detail"] = True
+
     # argument: debug
     is_debug = args.debug
 
     return gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug
 
 
-def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir, file_name_extra=""):
+def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir):
     metric_method = get_metric_method(metric)
     test_swc_name = test_swc_tree.get_name()
-    gold_swc_name = gold_swc_tree.get_name()
 
-    result = metric_method(gold_swc_tree=gold_swc_tree, test_swc_tree=test_swc_tree, config=config)
+    result, res_gold_swc_tree, res_test_swc_tree = metric_method(gold_swc_tree=gold_swc_tree,
+                                                                 test_swc_tree=test_swc_tree, config=config)
 
     print("---------------Result---------------")
     for key in result:
         print("{} = {}".format(key.ljust(15, ' '), result[key]))
     print("----------------End-----------------\n")
 
-    if file_name_extra == "reverse":
-        file_name = gold_swc_name[:-4] + "_" + metric + "_" + file_name_extra + ".swc"
-    else:
-        file_name = test_swc_name[:-4] + "_" + metric + "_" + file_name_extra + ".swc"
+    file_name = test_swc_name[:-4] + "_" + metric + "_"
 
     if detail_dir:
-        swc_save(swc_tree=gold_swc_tree,
-                 out_path=os.path.join(detail_dir, file_name))
+        swc_save(swc_tree=res_gold_swc_tree,
+                 out_path=os.path.join(detail_dir, file_name + "recall.swc"))
+        swc_save(swc_tree=res_test_swc_tree,
+                 out_path=os.path.join(detail_dir, file_name + "precision.swc"))
 
     if output_dir:
         read_json.save_json(data=result,
-                            json_file_path=os.path.join(output_dir, file_name))
+                            json_file_path=os.path.join(output_dir, file_name + ".json"))
 
 
 # command program
@@ -254,9 +254,6 @@ def run():
     for test_swc_tree in test_swc_trees:
         excute_metric(metric=metric, gold_swc_tree=gold_swc_tree, test_swc_tree=test_swc_tree,
                       config=config, detail_dir=detail_dir, output_dir=output_dir)
-        if metric in ["length_metric", "diadem_metric"]:
-            excute_metric(metric=metric, gold_swc_tree=test_swc_tree, test_swc_tree=gold_swc_tree,
-                          config=config, detail_dir=detail_dir, output_dir=output_dir, file_name_extra="reverse")
 
 
 if __name__ == "__main__":
@@ -278,4 +275,4 @@ if __name__ == "__main__":
 
 # pyneval --gold .\\data\test_data\geo_metric_data\gold_34_23_10.swc --test .\data\test_data\geo_metric_data\test_34_23_10.swc --metric branch_metric
 
-# pyneval --gold ./data/test_data/geo_metric_data/gold_fake_data1.swc --test ./data/test_data/geo_test/ --metric branch_metric --detail ./output
+# pyneval --gold ./data/test_data/geo_metric_data/gold_fake_data1.swc --test ./data/test_data/geo_test/test_fake_data1.swc --metric branch_metric --detail ./output/detail --output ./output/output
