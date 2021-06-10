@@ -13,6 +13,8 @@ from pyneval.metric import volume_metric
 from pyneval.metric import branch_leaf_metric
 from pyneval.metric import link_metric
 from pyneval.metric import ssd_metric
+from pyneval.metric.utils import anno_utils
+
 
 METRICS = {
     'diadem_metric': {
@@ -193,10 +195,9 @@ def set_configs(abs_dir, args):
 
     config = read_json.read_json(config_path)
     config_schema = read_json.read_json(config_schema_path)
-    try:
-        jsonschema.validate(config, config_schema)
-    except Exception:
-        raise Exception("[Error: ]Error in analyzing config json file")
+
+    jsonschema.validate(config, config_schema)
+
 
     # argument: output
     output_dir = None
@@ -230,10 +231,15 @@ def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, outp
     file_name = test_swc_name[:-4] + "_" + metric + "_"
 
     if detail_dir:
-        swc_save(swc_tree=res_gold_swc_tree,
-                 out_path=os.path.join(detail_dir, file_name + "recall.swc"))
-        swc_save(swc_tree=res_test_swc_tree,
-                 out_path=os.path.join(detail_dir, file_name + "precision.swc"))
+        if res_gold_swc_tree is not None:
+            swc_save(swc_tree=res_gold_swc_tree,
+                     out_path=os.path.join(detail_dir, file_name + "recall.swc"),
+                     extra=anno_utils.get_detail_type(metric))
+        if res_test_swc_tree is not None:
+            swc_save(swc_tree=res_test_swc_tree,
+                     out_path=os.path.join(detail_dir, file_name + "precision.swc"),
+                     extra=anno_utils.get_detail_type(metric))
+
 
     if output_dir:
         read_json.save_json(data=result,
