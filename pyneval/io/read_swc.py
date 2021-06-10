@@ -17,7 +17,7 @@ def read_swc_trees(swc_file_paths, tree_name_dict=None):
     swc_tree_list = []
     if os.path.isfile(swc_file_paths):
         if not (swc_file_paths[-4:] == ".swc" or swc_file_paths[-4:] == ".SWC"):
-            print(swc_file_paths + "is not a tif file")
+            print(swc_file_paths + "is not a swc file")
             return None
         swc_tree = SwcTree()
         swc_tree.load(swc_file_paths)
