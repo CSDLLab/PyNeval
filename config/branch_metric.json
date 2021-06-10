@@ -2,7 +2,7 @@
   "threshold_dis": 2,
   "threshold_mode": 1,
   "z_scale": 1,
-  "true_positive_type": 3,
-  "false_negative_type": 4,
-  "false_positive_type": 5
+  "true_positive": 3,
+  "missed": 4,
+  "excess": 5
 }

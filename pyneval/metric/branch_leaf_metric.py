@@ -161,9 +161,9 @@ def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
         threshold_dis = threshold_dis * tot_dis / edge_num
     # denote the color id of different type of nodes.
     color = [
-        config["true_positive_type"],
-        config["false_negative_type"],
-        config["false_positive_type"]
+        config["true_positive"],
+        config["missed"],
+        config["excess"]
     ]
     gold_swc_tree.type_clear(0, 0)
     test_swc_tree.type_clear(0, 0)
