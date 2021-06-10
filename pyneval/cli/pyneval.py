@@ -107,38 +107,39 @@ def read_parameters():
     parser.add_argument(
         "--gold",
         "-G",
-        help="path to the gold-standard SWC file",
-        required=True
+        help="path of the gold standard SWC file",
+        required=False
     )
     parser.add_argument(
         "--test",
         "-T",
-        help="a list of SWC files for evaluation",
-        required=True,
+        help="a list of reconstructed SWC files or folders for evaluation",
+        required=False,
         nargs='*',
     )
     parser.add_argument(
         "--metric",
         "-M",
         help="metric choice: " + get_metric_summary(False) + ".",
-        required=True
+        required=False
     )
     parser.add_argument(
         "--output",
         "-O",
-        help="metric output path, including different scores of the metric",
+        help="output path of metric results, output file is in json format with different scores of the metric",
         required=False
     )
     parser.add_argument(
         "--detail",
         "-D",
-        help="detail \"type\" marked for gold/test SWC file, including marked swc trees",
+        help="output path of detail metric result, swc format presented.\n"
+             "identify different type according to metric result for each node",
         required=False
     )
     parser.add_argument(
         "--config",
         "-C",
-        help="custom configuration file for the specified metric",
+        help="path of custom configuration file for the specified metric",
         required=False
     )
     parser.add_argument(
@@ -166,10 +167,9 @@ def set_configs(abs_dir, args):
     # argument: metric
     metric = get_root_metric(args.metric)
     if not metric:
-        print("\nERROR: The metric '{}' is not supported.".format(args.metric))
-        print("\nValid options for --metric:\n")
-        print(get_metric_summary(True))
-        return 1
+        raise Exception("\nERROR: The metric '{}' is not supported.".format(args.metric) +
+                        "\nValid options for --metric:\n" +
+                        get_metric_summary(True))
 
     # argument: test
     test_swc_paths = [os.path.join(abs_dir, path) for path in args.test]
@@ -245,10 +245,7 @@ def run():
     abs_dir = os.path.abspath("")
     init(abs_dir)
 
-    try:
-        args = read_parameters()
-    except:
-        raise Exception("[Error: ] Error in reading parameters")
+    args = read_parameters()
     gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug = set_configs(abs_dir, args)
 
     for test_swc_tree in test_swc_trees:
