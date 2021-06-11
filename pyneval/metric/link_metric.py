@@ -39,9 +39,9 @@ def get_extra_pos_nodes(big_set, subset):
 
 
 def link_metric(gold_swc_tree, test_swc_tree, config):
-    z_scale = config['z_scale']
-    gold_swc_tree.z_rescale(z_scale)
-    test_swc_tree.z_rescale(z_scale)
+    scale = config['scale']
+    gold_swc_tree.rescale(scale)
+    test_swc_tree.rescale(scale)
 
     gold_list = gold_swc_tree.get_node_list()
     test_list = test_swc_tree.get_node_list()

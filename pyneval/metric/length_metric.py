@@ -88,11 +88,11 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
     rad_mode = config["rad_mode"]
     rad_threshold = config["rad_threshold"]
     len_threshold = config["len_threshold"]
-    z_scale = config["z_scale"]
+    scale = config["scale"]
     debug = config["debug"]
 
-    gold_swc_tree.z_rescale(z_scale)
-    test_swc_tree.z_rescale(z_scale)
+    gold_swc_tree.rescale(scale)
+    test_swc_tree.rescale(scale)
     gold_swc_tree.set_node_type_by_topo(root_id=1)
     test_swc_tree.set_node_type_by_topo(root_id=5)
 

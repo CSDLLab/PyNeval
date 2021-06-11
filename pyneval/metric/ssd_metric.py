@@ -103,10 +103,10 @@ def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree,
     threshold_mode = config["threshold_mode"]
     ssd_threshold = config["ssd_threshold"]
     up_sample_threshold = config["up_sample_threshold"]
-    z_scale = config["z_scale"]
+    scale = config["scale"]
 
-    gold_swc_tree.z_rescale(z_scale)
-    test_swc_tree.z_rescale(z_scale)
+    gold_swc_tree.rescale(scale)
+    test_swc_tree.rescale(scale)
     u_gold_swc_tree = re_sample.up_sample_swc_tree(swc_tree=gold_swc_tree,
                                                    length_threshold=up_sample_threshold)
     u_test_swc_tree = re_sample.up_sample_swc_tree(swc_tree=test_swc_tree,

@@ -940,9 +940,9 @@ def diadem_metric(gold_swc_tree, test_swc_tree, config):
     diadem_init()
     config_init(config)
     diadam_match_utils.diadem_utils_init(config)
-    z_scale = config["z_scale"]
-    gold_swc_tree.z_rescale(z_scale)
-    test_swc_tree.z_rescale(z_scale)
+    scale = config["scale"]
+    gold_swc_tree.rescale(scale)
+    test_swc_tree.rescale(scale)
     test_kdtree, test_pos_node_dict = point_match_utils.create_kdtree(test_swc_tree.get_node_list())
 
     t_matches = {}

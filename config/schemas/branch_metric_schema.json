@@ -4,15 +4,19 @@
   "required": [
       "threshold_dis",
       "threshold_mode",
-      "z_scale",
+      "scale",
       "true_positive",
       "missed",
       "excess"
   ],
   "properties": {
-    "threshold_dis": {"type": "number", "exclusiveMinimum": 0},
+    "threshold_dis": {"type": "number", "minimum": 0},
     "threshold_mode": {"type": "number", "enum": [1, 2]},
-    "z_scale": {"type": "number","minimum": 0},
+    "scale": {"type":"array",
+              "additionalItems": {"type": "number", "minimum": 0},
+              "minItems": 3,
+              "maxItems": 3
+    },
     "true_positive": {"type": "integer", "exclusiveMinimum": 0},
     "missed": {"type": "integer", "exclusiveMinimum": 0},
     "excess": {"type": "integer", "exclusiveMinimum": 0}

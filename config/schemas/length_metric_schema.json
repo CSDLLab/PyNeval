@@ -5,14 +5,18 @@
       "rad_mode",
       "rad_threshold",
       "len_threshold",
-      "z_scale",
+      "scale",
       "debug"
   ],
   "properties": {
     "rad_mode": {"type": "number", "enum": [1,2]},
-    "rad_threshold": {"type": "number", "exclusiveMinimum": 0},
-    "len_threshold": {"type": "number", "exclusiveMinimum": 0},
-    "z_scale": {"type": "number", "minimum": 0},
+    "rad_threshold": {"type": "number", "minimum": 0},
+    "len_threshold": {"type": "number", "minimum": 0},
+    "scale": {"type":"array",
+              "additionalItems": {"type": "number", "minimum": 0},
+              "minItems": 3,
+              "maxItems": 3
+    },
     "debug": {"type": "boolean"}
   }
 }

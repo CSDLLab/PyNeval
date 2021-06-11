@@ -5,14 +5,18 @@
       "threshold_mode",
       "ssd_threshold",
       "up_sample_threshold",
-      "z_scale",
+      "scale",
       "debug"
   ],
   "properties": {
     "threshold_mode": {"type": "integer", "enum": [1,2]},
-    "ssd_threshold": {"type": "number", "exclusiveMinimum": 0},
-    "up_sample_threshold": {"type": "number", "exclusiveMinimum": 0},
-    "z_scale": {"type":"number", "minimum": 0},
+    "ssd_threshold": {"type": "number", "minimum": 0},
+    "up_sample_threshold": {"type": "number", "minimum": 0},
+    "scale": {"type":"array",
+              "additionalItems": {"type": "number", "minimum": 0},
+              "minItems": 3,
+              "maxItems": 3
+    },
     "debug": {"type": "boolean"}
   }
 }

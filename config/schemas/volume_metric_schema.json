@@ -7,8 +7,8 @@
       "debug"
   ],
   "properties": {
-    "length_threshold": {"type": "number", "exclusiveMinimum": 0},
-    "intensity_threshold": {"type": "number", "exclusiveMinimum": 0},
+    "length_threshold": {"type": "number", "minimum": 0},
+    "intensity_threshold": {"type": "number", "minimum": 0},
     "debug": {"type": "boolean"}
   }
 }
