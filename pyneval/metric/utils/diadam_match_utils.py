@@ -8,7 +8,7 @@ from pyneval.metric.utils.bin_utils import calculate_trajectories_xy, calculate_
 
 _2D = "2d"
 
-global TRAJECTORY_NONE
+TRAJECTORY_NONE = -1.0
 global g_xy_threshold
 global g_z_threshold
 global g_default_xy_path_error_threshold
@@ -24,7 +24,6 @@ def diadem_utils_init(config):
     global g_default_z_path_error_threshold
     global g_local_path_error_threshold
 
-    TRAJECTORY_NONE = config["TRAJECTORY_NONE"]
     g_xy_threshold = config["xy_threshold"]
     g_z_threshold = config["z_threshold"]
     g_default_xy_path_error_threshold = config["default_xy_path_error_threshold"]

@@ -240,7 +240,6 @@ def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, outp
                      out_path=os.path.join(detail_dir, file_name + "precision.swc"),
                      extra=anno_utils.get_detail_type(metric))
 
-
     if output_dir:
         read_json.save_json(data=result,
                             json_file_path=os.path.join(output_dir, file_name + ".json"))

@@ -13,8 +13,11 @@
     "list_distant_matches": {"type": "boolean", "default": "false"},
     "list_continuations": {"type": "boolean", "default": "false"},
     "find_proper_root": {"type": "boolean", "default": "true"},
-    "z_scale": {"type": "number", "minimum": 0},
-    "TRAJECTORY_NONE": {"type": "number"},
+    "scale": {"type":"array",
+              "additionalItems": {"type": "number", "minimum": 0},
+              "minItems": 3,
+              "maxItems": 3
+    },
     "xy_threshold": {"type": "number", "minimum": 0},
     "z_threshold": {"type": "number", "minimum": 0},
     "default_xy_path_error_threshold": {"type": "number", "minimum": 0},

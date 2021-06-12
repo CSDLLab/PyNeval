@@ -2,9 +2,13 @@
   "title": "link metric schema",
   "type": "object",
   "required": [
-      "z_scale"
+      "scale"
   ],
   "properties": {
-    "z_scale": {"type": "number", "minimum": 0}
+    "scale": {"type":"array",
+              "additionalItems": {"type": "number", "minimum": 0},
+              "minItems": 3,
+              "maxItems": 3
+    }
   }
 }
