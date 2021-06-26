@@ -1,5 +1,5 @@
 {% set name = "pyneval" %}
-{% set version = "0.0.6" %}
+{% set version = "0.0.7" %}
 
 package:
   name: "{{ name|lower }}"
@@ -7,7 +7,7 @@ package:
 
 source:
   url: "https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz"
-  sha256: 64f01e26f57fe78be46d13731718acf318661c06063672a8473a447a2bfcdc43
+  sha256: d86e270022ac3c941cf390527513a0fbfd0529a92c956c1d850f79d8ec52a31e
 
 build:
   number: 0
@@ -15,6 +15,7 @@ build:
     - pyneval=pyneval.cli.pyneval:run
     - pyneval_tools=pyneval.cli.pyneval_tools:run
   script: "{{ PYTHON }} -m pip install . -vv"
+  noarch: python
 
 requirements:
   host:
@@ -26,7 +27,7 @@ requirements:
     - kdtree>=0.16
     - numpy>=1.0
     - python>=3.7
-    - rtree>=0.8
+    - rtree==0.9.3
 
 test:
   imports:
