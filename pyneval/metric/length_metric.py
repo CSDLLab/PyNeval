@@ -188,8 +188,9 @@ if __name__ == "__main__":
     testTree.load("E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\data\example_selected\\a.swc")
     goldTree.load("E:\\00_project\\00_neural_reconstruction\\01_project\PyNeval\output\\random_data\move\\a\\020\move_00.swc")
 
-    config = read_json.read_json("..\\..\\config\\length_metric.json")
-    config_schema = read_json.read_json("..\\..\\config\\schemas\\length_metric_schema.json")
+    from pyneval.metric.utils import config_utils
+    config = config_utils.get_default_configs("length_metric")
+    config_schema = config_utils.get_config_schema("length_metric")
     try:
         jsonschema.validate(config, config_schema)
     except Exception as e:

@@ -2,6 +2,7 @@ import os
 
 from pyneval.tools.optimize.SA import SAFast
 from pyneval.metric import ssd_metric
+from pyneval.metric.utils import config_utils
 from pyneval.model import swc_node
 from pyneval.io import read_json
 from scipy import stats as st
@@ -26,12 +27,11 @@ FILE_ID = "test1"
 NEUTU_PATH = "neutu"
 ORIGIN_PATH = "../../../data/optimation/{}/{}_test.tif".format(FILE_ID, FILE_ID)
 GOLD_PATH = "../../../data/optimation/{}/{}_gold.swc".format(FILE_ID, FILE_ID)
-METRIC_CONFIG_PATH = "../../../config/ssd_metric.json"
 LOG_PATH = "../../../output/optimization/neutu_log.txt"
+METRIC = "ssd_metric"
 # specific test name is given in SA.py
 TEST_PATH = "../../../data/optimation/output/"
 CONFIG_PATH = "../../../config/fake_reconstruction_configs/"
-
 
 
 def SA_optimize(configs=None, test_name=None, lock=None):
@@ -82,7 +82,7 @@ def main():
     global g_metric_method
     global g_rcn_config
     g_metric_method = ssd_metric.ssd_metric
-    g_metric_configs = read_json.read_json(METRIC_CONFIG_PATH)
+    g_metric_configs = config_utils.get_default_configs(METRIC)
     g_rcn_config = read_json.read_json(os.path.join(CONFIG_PATH, "default.json"))
 
     # optimize with SA
@@ -117,8 +117,3 @@ def main():
 if __name__ == "__main__":
     main()
 
-    # g_metric_method = ssd_metric.ssd_metric
-    # g_metric_configs = read_json.read_json(METRIC_CONFIG_PATH)
-    # g_rcn_config = read_json.read_json(os.path.join(CONFIG_PATH, "6656_2304_22016.json"))
-    
-    # SA_optimize(test_name="6656_2816_22016")

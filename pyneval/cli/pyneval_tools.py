@@ -4,7 +4,7 @@ import os
 import platform
 from pyneval.io.read_swc import read_swc_trees
 from pyneval.io.read_json import read_json
-from pyneval.io.save_swc import swc_save
+from pyneval.io.swc_writer import swc_save
 from pyneval.tools.re_sample import up_sample_swc_tree_command_line, down_sample_swc_tree_command_line
 
 from pyneval.tools.overlap_detect import overlap_clean

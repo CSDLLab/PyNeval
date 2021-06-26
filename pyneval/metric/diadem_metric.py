@@ -1033,10 +1033,10 @@ if __name__ == "__main__":
 
     goldTree.load("../../data/test_data/topo_metric_data/gold_fake_data3.swc")
     testTree.load("../../data/test_data/topo_metric_data/test_fake_data3.swc")
-    config_utils.get_default_threshold(goldTree)
-    config = read_json.read_json("../../config/diadem_metric.json")
-    config_schema = read_json.read_json("../../config/schemas/diadem_metric_schema.json")
-
+    config_utils.get_avg_radius(goldTree)
+    from pyneval.metric.utils import config_utils
+    config = config_utils.get_default_configs("diadem_metric")
+    config_schema = config_utils.get_config_schema("diadem_metric")
     try:
         jsonschema.validate(config, config_schema)
     except Exception as e:
