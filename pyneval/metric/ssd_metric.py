@@ -130,9 +130,7 @@ def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree,
         "precision": 1 - t2g_num/u_test_swc_tree.size()
     }
 
-    if "detail" in config:
-        return res, u_gold_swc_tree, u_test_swc_tree
-    return res
+    return res, u_gold_swc_tree, u_test_swc_tree
 
 
 if __name__ == "__main__":
