@@ -1,8 +1,0 @@
-{
-  "threshold_dis": 2,
-  "threshold_mode": 1,
-  "scale": [1, 1, 1],
-  "true_positive": 3,
-  "missed": 4,
-  "excess": 5
-}

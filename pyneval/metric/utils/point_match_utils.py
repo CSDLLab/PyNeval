@@ -2,7 +2,6 @@ import queue
 import kdtree
 from anytree import PreOrderIter
 from pyneval.model.swc_node import SwcTree
-from pyneval.metric.utils.config_utils import get_default_threshold
 from pyneval.metric.utils.config_utils import SAME_POS_TH
 
 

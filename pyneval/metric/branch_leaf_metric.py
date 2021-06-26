@@ -199,9 +199,9 @@ if __name__ == "__main__":
 
     gold_swc_tree.load("../../data/example_selected/a.swc")
     test_swc_tree.load("../../output/random_data/move/a/010/move_03.swc")
-
-    config = read_json.read_json("..\\..\\config\\branch_metric.json")
-    config_schema = read_json.read_json("..\\..\\config\\schemas\\branch_metric_schema.json")
+    from pyneval.metric.utils import config_utils
+    config = config_utils.get_default_configs("branch_metric")
+    config_schema = config_utils.get_config_schema("branch_metric")
     try:
         jsonschema.validate(config, config_schema)
     except Exception as e:

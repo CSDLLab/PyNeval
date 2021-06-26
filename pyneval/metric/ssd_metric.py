@@ -143,8 +143,9 @@ if __name__ == "__main__":
     gold_tree.load("../../data/test_data/geo_metric_data/gold_fake_data1.swc")
     test_tree.load("../../data/test_data/geo_metric_data/test_fake_data1.swc")
 
-    config = read_json.read_json("../../config/ssd_metric.json")
-    config_schema = read_json.read_json("../../config/schemas/ssd_metric_schema.json")
+    from pyneval.metric.utils import config_utils
+    config = config_utils.get_default_configs("ssd_metric")
+    config_schema = config_utils.get_config_schema("ssd_metric")
 
     try:
         jsonschema.validate(config, config_schema)

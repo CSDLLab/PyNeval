@@ -1,7 +1,7 @@
 import unittest
 from pyneval.metric.diadem_metric import diadem_metric
 from pyneval.model.swc_node import SwcNode, SwcTree
-from pyneval.metric.utils.config_utils import get_default_threshold
+from pyneval.metric.utils.config_utils import get_avg_radius
 from pyneval.io.read_json import read_json
 
 
@@ -14,7 +14,7 @@ class DiademTotTest(unittest.TestCase):
 
         # goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\\ExampleGoldStandard.swc")
         # testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\ExampleTest.swc")
-        get_default_threshold(goldTree)
+        get_avg_radius(goldTree)
 
         score = diadem_metric(swc_test_tree=testTree,
                               swc_gold_tree=goldTree,
@@ -30,7 +30,7 @@ class DiademTotTest(unittest.TestCase):
 
         # goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\\ExampleGoldStandard.swc")
         # testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\ExampleTest.swc")
-        get_default_threshold(goldTree)
+        get_avg_radius(goldTree)
 
         score = diadem_metric(swc_test_tree=testTree,
                               swc_gold_tree=goldTree,
@@ -46,7 +46,7 @@ class DiademTotTest(unittest.TestCase):
 
         # goldtree.load("D:\gitProject\mine\PyNeval\\test\data_example\\gold\\ExampleGoldStandard.swc")
         # testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\\ExampleTest.swc")
-        get_default_threshold(goldTree)
+        get_avg_radius(goldTree)
 
         score = diadem_metric(swc_test_tree=testTree,
                               swc_gold_tree=goldTree,
@@ -60,7 +60,7 @@ class DiademTotTest(unittest.TestCase):
         goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\diadem\diadem8.swc")
         testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\diadem\diadem8.swc")
 
-        get_default_threshold(goldTree)
+        get_avg_radius(goldTree)
 
         score = diadem_metric(swc_test_tree=testTree,
                               swc_gold_tree=goldTree,
@@ -74,7 +74,7 @@ class DiademTotTest(unittest.TestCase):
         goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\diadem\diadem7.swc")
         testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\diadem\diadem7.swc")
 
-        get_default_threshold(goldTree)
+        get_avg_radius(goldTree)
 
         score = diadem_metric(swc_test_tree=testTree,
                               swc_gold_tree=goldTree,
@@ -88,7 +88,7 @@ class DiademTotTest(unittest.TestCase):
         goldTree.load("D:\gitProject\mine\PyNeval\\test\data_example\gold\ExampleGoldStandard.swc")
         testTree.load("D:\gitProject\mine\PyNeval\\test\data_example\\test\ExampleTest.swc")
 
-        get_default_threshold(goldTree)
+        get_avg_radius(goldTree)
 
         score = diadem_metric(swc_test_tree=testTree,
                               swc_gold_tree=goldTree,

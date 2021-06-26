@@ -3,6 +3,7 @@ import sys
 import os
 import jsonschema
 import pyneval
+
 from pyneval.io.read_swc import read_swc_trees
 from pyneval.io import read_json
 from pyneval.io.swc_writer import swc_save
@@ -14,6 +15,7 @@ from pyneval.metric import branch_leaf_metric
 from pyneval.metric import link_metric
 from pyneval.metric import ssd_metric
 from pyneval.metric.utils import anno_utils
+from pyneval.metric.utils import config_utils
 
 
 METRICS = {
@@ -88,15 +90,6 @@ def get_metric_summary(with_description):
         summary = ', '.join((filter(lambda m: METRICS[m].get('public', False), METRICS.keys())))
 
     return summary
-
-config_dir = os.path.join(os.path.dirname(pyneval.__file__), '../config', )
-
-def get_metric_config_path(metric, root_dir):
-    return os.path.join(config_dir, get_metric_config(metric)['config'])
-
-def get_metric_config_schema_path(metric, root_dir):
-    schema_dir = os.path.join(config_dir, "schemas")
-    return os.path.join(schema_dir, get_metric_config(metric)['config'][:-5]+"_schema.json")
 
 def get_metric_method(metric):
     return get_metric_config(metric)['method']
@@ -190,14 +183,12 @@ def set_configs(abs_dir, args):
     # argument: config
     config_path = args.config
     if config_path is None:
-        config_path = get_metric_config_path(metric, abs_dir)
-    config_schema_path = get_metric_config_schema_path(metric, abs_dir)
+        config = config_utils.get_default_configs(metric)
+    else:
+        config = read_json.read_json(config_path)
 
-    config = read_json.read_json(config_path)
-    config_schema = read_json.read_json(config_schema_path)
-
+    config_schema = config_utils.get_config_schema(metric)
     jsonschema.validate(config, config_schema)
-
 
     # argument: output
     output_dir = None
@@ -261,6 +252,7 @@ def run():
 if __name__ == "__main__":
     sys.exit(run())
 
+
 # pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --metric matched_length --reverse true
 
 # pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\194444.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\194444.swc --metric matched_length --reverse true
@@ -277,4 +269,4 @@ if __name__ == "__main__":
 
 # pyneval --gold .\\data\test_data\geo_metric_data\gold_34_23_10.swc --test .\data\test_data\geo_metric_data\test_34_23_10.swc --metric branch_metric
 
-# pyneval --gold ./data/test_data/geo_metric_data/gold_fake_data1.swc --test ./data/test_data/geo_test/test_fake_data1.swc --metric branch_metric --detail ./output/detail --output ./output/output
+# pyneval --gold ./data/test_data/geo_metric_data/gold_fake_data1.swc --test ./data/test_data/geo_metric_data/test_fake_data1.swc --metric branch_metric --detail ./output/detail --output ./output/output

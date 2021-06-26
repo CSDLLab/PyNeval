@@ -113,8 +113,9 @@ if __name__ == "__main__":
     test_tiff = imread(tiff_path)
     swc_tree = SwcTree()
     swc_tree.load(swc_path)
-    config = read_json.read_json("..\\..\\config\\volume_metric.json")
-    config_schema = read_json.read_json("..\\..\\config\\schemas\\volume_metric_schema.json")
+    from pyneval.metric.utils import config_utils
+    config = config_utils.get_default_configs("volume_metric")
+    config_schema = config_utils.get_config_schema("volume_metric")
 
     try:
         jsonschema.validate(config, config_schema)
