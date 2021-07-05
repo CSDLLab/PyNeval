@@ -6,6 +6,9 @@ from pyneval.metric.utils import edge_match_utils
 from pyneval.io import read_json
 from pyneval.io import read_swc
 from pyneval.io import swc_writer
+from pyneval.metric.metric_manager import get_metric_manager
+
+metric_manager = get_metric_manager()
 
 
 def length_metric_run(gold_swc_tree=None, test_swc_tree=None,
@@ -59,6 +62,13 @@ def length_metric_run(gold_swc_tree=None, test_swc_tree=None,
 
 
 # @do_cprofile("./mkm_run.prof")
+@metric_manager.register(
+    name="length_metric",
+    config="length_metric.json",
+    desc="length of matched branches and fibers",
+    public=True,
+    alias=['ML']
+)
 def length_metric(gold_swc_tree, test_swc_tree, config):
     """Main function of length metric.
     unpack config and run the matching function

@@ -13,7 +13,9 @@ from pyneval.metric.utils import config_utils
 from pyneval.metric.utils import diadam_match_utils
 from pyneval.metric.utils import bin_utils
 from pyneval.metric.utils import point_match_utils
+from pyneval.metric.metric_manager import get_metric_manager
 
+metric_manager = get_metric_manager()
 
 # thresholds
 g_terminal_threshold = 0
@@ -51,7 +53,6 @@ g_weight_dict = {}
 g_excess_nodes = {}
 g_distance_match = []
 g_continuation = []
-
 
 def remove_spurs(bin_root, threshold):
     spur_set = set()
@@ -906,7 +907,13 @@ def adjust_root(swc_gold_tree, swc_test_tree,
                     test_vis_list[sub_node.get_id()] = 1
                 break
 
-
+@metric_manager.register(
+    name="diadem_metric",
+    config="diadem_metric.json",
+    desc="DIADEM metric (https://doi.org/10.1007/s12021-011-9117-y)",
+    alias=["DM"],
+    public=True,
+)
 def diadem_metric(gold_swc_tree, test_swc_tree, config):
     """Main function of diadem metric
     Args:

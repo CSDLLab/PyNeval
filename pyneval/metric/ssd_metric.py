@@ -27,6 +27,9 @@ from pyneval.tools import re_sample
 from pyneval.metric.utils import point_match_utils
 from pyneval.io import read_config
 
+from pyneval.metric.metric_manager import get_metric_manager
+
+metric_manager = get_metric_manager()
 
 def get_mse(src_tree, tar_tree, ssd_threshold=2.0, mode=1):
     """ calculate the minimum square error of two trees
@@ -74,7 +77,13 @@ def get_mse(src_tree, tar_tree, ssd_threshold=2.0, mode=1):
         dis = num = 0
     return dis, num
 
-
+@metric_manager.register(
+    name="ssd_metric",
+    config="ssd_metric.json",
+    desc="minimum square error between up-sampled gold and test trees",
+    alias=['SM'],
+    public=True,
+)
 def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree, config: dict):
     """Main function of SSD metric.
     Args:

@@ -5,6 +5,9 @@ from pyneval.io import read_json
 from pyneval.model import swc_node
 from pyneval.metric.utils import km_utils
 from pyneval.metric.utils import point_match_utils
+from pyneval.metric.metric_manager import get_metric_manager
+
+metric_manager = get_metric_manager()
 
 
 def get_result(test_len, gold_len, switch, km, threshold_dis):
@@ -121,7 +124,13 @@ def score_point_distance(gold_tree: swc_node.SwcTree, test_tree: swc_node.SwcTre
     return gold_len, test_len, true_pos_num, false_neg_num, false_pos_num, \
            mean_dis, tot_dis, pt_cost, iso_node_num
 
-
+@metric_manager.register(
+    name="branch_metric",
+    config="branch_metric.json",
+    desc="quality of critical points",
+    public=True,
+    alias=['BM'],
+)
 def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
     """
     branch metric calculates the minimum distance match between branches of two swc trees
