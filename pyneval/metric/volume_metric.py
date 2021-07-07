@@ -2,13 +2,13 @@ import jsonschema
 import queue
 import math
 
-from pyneval.io import read_json
-from pyneval.io.swc_writer import swc_save
 from pyneval.metric.utils.klib.TiffFile import imread
-from pyneval.metric.utils.tiff_utils import front_expend_step
 from pyneval.model.swc_node import SwcTree
 from pyneval.tools.re_sample import up_sample_swc_tree
 
+from pyneval.metric.utils.metric_manager import get_metric_manager
+
+metric_manager = get_metric_manager()
 
 def adjust_swc_tree(swc_tree, tiff_file, thres_intensity, max_step=4):
     swc_list = swc_tree.get_node_list()
@@ -93,7 +93,13 @@ def cal_volume_recall(test_tiff, gold_swc, intensity_threshold, debug):
         tot_back += 1
     return tot_front/tot_back
 
-
+@metric_manager.register(
+    name="volume_metric",
+    config="volume_metric.json",
+    desc="volume overlap",
+    public=False,
+    alias=['VM']
+)
 def volume_metric(gold_swc_tree, test_swc_tree, config=None):
     length_threshold = config['length_threshold']
     intensity_threshold = config['intensity_threshold']

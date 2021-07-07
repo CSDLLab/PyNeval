@@ -5,9 +5,11 @@ import jsonschema
 from pyneval.metric.utils.config_utils import DINF
 from pyneval.model.swc_node import SwcTree
 from pyneval.metric.utils.km_utils import KM, get_dis_graph
-from pyneval.io.read_json import read_json
 from pyneval.metric.utils.point_match_utils import get_swc2swc_dicts
 
+from pyneval.metric.utils.metric_manager import get_metric_manager
+
+metric_manager = get_metric_manager()
 
 def get_neighbors(node):
     neighbors = list(node.children)
@@ -37,7 +39,13 @@ def get_extra_pos_nodes(big_set, subset):
             res.append(node)
     return res
 
-
+@metric_manager.register(
+    name="link_metric",
+    config="link_metric.json",
+    desc="",
+    public=False,
+    alias=['LM'],
+)
 def link_metric(gold_swc_tree, test_swc_tree, config):
     scale = config['scale']
     gold_swc_tree.rescale(scale)

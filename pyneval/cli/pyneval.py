@@ -2,99 +2,33 @@ import argparse
 import sys
 import os
 import jsonschema
-import pyneval
+import importlib
 
 from pyneval.io.read_swc import read_swc_trees
 from pyneval.io import read_json
 from pyneval.io.swc_writer import swc_save
 from pyneval.io.read_tiff import read_tiffs
-from pyneval.metric import diadem_metric
-from pyneval.metric import length_metric
-from pyneval.metric import volume_metric
-from pyneval.metric import branch_leaf_metric
-from pyneval.metric import link_metric
-from pyneval.metric import ssd_metric
 from pyneval.metric.utils import anno_utils
 from pyneval.metric.utils import config_utils
+from pyneval.metric.utils.metric_manager import get_metric_manager
 
+# load method in metrics
+def import_metrics(abs_path):
+    metric_path = os.path.join(abs_path, "pyneval/metric")
+    files= os.listdir(metric_path)
+    metrics = []
+    for f in files:
+        m_f = f.split(".")
+        if len(m_f) == 2 and m_f[0][-7:] == "_metric" and m_f[1] == 'py':
+            metrics.append(m_f[0])
+    for m in metrics:
+        md = 'pyneval.metric.{}'.format(m)
+        importlib.import_module(md)
 
-METRICS = {
-    'diadem_metric': {
-        'config': "diadem_metric.json",
-        'description': "DIADEM metric (https://doi.org/10.1007/s12021-011-9117-y)",
-        'alias': ['DM'],
-        'method': diadem_metric.diadem_metric,
-        'public': True
-    },
-    'ssd_metric': {
-        'config': "ssd_metric.json",
-        'description': "minimum square error between up-sampled gold and test trees",
-        'alias': ['SM'],
-        'method': ssd_metric.ssd_metric,
-        'public': True
-    },
-    'length_metric': {
-        'config': "length_metric.json",
-        'description': "length of matched branches and fibers",
-        'alias': ['ML'],
-        'method': length_metric.length_metric,
-        'public': True
-    },
-    'volume_metric': {
-        'config': "volume_metric.json",
-        'description': "volume overlap",
-        'alias': ['VM'],
-        'method': volume_metric.volume_metric,
-        'public': False
-    },
-    'branch_metric': {
-        'config': "branch_metric.json",
-        'description': "quality of critical points",
-        'alias': ['BM'],
-        'method': branch_leaf_metric.branch_leaf_metric,
-        'public': True
-    },
-    'link_metric': {
-        'config': "link_metric.json",
-        'description': "",
-        'alias': ['LM'],
-        'method': link_metric.link_metric,
-        'public': False
-    },
-}
-
-METRIC_ALIAS_MAP = {}
-
-for metric in METRICS:
-    if 'alias' in METRICS[metric]:
-        for alias in METRICS[metric]['alias']:
-            METRIC_ALIAS_MAP[alias] = metric
-
-def get_root_metric(metric):
-    if metric in METRIC_ALIAS_MAP:
-        return METRIC_ALIAS_MAP[metric]
-    elif metric in METRICS:
-        return metric
-
-def get_metric_config(metric):
-    return METRICS[get_root_metric(metric)]
-
-def get_metric_summary(with_description):
-    summary = ''
-    if with_description:
-        for metric in METRICS:
-            if METRICS[metric].get('public', False):
-                description = METRICS[metric]['description']
-                summary += '[{}]: '.format(metric) + (description if description else '[No description]') + '\n'
-    else:
-        summary = ', '.join((filter(lambda m: METRICS[m].get('public', False), METRICS.keys())))
-
-    return summary
-
-def get_metric_method(metric):
-    return get_metric_config(metric)['method']
 
 def read_parameters():
+    metric_manager = get_metric_manager()
+
     parser = argparse.ArgumentParser(
         description="pyneval 1.0"
     )
@@ -115,7 +49,7 @@ def read_parameters():
     parser.add_argument(
         "--metric",
         "-M",
-        help="metric choice: " + get_metric_summary(False) + ".",
+        help="metric choice: " + metric_manager.get_metric_summary(False) + ".",
         required=False
     )
     parser.add_argument(
@@ -160,11 +94,12 @@ def set_configs(abs_dir, args):
     gold_swc_tree = read_swc_trees(gold_swc_path)[0]  # SwcTree
 
     # argument: metric
-    metric = get_root_metric(args.metric)
+    metric_manager = get_metric_manager()
+    metric = metric_manager.get_root_metric(args.metric)
     if not metric:
         raise Exception("\nERROR: The metric '{}' is not supported.".format(args.metric) +
                         "\nValid options for --metric:\n" +
-                        get_metric_summary(True))
+                        metric_manager.get_metric_summary(True))
 
     # argument: test
     test_swc_paths = [os.path.join(abs_dir, path) for path in args.test]
@@ -208,7 +143,8 @@ def set_configs(abs_dir, args):
 
 
 def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir):
-    metric_method = get_metric_method(metric)
+    metric_manager = get_metric_manager()
+    metric_method = metric_manager.get_metric_method(metric)
     test_swc_name = test_swc_tree.get_name()
 
     result, res_gold_swc_tree, res_test_swc_tree = metric_method(gold_swc_tree=gold_swc_tree,
@@ -239,6 +175,7 @@ def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, outp
 # command program
 def run():
     abs_dir = os.path.abspath("")
+    import_metrics(abs_dir)
     init(abs_dir)
 
     args = read_parameters()
