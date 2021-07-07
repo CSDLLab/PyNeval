@@ -20,14 +20,11 @@ import sys
 
 import jsonschema
 
-from pyneval.io import swc_writer
 from pyneval.model import swc_node
-from pyneval.io import read_json
 from pyneval.tools import re_sample
 from pyneval.metric.utils import point_match_utils
-from pyneval.io import read_config
 
-from pyneval.metric.metric_manager import get_metric_manager
+from pyneval.metric.utils.metric_manager import get_metric_manager
 
 metric_manager = get_metric_manager()
 

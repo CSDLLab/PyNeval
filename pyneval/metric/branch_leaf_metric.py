@@ -1,11 +1,10 @@
 import sys
 import jsonschema
 
-from pyneval.io import read_json
 from pyneval.model import swc_node
 from pyneval.metric.utils import km_utils
 from pyneval.metric.utils import point_match_utils
-from pyneval.metric.metric_manager import get_metric_manager
+from pyneval.metric.utils.metric_manager import get_metric_manager
 
 metric_manager = get_metric_manager()
 

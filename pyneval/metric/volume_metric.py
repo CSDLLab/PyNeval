@@ -2,14 +2,11 @@ import jsonschema
 import queue
 import math
 
-from pyneval.io import read_json
-from pyneval.io.swc_writer import swc_save
 from pyneval.metric.utils.klib.TiffFile import imread
-from pyneval.metric.utils.tiff_utils import front_expend_step
 from pyneval.model.swc_node import SwcTree
 from pyneval.tools.re_sample import up_sample_swc_tree
 
-from pyneval.metric.metric_manager import get_metric_manager
+from pyneval.metric.utils.metric_manager import get_metric_manager
 
 metric_manager = get_metric_manager()
 

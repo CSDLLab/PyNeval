@@ -3,7 +3,6 @@ import sys
 import os
 import jsonschema
 import importlib
-import pyneval
 
 from pyneval.io.read_swc import read_swc_trees
 from pyneval.io import read_json
@@ -11,7 +10,7 @@ from pyneval.io.swc_writer import swc_save
 from pyneval.io.read_tiff import read_tiffs
 from pyneval.metric.utils import anno_utils
 from pyneval.metric.utils import config_utils
-from pyneval.metric.metric_manager import get_metric_manager
+from pyneval.metric.utils.metric_manager import get_metric_manager
 
 # load method in metrics
 def import_metrics(abs_path):
@@ -19,10 +18,8 @@ def import_metrics(abs_path):
     files= os.listdir(metric_path)
     metrics = []
     for f in files:
-        if f in ('__init__.py', 'metric_manager.py'):
-            continue
         m_f = f.split(".")
-        if len(m_f) == 2 and m_f[1] == 'py':
+        if len(m_f) == 2 and m_f[0][-7:] == "_metric" and m_f[1] == 'py':
             metrics.append(m_f[0])
     for m in metrics:
         md = 'pyneval.metric.{}'.format(m)
