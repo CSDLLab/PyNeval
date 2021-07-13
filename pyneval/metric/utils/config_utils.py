@@ -20,7 +20,7 @@ def get_default_configs(method):
     if method == "ssd_metric":
         configs["threshold_mode"] = 1
         configs["ssd_threshold"] = 2
-        configs["up_sample_threshold"] = 1
+        configs["up_sample_threshold"] = 2
         configs["scale"] = [1, 1, 1]
         configs["debug"] = False
 

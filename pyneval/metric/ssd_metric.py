@@ -157,7 +157,7 @@ if __name__ == "__main__":
         raise Exception("[Error: ]Error in analyzing config json file")
     config["detail_path"] = "..//..//output//ssd_output//ssd_detail.swc"
 
-    ssd_res = ssd_metric(gold_swc_tree=gold_tree,
+    ssd_res,_,_ = ssd_metric(gold_swc_tree=gold_tree,
                          test_swc_tree=test_tree,
                          config=config)
 
@@ -167,4 +167,3 @@ if __name__ == "__main__":
           format(round(ssd_res["avg_score"], 2),
                  round(ssd_res["recall"]*100, 2),
                  round(ssd_res["precision"]*100, 2)))
-
