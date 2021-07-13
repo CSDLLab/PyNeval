@@ -1,4 +1,5 @@
 import queue
+import numpy as np
 from pyneval.model.swc_node import SwcNode, SwcTree, Make_Virtual
 from pyneval.model.euclidean_point import Line, EuclideanPoint
 from anytree import PreOrderIter
@@ -114,68 +115,46 @@ def down_sample_swc_tree(swc_tree, rad_mul=1.50, center_dis=None, k=1.0):
     return res2
 
 
-def re_sample(swc_tree, son, pa, length_threshold):
-    '''
-    self recursive function, add node on the middle of edge son, pa
-    :param swc_tree:
-    :param son:
-    :param pa:
-    :param length_threshold: control how many nodes to add
-    :param tiff_file: optional, adjust to fit tiff if exist
-    :return: True/False, it dose not matter
-    '''
-    dis = son.distance(pa)
-    if dis - (son.radius() + pa.radius()) < length_threshold:
-        return False
-
-    new_pos = EuclideanPoint(center=[(son.get_x() + pa.get_x()) / 2,
-                                     (son.get_y() + pa.get_y()) / 2,
-                                     (son.get_z() + pa.get_z()) / 2])
-
-    new_node = SwcNode(center=new_pos)
-    new_node.set_r((son.radius() + pa.radius()) / 2)
-    new_node._type = 7
-
-    swc_tree.unlink_child(son)
-    if not swc_tree.add_child(pa, new_node):
-        raise Exception("[Error: ] add child fail type of pa :{}, type of son".format(type(pa, new_node)))
-    if not swc_tree.link_child(new_node, son):
-        raise Exception("[Error: ] add child fail type of pa :{}, type of son".format(type(new_node, son)))
-
-    re_sample(swc_tree=swc_tree, son=new_node, pa=pa, length_threshold=length_threshold)
-    re_sample(swc_tree=swc_tree, son=son, pa=new_node, length_threshold=length_threshold)
-    return True
-
-
 def up_sample_swc_tree_command_line(swc_tree, config=None):
     length_threshold = float(config['length_threshold'])
     return up_sample_swc_tree(swc_tree=swc_tree, length_threshold=length_threshold)
 
 
-def up_sample_swc_tree(swc_tree, length_threshold=1.0):
+def up_sample_swc_tree(swc_tree, length_threshold):
     '''
-    :param swc_tree: the tree need to add node(dense)
-    :param length_threshold: control how many nodes to add
-    :return: swc_tree has changed in this function
+    :param swc_tree: the tree need to upsample
+    :param length_threshold: the distance between upsampled adjacent nodes.
+                             floor(length_of_length/threshold - 1) new nodes will be interpolated in to an edge.
+                             if length_of_length < threshold, no new nodes will be added.
+    :return: upsampled swc tree
     '''
     up_sampled_swc_tree = swc_tree.get_copy()
+    node_list = up_sampled_swc_tree.get_node_list()
+    for node in node_list:
+        # actually only div_num - 1 new nodes will be interpolated, id from 1 to div_num-1
+        div_num = int(np.floor(node.parent_distance() / length_threshold))
+        pa = node.parent
+        for i in range(1, div_num):
+            new_pos = EuclideanPoint(center=[node.get_x() + (pa.get_x() - node.get_x())/div_num*i,
+                                             node.get_y() + (pa.get_y() - node.get_y())/div_num*i,
+                                             node.get_z() + (pa.get_z() - node.get_z())/div_num*i])
 
-    swc_list = up_sampled_swc_tree.get_node_list()
-    for node in swc_list:
-        if node.is_virtual() or node.parent.is_virtual():
-            continue
+            new_node = SwcNode(center=new_pos)
+            new_node.set_r(node.radius() + (pa.radius() - node.radius())/div_num*i)
+            new_node._type = 7
 
-        re_sample(swc_tree=up_sampled_swc_tree, son=node, pa=node.parent,
-                  length_threshold=length_threshold)
-
-    # 're_sample' will change the structure of the tree. Update is required after using
+            up_sampled_swc_tree.unlink_child(node)
+            if not up_sampled_swc_tree.add_child(pa, new_node):
+                raise Exception("[Error: ] add child fail type of pa :{}, type of son".format(type(pa, new_node)))
+            if not up_sampled_swc_tree.link_child(new_node, node):
+                raise Exception("[Error: ] add child fail type of pa :{}, type of son".format(type(new_node, node)))
     up_sampled_swc_tree.get_node_list(update=True)
     return up_sampled_swc_tree
 
 
 if __name__ == "__main__":
     swc_tree = SwcTree()
-    swc_tree.load("/home/zhanghan/01_project/Pyneval/data/raw/1-8.swc")
+    swc_tree.load("E:\\04_code\\00_neural_reconstruction\PyNeval\data\\test_data\geo_metric_data\\gold_34_23_10.swc")
 
-    res_swc = down_sample_swc_tree(swc_tree=swc_tree, k=3)
-    swc_save(res_swc, out_path="/home/zhanghan/01_project/Pyneval/output/down_sample.swc")
+    res_swc = up_sample_swc_tree(swc_tree=swc_tree, length_threshold=1.5)
+    swc_save(res_swc, out_path="E:\\04_code\\00_neural_reconstruction\PyNeval\data\\test_data\geo_metric_data\\output.swc")
