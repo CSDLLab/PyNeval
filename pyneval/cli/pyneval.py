@@ -86,6 +86,37 @@ def init(abs_dir):
     sys.setrecursionlimit(1000000)
 
 
+def check_path(path_name, dir_path):
+    while not os.path.exists(dir_path) or not os.path.isdir(dir_path):
+        print("The input path {} for {} does not exist or is not a folder. You may choose to:\n"
+              "[Input=1]Input a new path\n"
+              "[Input=2]Quit this process\n"
+              "[Input=3]Continue without saving".format(dir_path, path_name))
+        if not os.path.isfile(dir_path):
+            print("[Input=4]Create new folder {}.".format(dir_path))
+        choice = input()
+        if choice.lower() == "1":
+            print("Input new detail path:")
+            new_dir = input()
+            return 1, new_dir
+        elif choice.lower() == "2":
+            print("Pyneval ends...")
+            return 2, ""
+        elif choice.lower() == "3":
+            print("Pyneval processing without saving details ...")
+            return 3, ""
+        elif choice.lower() == "4":
+            if os.path.isfile(dir_path):
+                print("[Info: ] Error input")
+                continue
+            os.makedirs(dir_path)
+            print("{} has been created".format(dir_path))
+            return 4, ""
+        else:
+            print("[Info: ] Error input")
+    return 4, ""
+
+
 def set_configs(abs_dir, args):
     # argument: gold
     gold_swc_path = os.path.join(abs_dir, args.gold)
@@ -129,12 +160,27 @@ def set_configs(abs_dir, args):
     output_dir = None
     if args.output:
         output_dir = os.path.join(abs_dir, args.output)
+        choose, new_path = check_path("output", output_dir)
+        if choose == 1:
+            output_dir = new_path
+        if choose == 2:
+            raise Exception("Pyneval end by user")
+        if choose == 3:
+            output_dir = None
+
 
     # argument: detail
     detail_dir = None
     if args.detail:
         detail_dir = os.path.join(abs_dir, args.detail)
-        config["detail"] = True
+        choose, new_path = check_path("detail", detail_dir)
+        if choose == 1:
+            detail_dir = new_path
+        if choose == 2:
+            raise Exception("Pyneval end by user")
+        if choose == 3:
+            detail_dir = None
+
 
     # argument: debug
     is_debug = args.debug
