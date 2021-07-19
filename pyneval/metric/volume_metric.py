@@ -94,7 +94,7 @@ def cal_volume_recall(test_tiff, gold_swc, intensity_threshold, debug):
     return tot_front/tot_back
 
 @metric_manager.register(
-    name="volume_metric",
+    name="volume",
     config="volume_metric.json",
     desc="volume overlap",
     public=False,

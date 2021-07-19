@@ -907,7 +907,7 @@ def adjust_root(swc_gold_tree, swc_test_tree,
                 break
 
 @metric_manager.register(
-    name="diadem_metric",
+    name="diadem",
     config="diadem_metric.json",
     desc="DIADEM metric (https://doi.org/10.1007/s12021-011-9117-y)",
     alias=["DM"],

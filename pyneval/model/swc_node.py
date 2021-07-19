@@ -728,6 +728,9 @@ class SwcTree:
         for node in swc_list:
             if node.is_virtual():
                 continue
+            if node.parent.is_virtual():
+                if len(node.children) == 1:
+                    leaf_list.append(node)
             if len(node.children) == 0:
                 leaf_list.append(node)
         return leaf_list

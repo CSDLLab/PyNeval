@@ -10,7 +10,7 @@ from pyneval.io import read_json
 from pyneval.model import swc_node
 from pyneval.metric import length_metric as lm
 from pyneval.metric import diadem_metric as dm
-from pyneval.metric import branch_leaf_metric as bm
+from pyneval.metric import critical_node_metric as cnm
 from pyneval.metric import link_metric as lkm
 from pyneval.metric import ssd_metric as ssdm
 from pyneval.metric import volume_metric as vm
@@ -170,24 +170,24 @@ def single_test(test_metric, metric_args, gold_file, test_file_path):
 
 
 def batch_test(test_datas, gold_dir, test_dir, method):
-    metric_names = ["ssd_metric", "length_metric", "diadem_metric", "branch_metric", "link_metric"]
+    metric_names = ["ssd_metric", "length_metric", "diadem_metric", "critical_node_metric", "link_metric"]
     metrics = {
         "ssd_metric": ssdm.ssd_metric,
         "length_metric": lm.length_metric,
         "diadem_metric": dm.diadem_metric,
-        "branch_metric": bm.branch_leaf_metric,
+        "critical_node_metric": cnm.critical_node_metric,
         "link_metric": lkm.link_metric}
     configs = {
         "ssd_metric": read_json.read_json("..\\..\\config\\ssd_metric.json"),
         "length_metric": read_json.read_json("..\\..\\config\\length_metric.json"),
         "diadem_metric": read_json.read_json("..\\..\\config\\diadem_metric.json"),
-        "branch_metric": read_json.read_json("..\\..\\config\\branch_metric.json"),
+        "critical_node_metric": read_json.read_json("..\\..\\config\\critical_node_metric.json"),
         "link_metric": read_json.read_json("..\\..\\config\\link_metric.json")}
     labels = {
         "ssd_metric": ["ssd_score", "recall", "precision"],
         "length_metric": ["recall", "precision"],
         "diadem_metric": ["final_score"],
-        "branch_metric": ["true_positive_number", "false_negative_num", "false_positive_num", "matched_mean_distance"],
+        "critical_node_metric": ["true_positive_number", "false_negative_num", "false_positive_num", "matched_mean_distance"],
         "link_metric": ["edge_loss", "tree_dis_loss"]
     }
     metric_result = {}
@@ -206,12 +206,12 @@ def batch_test(test_datas, gold_dir, test_dir, method):
 
 if __name__=='__main__':
     sys.setrecursionlimit(10000000)
-    metric_names = ["ssd_metric", "length_metric", "diadem_metric", "branch_metric", "link_metric"]
+    metric_names = ["ssd_metric", "length_metric", "diadem_metric", "critical_node_metric", "link_metric"]
     labels = {
         "ssd_metric": ["ssd_score", "recall", "precision"],
         "length_metric": ["recall", "precision"],
         "diadem_metric": ["final_score"],
-        "branch_metric": ["true_positive_number", "false_negative_num", "false_positive_num", "matched_mean_distance"],
+        "critical_node_metric": ["true_positive_number", "false_negative_num", "false_positive_num", "matched_mean_distance"],
         "link_metric": ["edge_loss", "tree_dis_loss"]
     }
 

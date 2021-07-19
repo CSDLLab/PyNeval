@@ -62,7 +62,7 @@ def length_metric_run(gold_swc_tree=None, test_swc_tree=None,
 
 # @do_cprofile("./mkm_run.prof")
 @metric_manager.register(
-    name="length_metric",
+    name="length",
     config="length_metric.json",
     desc="length of matched branches and fibers",
     public=True,

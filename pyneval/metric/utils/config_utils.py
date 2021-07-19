@@ -17,21 +17,21 @@ def get_avg_radius(gold_swc_tree, rate=0.1):
 
 def get_default_configs(method):
     configs = dict()
-    if method == "ssd_metric":
+    if method == "ssd":
         configs["threshold_mode"] = 1
         configs["ssd_threshold"] = 2
         configs["up_sample_threshold"] = 1
         configs["scale"] = [1, 1, 1]
         configs["debug"] = False
 
-    if method == "length_metric":
+    if method == "length":
         configs["rad_mode"] = 1
         configs["rad_threshold"] = 2
         configs["len_threshold"] = 0.2
         configs["scale"] = [1, 1, 1]
         configs["debug"] = False
 
-    if method == "diadem_metric":
+    if method == "diadem":
         configs["weight_mode"] = 1
         configs["remove_spur"] = False
         configs["count_excess_nodes"] = True
@@ -48,18 +48,19 @@ def get_default_configs(method):
         configs["local_path_error_threshold"] = 0.4
         configs["debug"] = False
 
-    if method == "branch_metric":
+    if method == "critical_node":
         configs["threshold_dis"] = 2
         configs["threshold_mode"] = 1
+        configs["critical_type"] = 1
         configs["scale"] = [1, 1, 1]
         configs["true_positive"] = 3
         configs["missed"] = 4
         configs["excess"] = 5
 
-    if method == "link_metric":
+    if method == "link":
         configs["scale"] = [1, 1, 1]
 
-    if method == "volume_metric":
+    if method == "volume":
         configs["length_threshold"] = 1.0
         configs["intensity_threshold"] = 1.0
         configs["debug"] = False
@@ -70,7 +71,7 @@ def get_default_configs(method):
 def get_config_schema(method):
     schema = dict()
 
-    if method == "ssd_metric":
+    if method == "ssd":
         schema = {
             "title": "ssd metric schema",
             "type": "object",
@@ -95,7 +96,7 @@ def get_config_schema(method):
             }
         }
 
-    if method == "length_metric":
+    if method == "length":
         schema = {
             "title": "length metric schema",
             "type": "object",
@@ -120,7 +121,7 @@ def get_config_schema(method):
             }
         }
 
-    if method == "diadem_metric":
+    if method == "diadem":
         schema = {
             "title": "diadem metric schema",
             "type": "object",
@@ -151,13 +152,14 @@ def get_config_schema(method):
             }
         }
 
-    if method == "branch_metric":
+    if method == "critical_node":
         schema = {
             "title": "branch metric schema",
             "type": "object",
             "required": [
               "threshold_dis",
               "threshold_mode",
+              "critical_type",
               "scale",
               "true_positive",
               "missed",
@@ -166,8 +168,9 @@ def get_config_schema(method):
             "properties": {
                 "threshold_dis": {"type": "number", "minimum": 0},
                 "threshold_mode": {"type": "number", "enum": [1, 2]},
+                "critical_type": {"type": "integer", "enum": [1, 2, 3]},
                 "scale": {
-                    "type":"array",
+                    "type": "array",
                     "additionalItems": {"type": "number", "minimum": 0},
                     "minItems": 3,
                     "maxItems": 3
@@ -178,7 +181,7 @@ def get_config_schema(method):
             }
         }
 
-    if method == "link_metric":
+    if method == "link":
         schema = {
             "title": "link metric schema",
             "type": "object",
@@ -195,7 +198,7 @@ def get_config_schema(method):
             }
         }
 
-    if method == "volume_metric":
+    if method == "volume":
         schema = {
             "title": "length metric schema",
             "type": "object",
