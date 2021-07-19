@@ -40,7 +40,7 @@ def get_extra_pos_nodes(big_set, subset):
     return res
 
 @metric_manager.register(
-    name="link_metric",
+    name="link",
     config="link_metric.json",
     desc="",
     public=False,

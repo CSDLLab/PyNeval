@@ -75,7 +75,7 @@ def get_mse(src_tree, tar_tree, ssd_threshold=2.0, mode=1):
     return dis, num
 
 @metric_manager.register(
-    name="ssd_metric",
+    name="ssd",
     config="ssd_metric.json",
     desc="minimum square error between up-sampled gold and test trees",
     alias=['SM'],

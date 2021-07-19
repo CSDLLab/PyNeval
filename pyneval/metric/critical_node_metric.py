@@ -21,6 +21,7 @@ def get_result(test_len, gold_len, switch, km, threshold_dis):
     # definition of swich is in function "get_dis_graph"
     if switch:
         false_neg_num, false_pos_num = false_pos_num, false_neg_num
+        gold_len, test_len = test_len, gold_len
 
     if true_pos_num != 0:
         mean_dis = -km.get_max_dis() / true_pos_num
@@ -38,7 +39,7 @@ def get_result(test_len, gold_len, switch, km, threshold_dis):
     # print(true_neg_num)
     # print(mean_dis)
     # print(pt_cost)
-    return true_pos_num, false_neg_num, false_pos_num, mean_dis, mean_dis * true_pos_num, pt_cost
+    return gold_len, test_len, true_pos_num, false_neg_num, false_pos_num, mean_dis, mean_dis * true_pos_num, pt_cost
 
 
 def get_colored_tree(test_node_list, gold_node_list, switch, km, color):
@@ -106,7 +107,7 @@ def score_point_distance(gold_tree: swc_node.SwcTree, test_tree: swc_node.SwcTre
     km = km_utils.KM(maxn=max(test_len, gold_len)+10, nx=test_len, ny=gold_len, G=dis_graph)
     km.solve()
     # calculate the result
-    true_pos_num, false_neg_num, false_pos_num, \
+    gold_len, test_len, true_pos_num, false_neg_num, false_pos_num, \
     mean_dis, tot_dis, pt_cost = get_result(test_len=test_len,
                                             gold_len=gold_len,
                                             switch=switch,
@@ -124,13 +125,13 @@ def score_point_distance(gold_tree: swc_node.SwcTree, test_tree: swc_node.SwcTre
            mean_dis, tot_dis, pt_cost, iso_node_num
 
 @metric_manager.register(
-    name="branch_metric",
-    config="branch_metric.json",
+    name="critical_node",
+    config="critical_node_metric.json",
     desc="quality of critical points",
     public=True,
     alias=['BM'],
 )
-def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
+def critical_node_metric(gold_swc_tree, test_swc_tree, config):
     """
     branch metric calculates the minimum distance match between branches of two swc trees
     This function is used for unpacking configs and packaging return values
@@ -156,6 +157,8 @@ def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
     # read configs
     threshold_dis = config["threshold_dis"]
     threshold_mode = config["threshold_mode"]
+    critical_type = config["critical_type"]
+
     scale = config["scale"]
 
     gold_swc_tree.rescale(scale)
@@ -175,13 +178,22 @@ def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
     ]
     gold_swc_tree.type_clear(0, 0)
     test_swc_tree.type_clear(0, 0)
-    test_branch_swc_list = test_swc_tree.get_branch_swc_list()
-    gold_branch_swc_list = gold_swc_tree.get_branch_swc_list()
+    test_critical_swc_list = []
+    gold_critical_swc_list = []
+    # critical_type == 1: both branches and leaves
+    # critical_type == 2: only leaves
+    # critical_type == 3: only branches
+    if critical_type != 2:
+        test_critical_swc_list += test_swc_tree.get_branch_swc_list()
+        gold_critical_swc_list += gold_swc_tree.get_branch_swc_list()
+    if critical_type != 3:
+        test_critical_swc_list += test_swc_tree.get_leaf_swc_list()
+        gold_critical_swc_list += gold_swc_tree.get_leaf_swc_list()
 
     branch_result_tuple = score_point_distance(gold_tree=gold_swc_tree,
                                                test_tree=test_swc_tree,
-                                               test_node_list=test_branch_swc_list,
-                                               gold_node_list=gold_branch_swc_list,
+                                               test_node_list=test_critical_swc_list,
+                                               gold_node_list=gold_critical_swc_list,
                                                threshold_dis=threshold_dis,
                                                color=color)
 
@@ -191,6 +203,8 @@ def branch_leaf_metric(gold_swc_tree, test_swc_tree, config):
         "true_pos_num": branch_result_tuple[2],
         "false_neg_num": branch_result_tuple[3],
         "false_pos_num": branch_result_tuple[4],
+        "precision": branch_result_tuple[2] / branch_result_tuple[1],
+        "recall": branch_result_tuple[2] / branch_result_tuple[0],
         "mean_dis": branch_result_tuple[5],
         "tot_dis": branch_result_tuple[6],
         "pt_cost": branch_result_tuple[7],
@@ -205,32 +219,33 @@ if __name__ == "__main__":
     gold_swc_tree = swc_node.SwcTree()
     test_swc_tree = swc_node.SwcTree()
 
-    gold_swc_tree.load("../../data/test_data/topo_metric_data/gold_fake_data3.swc")
-    test_swc_tree.load("../../data/test_data/topo_metric_data/test_fake_data3.swc")
+    gold_swc_tree.load("../../data\\test_data\geo_metric_data\gold_34_23_10.swc")
+    test_swc_tree.load("../../data\\test_data\geo_metric_data\\test_34_23_10.swc")
     from pyneval.metric.utils import config_utils
-    config = config_utils.get_default_configs("branch_metric")
-    config_schema = config_utils.get_config_schema("branch_metric")
+    config = config_utils.get_default_configs("critical_node")
+    config["critical_type"] = 2
+    config_schema = config_utils.get_config_schema("critical_node")
     try:
         jsonschema.validate(config, config_schema)
     except Exception as e:
         raise Exception("[Error: ]Error in analyzing config json file")
 
     branch_result, _, _ = \
-        branch_leaf_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
+        critical_node_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
     print("---------------Result---------------")
     print("gole_branch_num = {}, test_branch_num = {}\n"
           "true_positive_number  = {}\n"
           "false_negative_num    = {}\n"
           "false_positive_num    = {}\n"
+          "precision             = {}\n"
+          "recall                = {}\n"
           "matched_mean_distance = {}\n"
           "matched_sum_distance  = {}\n"
           "pt_score              = {}\n"
           "isolated node number  = {}".
           format(branch_result["gold_len"], branch_result["test_len"], branch_result["true_pos_num"],
-                 branch_result["false_neg_num"], branch_result["false_pos_num"], branch_result["mean_dis"],
+                 branch_result["false_neg_num"], branch_result["false_pos_num"], branch_result["precision"],
+                 branch_result["recall"], branch_result["mean_dis"],
                  branch_result["tot_dis"], branch_result["pt_cost"], branch_result["iso_node_num"]))
     print("----------------End-----------------")
-    # with open("../../output/branch_metric/{}_gold.swc".format(file_name), 'w') as f:
-    #     f.write(gold_swc_tree.to_str_list())
-    # with open("../../output/branch_metric/{}_test.swc".format(file_name), 'w') as f:
-    #     f.write(test_swc_tree.to_str_list())
+
