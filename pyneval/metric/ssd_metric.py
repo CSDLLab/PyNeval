@@ -144,8 +144,8 @@ if __name__ == "__main__":
     gold_tree = swc_node.SwcTree()
 
     sys.setrecursionlimit(10000000)
-    gold_tree.load("../../data/test_data/geo_metric_data/gold_fake_data1.swc")
-    test_tree.load("../../data/test_data/geo_metric_data/test_fake_data1.swc")
+    gold_tree.load("../../data/test_data/geo_metric_data/gold_fake_data5.swc")
+    test_tree.load("../../data/test_data/geo_metric_data/test_fake_data5.swc")
 
     from pyneval.metric.utils import config_utils
     config = config_utils.get_default_configs("ssd_metric")
@@ -160,10 +160,13 @@ if __name__ == "__main__":
     ssd_res,_,_ = ssd_metric(gold_swc_tree=gold_tree,
                          test_swc_tree=test_tree,
                          config=config)
-
+    print(2*ssd_res["recall"]*ssd_res["precision"])
+    print(ssd_res["recall"]+ssd_res["precision"])
     print("ssd score = {}\n"
           "recall    = {}%\n"
-          "precision = {}%".
+          "precision = {}%\n"
+          "f1        = {}".
           format(round(ssd_res["avg_score"], 2),
                  round(ssd_res["recall"]*100, 2),
-                 round(ssd_res["precision"]*100, 2)))
+                 round(ssd_res["precision"]*100, 2),
+                 round((2*ssd_res["recall"]*ssd_res["precision"])/(ssd_res["recall"]+ssd_res["precision"]), 2)))
