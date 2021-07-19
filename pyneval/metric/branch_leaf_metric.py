@@ -205,8 +205,8 @@ if __name__ == "__main__":
     gold_swc_tree = swc_node.SwcTree()
     test_swc_tree = swc_node.SwcTree()
 
-    gold_swc_tree.load("../../data/example_selected/a.swc")
-    test_swc_tree.load("../../output/random_data/move/a/010/move_03.swc")
+    gold_swc_tree.load("../../data/test_data/topo_metric_data/gold_fake_data3.swc")
+    test_swc_tree.load("../../data/test_data/topo_metric_data/test_fake_data3.swc")
     from pyneval.metric.utils import config_utils
     config = config_utils.get_default_configs("branch_metric")
     config_schema = config_utils.get_config_schema("branch_metric")
@@ -215,7 +215,7 @@ if __name__ == "__main__":
     except Exception as e:
         raise Exception("[Error: ]Error in analyzing config json file")
 
-    branch_result = \
+    branch_result, _, _ = \
         branch_leaf_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
     print("---------------Result---------------")
     print("gole_branch_num = {}, test_branch_num = {}\n"
@@ -234,4 +234,3 @@ if __name__ == "__main__":
     #     f.write(gold_swc_tree.to_str_list())
     # with open("../../output/branch_metric/{}_test.swc".format(file_name), 'w') as f:
     #     f.write(test_swc_tree.to_str_list())
-
