@@ -1,6 +1,4 @@
 import os
-from anytree import PreOrderIter
-
 
 def is_path_valid(file_path):
     tmp_path, tmp_file = os.path.split(file_path)
@@ -8,15 +6,15 @@ def is_path_valid(file_path):
     if not os.path.exists(file_path):
         if not os.path.exists(tmp_path):
             os.makedirs(tmp_path)
-        newfile = open(file_path, 'w')
-        newfile.close()
+        new_file = open(file_path, 'w')
+        new_file.close()
 
-    if os.path.isdir(file_path):
-        raise Exception("[Error: ] file: \"{}\" has exist in path: \"{}\". and it is a menu"
-                        .format(tmp_file, tmp_path))
-        return False
+    # if os.path.isdir(file_path):
+        # raise PyNevalError("[Error: ] file: \"{}\" has exist in path: \"{}\". and it is a menu"
+        #                 .format(tmp_file, tmp_path))
+        # return False
 
-    return True
+    return not os.path.isdir(file_path)
 
 
 def save_line_tuple_as_swc(match_fail, file_path):

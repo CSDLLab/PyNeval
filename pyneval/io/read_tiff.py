@@ -1,16 +1,44 @@
-from pyneval.metric.utils.klib.TiffFile import imsave, imread, TiffFile
 import os
+from pyneval.metric.utils.klib.TiffFile import imsave, imread, TiffFile
+from pyneval.erros.exceptions import InvalidTiffFileError
 
+def is_tiff_file(tiff_file):
+    return tiff_file[-4:] in (".tif", ".TIF")
+
+def read_tiff(tiff_path):
+    """
+    Args:
+        tiff_path: a tiff file path
+
+    Returns:
+        tiff image object
+    """
+    if not os.path.isfile(tiff_path) or not is_tiff_file(tiff_path):
+        raise InvalidTiffFileError(tiff_path)
+    return imread(tiff_path)
 
 def read_tiffs(tiff_paths):
-    tiff_list = []
+    """
+    Args:
+        tiff_paths: tiff_path file path for directs that contain tiff files
+    Returns:
+        tiff image objects
+    """
+    # load all tiff file paths
+    tiff_files = []
     if os.path.isfile(tiff_paths):
-        if not (tiff_paths[-4:] == ".tif" or tiff_paths[-4:] == ".TIF"):
+        if not is_tiff_file(tiff_files):
             print(tiff_paths + "is not a tif file")
             return None
-        tiff_file = imread(tiff_paths)
-        tiff_list.append(tiff_file)
-    elif os.path.isdir(tiff_paths):
-        for file in os.listdir(tiff_paths):
-            tiff_list += read_tiffs(tiff_paths=os.path.join(tiff_paths, file))
+        tiff_files.append(tiff_paths)
+    else:
+        for root, _, files in os.walk(tiff_paths):
+            for file in files:
+                f = os.path.join(root, file)
+                if is_tiff_file(f):
+                    tiff_files.append(f)
+    # load image objects
+    tiff_list = []
+    for tiff_file in tiff_files:
+        tiff_list.append(imread(tiff_file))
     return tiff_list

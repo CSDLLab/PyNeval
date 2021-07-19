@@ -1,8 +1,19 @@
 import os
 from pyneval.model.swc_node import SwcNode, SwcTree
+from pyneval.erros.exceptions import InvalidSwcFileError
 
 
-# if path is a fold
+def is_swc_file(file_path):
+    return file_path[-4:] in (".swc", ".SWC")
+
+def read_swc_tree(swc_file_path):
+    if not os.path.isfile(swc_file_path) or not is_swc_file(swc_file_path):
+        raise InvalidSwcFileError(swc_file_path)
+    swc_tree = SwcTree()
+    swc_tree.load(swc_file_path)
+    return swc_tree
+
+# if path is a folder
 def read_swc_trees(swc_file_paths, tree_name_dict=None):
     """
     Read a swc tree or recursively read all the swc trees in a fold
@@ -14,21 +25,27 @@ def read_swc_trees(swc_file_paths, tree_name_dict=None):
     Output:
         swc_tree_list(list): a list shaped 1*n, containing all the swc tree in the path
     """
-    swc_tree_list = []
+    # get all swc files
+    swc_files = []
     if os.path.isfile(swc_file_paths):
-        if not (swc_file_paths[-4:] == ".swc" or swc_file_paths[-4:] == ".SWC"):
+        if not is_swc_file(swc_file_paths):
             print(swc_file_paths + "is not a swc file")
-            return None
+            return
+        swc_files = [swc_file_paths]
+    else:
+        for root, _, files in os.walk(swc_file_paths):
+            for file in files:
+                f = os.path.join(root, file)
+                if is_swc_file(f):
+                    swc_files.append(f)
+    # load swc trees
+    swc_tree_list = []
+    for swc_file in swc_files:
         swc_tree = SwcTree()
-        swc_tree.load(swc_file_paths)
+        swc_tree.load(swc_file)
         swc_tree_list.append(swc_tree)
         if tree_name_dict is not None:
-            tree_name_dict[swc_tree] = os.path.basename(swc_file_paths)
-    elif os.path.isdir(swc_file_paths):
-        for file in os.listdir(swc_file_paths):
-            swc_tree = read_swc_trees(swc_file_paths=os.path.join(swc_file_paths, file), tree_name_dict=tree_name_dict)
-            if swc_tree is not None:
-                swc_tree_list += swc_tree
+            tree_name_dict[swc_tree] = os.path.basename(swc_file)
     return swc_tree_list
 
 

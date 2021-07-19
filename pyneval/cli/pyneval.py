@@ -4,13 +4,14 @@ import os
 import jsonschema
 import importlib
 
-from pyneval.io.read_swc import read_swc_trees
+from pyneval.io.read_swc import read_swc_trees, read_swc_tree
 from pyneval.io import read_json
 from pyneval.io.swc_writer import swc_save
 from pyneval.io.read_tiff import read_tiffs
 from pyneval.metric.utils import anno_utils
 from pyneval.metric.utils import config_utils
 from pyneval.metric.utils.metric_manager import get_metric_manager
+from pyneval.erros.exceptions import InvalidMetricError, PyNevalError
 
 # load method in metrics
 def import_metrics(abs_path):
@@ -120,28 +121,27 @@ def check_path(path_name, dir_path):
 def set_configs(abs_dir, args):
     # argument: gold
     gold_swc_path = os.path.join(abs_dir, args.gold)
-    if not (os.path.isfile(gold_swc_path) and gold_swc_path[-4:] == ".swc"):
-        raise Exception("[Error: ] gold standard file is not a swc file")
-    gold_swc_tree = read_swc_trees(gold_swc_path)[0]  # SwcTree
+    gold_swc_tree =  read_swc_tree(gold_swc_path) # SwcTree
 
     # argument: metric
     metric_manager = get_metric_manager()
     metric = metric_manager.get_root_metric(args.metric)
     if not metric:
-        raise Exception("\nERROR: The metric '{}' is not supported.".format(args.metric) +
-                        "\nValid options for --metric:\n" +
-                        metric_manager.get_metric_summary(True))
+        raise InvalidMetricError(args.metric, metric_manager.get_metric_summary(True))
 
     # argument: test
     test_swc_paths = [os.path.join(abs_dir, path) for path in args.test]
     test_swc_trees = []
     # read test trees
-    if metric in ['volume_metric', 'VM']:
+    if metric.lower() in ['volume_metric', 'vm']:
         for file in test_swc_paths:
-            test_swc_trees += read_tiffs(file)
+            test_swc_trees.extend(read_tiffs(file))
     else:
         for file in test_swc_paths:
-            test_swc_trees += read_swc_trees(file)
+            test_swc_trees.extend(read_swc_trees(file))
+
+    if len(test_swc_trees) == 0:
+        raise PyNevalError("test images can't be null")
 
     # info: how many trees read
     print("There are {} test image(s)".format(len(test_swc_trees)))
