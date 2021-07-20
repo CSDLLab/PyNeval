@@ -142,7 +142,7 @@ class SwcNode(NodeMixin):
                  nid=-1,
                  ntype=0,
                  radius=1.0,
-                 center=EuclideanPoint(center=[0,0,0]),
+                 center=None,
                  parent=None,
                  depth=0,
 
@@ -160,7 +160,7 @@ class SwcNode(NodeMixin):
         self._id = nid
         self._type = ntype
         self.parent = parent
-        self._pos = center
+        self._pos = center if center is not None else EuclideanPoint(center=[0,0,0])
         self._radius = radius
         self.surface_area = surface_area
         self.volume = volume
@@ -354,20 +354,17 @@ class SwcTree:
     # warning: slow, don't use in loop
     def parent_id(self, nid):
         tn = self.node_from_id(nid)
-        if tn:
-            return tn.get_parent_id()
+        return tn.get_parent_id() if tn else None
 
     # warning: slow, don't use in loop
     def parent_node(self, nid):
         tn = self.node_from_id(nid)
-        if tn:
-            return tn.parent
+        return tn.parent if tn else None
 
     # warning: slow, don't use in loop
     def child_list(self, nid):
         tn = self.node_from_id(nid)
-        if tn:
-            return tn.children
+        return tn.children if tn else None
 
     def load_list(self, lines):
         self.clear()

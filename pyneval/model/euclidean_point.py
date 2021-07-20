@@ -7,8 +7,8 @@ class EuclideanPoint(object):
     geometry node without volume
     for point-line calculate
     '''
-    def __init__(self,
-                 center=[0, 0, 0]):
+    def __init__(self, center=None):
+        center = center if center is not None else [0, 0, 0]
         if not isinstance(center, list):
             raise Exception("[Error: ]not a list")
         self._pos = center
