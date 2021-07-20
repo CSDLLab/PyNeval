@@ -413,43 +413,7 @@ class SwcTree:
         self._name = os.path.basename(path)
         with open(path, 'r') as fp:
             lines = fp.readlines()
-            nodeDict = dict()
-            for line in lines:
-                if not self.is_comment(line):
-                    #                     print line
-                    data = list(map(float, line.split()))
-                    #                     print(data)
-                    if len(data) == 7:
-                        nid = int(data[0])
-                        ntype = int(data[1])
-                        pos = EuclideanPoint(center=data[2:5])
-                        radius = data[5]
-                        parentId = data[6]
-                        if nid in self.id_set:
-                            raise Exception("[Error: SwcTree.load]Same id {}".format(nid))
-                        self.id_set.add(nid)
-                        tn = SwcNode(nid=nid, ntype=ntype, radius=radius, center=pos)
-                        nodeDict[nid] = (tn, parentId)
-            fp.close()
-
-        for _, value in nodeDict.items():
-            tn = value[0]
-            parentId = value[1]
-            if parentId == -1:
-                tn.parent = self._root
-            else:
-                parentNode = nodeDict.get(parentId)
-                if parentNode:
-                    tn.parent = parentNode[0]
-
-        for node in self.get_node_list():
-            if node.parent is None:
-                continue
-            if node.parent.get_id() == -1:
-                node._depth = 0
-            else:
-                node._depth = node.parent._depth + 1
-                node.root_length = node.parent.root_length + node.parent_distance()
+            self.load_list(lines)
 
     def has_regular_node(self):
         return len(self.regular_root()) > 0
