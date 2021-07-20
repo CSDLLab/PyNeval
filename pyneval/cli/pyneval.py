@@ -102,6 +102,11 @@ def check_path(path_name, dir_path):
 
 
 def set_configs(abs_dir, args):
+    # argument: debug
+    is_debug = False
+    if args.debug and args.debug.lower() in ("True", "true", "t", "T", "yes", "YES"):
+        is_debug = True
+
     # argument: gold
     gold_swc_path = os.path.join(abs_dir, args.gold)
     gold_swc_tree = read_swc_tree(gold_swc_path)  # SwcTree
@@ -127,7 +132,7 @@ def set_configs(abs_dir, args):
         raise PyNevalError("test images can't be null")
 
     # info: how many trees read
-    print ("There are {} test image(s)".format(len(test_swc_trees)))
+    print ("There are {} test image(s) \n".format(len(test_swc_trees)))
 
     # argument: config
     config_path = args.config
@@ -146,9 +151,9 @@ def set_configs(abs_dir, args):
         choose, new_path = check_path("output", output_dir)
         if choose == 1:
             output_dir = new_path
-        if choose == 2:
+        elif choose == 2:
             raise Exception("Pyneval end by user")
-        if choose == 3:
+        elif choose == 3:
             output_dir = None
 
     # argument: detail
@@ -158,13 +163,10 @@ def set_configs(abs_dir, args):
         choose, new_path = check_path("detail", detail_dir)
         if choose == 1:
             detail_dir = new_path
-        if choose == 2:
+        elif choose == 2:
             raise Exception("Pyneval end by user")
-        if choose == 3:
+        elif choose == 3:
             detail_dir = None
-
-    # argument: debug
-    is_debug = args.debug
 
     return gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug
 
@@ -179,7 +181,7 @@ def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, outp
     )
 
     print ("---------------Result---------------")
-    print ("file = {}".format(test_swc_name))
+    print ("test_swc_file   = {}".format(test_swc_name))
     for key in result:
         print ("{} = {}".format(key.ljust(15, " "), result[key]))
     print ("----------------End-----------------\n")
@@ -223,16 +225,15 @@ def run():
                 detail_dir=detail_dir,
                 output_dir=output_dir,
             )
-        return
-
-    # use multi process
-    max_procs = cpu_count()
-    p_pool = Pool(max_procs)
-    for test_swc_tree in test_swc_trees:
-        p_pool.apply_async(excute_metric, args=(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir))
-    p_pool.close()
-    p_pool.join()
-    print ("All subprocesses done.")
+    else:
+        # use multi process
+        max_procs = cpu_count()
+        p_pool = Pool(max_procs)
+        for test_swc_tree in test_swc_trees:
+            p_pool.apply_async(excute_metric, args=(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir))
+        p_pool.close()
+        p_pool.join()
+    print ("All Finished!")
 
 
 if __name__ == "__main__":

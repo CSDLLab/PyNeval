@@ -8,6 +8,7 @@ from pyneval.io.swc_writer import swc_save
 from pyneval.tools.re_sample import up_sample_swc_tree_command_line, down_sample_swc_tree_command_line
 
 from pyneval.tools.overlap_detect import overlap_clean
+from pyneval.erros.exceptions import InvalidMetricError
 
 method_list = [
     "up_sample",
@@ -75,9 +76,7 @@ def run():
     # method
     method = args.method
     if method not in method_list:
-        raise Exception("[Error: ] Unknown metric method {}".format(
-            method
-        ))
+        raise InvalidMetricError(method)
 
     # out_path
     out_path = args.output
