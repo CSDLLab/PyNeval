@@ -1,13 +1,15 @@
-import numpy as np
 import math
-from pyneval.metric.utils.config_utils import EPS
+
 from pyneval.erros.exceptions import InvalidEuclideanPoint
+from pyneval.metric.utils.config_utils import EPS
+
 
 class EuclideanPoint(object):
-    '''
+    """
     geometry node without volume
     for point-line calculate
-    '''
+    """
+
     def __init__(self, center=None):
         center = center if center is not None else [0, 0, 0]
         if not isinstance(center, list):
@@ -33,13 +35,13 @@ class EuclideanPoint(object):
         self._pos[2] = z
 
     def to_str(self):
-        print("{} {} {}".format(self._pos[0], self._pos[1], self._pos[2]))
+        print ("{} {} {}".format(self._pos[0], self._pos[1], self._pos[2]))
 
     def add_coord(self, point_a):
-        '''
+        """
         :param point_a: another EuclideanPoint
         :return: True if success
-        '''
+        """
         if not isinstance(point_a, EuclideanPoint):
             return False
 
@@ -53,15 +55,15 @@ class EuclideanPoint(object):
         p = self._pos
         a = line.coords[0]
         b = line.coords[1]
-        a_p = [a[0]-p[0], a[1]-p[1], a[2]-p[2]]
-        b_a = [b[0]-a[0], b[1]-a[1], b[2]-a[2]]
+        a_p = [a[0] - p[0], a[1] - p[1], a[2] - p[2]]
+        b_a = [b[0] - a[0], b[1] - a[1], b[2] - a[2]]
 
-        k_up = -(a_p[0]*b_a[0]+a_p[1]*b_a[1]+a_p[2]*b_a[2])
-        k_down = b_a[0]**2+b_a[1]**2+b_a[2]**2
+        k_up = -(a_p[0] * b_a[0] + a_p[1] * b_a[1] + a_p[2] * b_a[2])
+        k_down = b_a[0] ** 2 + b_a[1] ** 2 + b_a[2] ** 2
         if k_down < EPS:
             raise Exception("[Error: ] Line {} {} is just a point".format(a, b))
-        k = k_up/k_down
-        foot = [k*b_a[0]+a[0], k*b_a[1]+a[1], k*b_a[2]+a[2]]
+        k = k_up / k_down
+        foot = [k * b_a[0] + a[0], k * b_a[1] + a[1], k * b_a[2] + a[2]]
         return EuclideanPoint(foot)
 
     def get_closest_point(self, line):
@@ -71,7 +73,7 @@ class EuclideanPoint(object):
         else:
             dis1 = self.distance(EuclideanPoint(center=line.coords[0]))
             dis2 = self.distance(EuclideanPoint(center=line.coords[1]))
-            if dis1 <dis2:
+            if dis1 < dis2:
                 return EuclideanPoint(center=line.coords[0])
             else:
                 return EuclideanPoint(center=line.coords[1])
@@ -81,9 +83,11 @@ class EuclideanPoint(object):
         a = line.coords[0]
         b = line.coords[1]
 
-        if min(a[0], b[0]) <= p[0] <= max(a[0], b[0]) and \
-                min(a[1], b[1]) <= p[1] <= max(a[1], b[1]) and \
-                min(a[2], b[2]) <= p[2] <= max(a[2], b[2]):
+        if (
+            min(a[0], b[0]) <= p[0] <= max(a[0], b[0])
+            and min(a[1], b[1]) <= p[1] <= max(a[1], b[1])
+            and min(a[2], b[2]) <= p[2] <= max(a[2], b[2])
+        ):
             return True
         return False
 
@@ -96,19 +100,15 @@ class EuclideanPoint(object):
     def distance_to_point(self, point):
         if not isinstance(point, EuclideanPoint):
             raise InvalidEuclideanPoint(point)
-        sub = [self._pos[0] - point._pos[0],
-               self._pos[1] - point._pos[1],
-               self._pos[2] - point._pos[2]]
-        return math.sqrt(sub[0]*sub[0] + sub[1]*sub[1] + sub[2]*sub[2])
+        sub = [self._pos[0] - point._pos[0], self._pos[1] - point._pos[1], self._pos[2] - point._pos[2]]
+        return math.sqrt(sub[0] * sub[0] + sub[1] * sub[1] + sub[2] * sub[2])
 
     def distance_to_point_2d(self, point):
         if not isinstance(point, EuclideanPoint):
             raise InvalidEuclideanPoint(point)
 
-        sub = [self._pos[0] - point._pos[0],
-               self._pos[1] - point._pos[1],
-               self._pos[2] - point._pos[2]]
-        return math.sqrt(sub[0]*sub[0] + sub[1]*sub[1])
+        sub = [self._pos[0] - point._pos[0], self._pos[1] - point._pos[1], self._pos[2] - point._pos[2]]
+        return math.sqrt(sub[0] * sub[0] + sub[1] * sub[1])
 
     def distance_to_line(self, line):
         foot = self.get_foot_point(line)
@@ -137,27 +137,31 @@ class EuclideanPoint(object):
 
 
 class Line:
-    '''
+    """
     consist of two EuclideanPoint
     coords[0] and coords[1]
-    '''
-    def __init__(self,
-                 coords=None,
-                 e_node_1=None,
-                 e_node_2=None,
-                 is_segment=True):
+    """
+
+    def __init__(self, coords=None, e_node_1=None, e_node_2=None, is_segment=True):
         if coords is not None:
             self.coords = coords
         else:
-            self.coords = [[],[]]
+            self.coords = [[], []]
             self.coords[0] = e_node_1._pos
             self.coords[1] = e_node_2._pos
         self.is_segment = is_segment
 
     def to_str(self):
-        print("[{} {} {}, {} {} {}]".format(
-            self.coords[0].get_x(), self.coords[0].get_y(), self.coords[0].get_z(),
-            self.coords[1].get_x(), self.coords[1].get_y(), self.coords[1].get_z()))
+        print (
+            "[{} {} {}, {} {} {}]".format(
+                self.coords[0].get_x(),
+                self.coords[0].get_y(),
+                self.coords[0].get_z(),
+                self.coords[1].get_x(),
+                self.coords[1].get_y(),
+                self.coords[1].get_z(),
+            )
+        )
 
     def get_points(self):
         point_a = EuclideanPoint(self.coords[0])
