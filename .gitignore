@@ -12,4 +12,5 @@ pyneval/metric/utils/__pycache__/
 pyneval/metric/utils/klib/__pycache__/
 pyneval/model/__pycache__/
 pyneval/tools/__pycache__/
+pyneval/erros/__pycache__/
 
