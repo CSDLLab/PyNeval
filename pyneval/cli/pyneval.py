@@ -181,7 +181,7 @@ def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, outp
     )
 
     print ("---------------Result---------------")
-    print ("test_swc_file   = {}".format(test_swc_name))
+    print ("swc_file_name   = {}".format(test_swc_name))
     for key in result:
         print ("{} = {}".format(key.ljust(15, " "), result[key]))
     print ("----------------End-----------------\n")

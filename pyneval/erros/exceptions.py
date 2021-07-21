@@ -46,3 +46,14 @@ class InvalidMetricError(PyNevalError):
             self.detail = "ERROR: The metric '{}' is not supported.".format(metric)
         if valid_metrics is not None:
             self.detail += "\nValid options for --metric:\n{}".format(valid_metrics)
+
+class InvalidEuclideanPoint(PyNevalError):
+    """
+    Invalid Euclidean point
+    """
+    default_detail = "ERROR: invalid euclidean point"
+
+    def __init__(self, param=None):
+        self.detail = self.default_detail
+        if param is not None:
+            self.detail = "ERROR: {} is not a valid eculidean point".format(param)

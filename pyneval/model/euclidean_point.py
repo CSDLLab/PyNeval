@@ -1,6 +1,7 @@
 import numpy as np
 import math
 from pyneval.metric.utils.config_utils import EPS
+from pyneval.erros.exceptions import InvalidEuclideanPoint
 
 class EuclideanPoint(object):
     '''
@@ -86,22 +87,23 @@ class EuclideanPoint(object):
             return True
         return False
 
-    def distance_to_point(self, point):
-        if isinstance(point, list) and len(point) == 3:
-            point = EuclideanPoint(point)
-        if not isinstance(point, EuclideanPoint):
-            raise Exception("[Error:  ] expect point. got {}".format(point))
+    def distance_to_coord(self, coord):
+        if not isinstance(coord, list) and len(coord) != 3:
+            raise InvalidEuclideanPoint(coord)
+        point = EuclideanPoint(coord)
+        return self.distance_to_point(point)
 
+    def distance_to_point(self, point):
+        if not isinstance(point, EuclideanPoint):
+            raise InvalidEuclideanPoint(point)
         sub = [self._pos[0] - point._pos[0],
                self._pos[1] - point._pos[1],
                self._pos[2] - point._pos[2]]
         return math.sqrt(sub[0]*sub[0] + sub[1]*sub[1] + sub[2]*sub[2])
 
     def distance_to_point_2d(self, point):
-        if isinstance(point, list) and len(point) == 3:
-            point = EuclideanPoint(point)
         if not isinstance(point, EuclideanPoint):
-            raise Exception("[Error:  ] expect point. got {}".format(point))
+            raise InvalidEuclideanPoint(point)
 
         sub = [self._pos[0] - point._pos[0],
                self._pos[1] - point._pos[1],
@@ -118,8 +120,8 @@ class EuclideanPoint(object):
         if foot.on_line(line):
             return self.distance_to_point(foot)
         else:
-            dis1 = self.distance_to_point(line.coords[0])
-            dis2 = self.distance_to_point(line.coords[1])
+            dis1 = self.distance_to_coord(line.coords[0])
+            dis2 = self.distance_to_coord(line.coords[1])
             return min(dis1, dis2)
 
     def distance(self, obj):
