@@ -1,12 +1,12 @@
 import argparse
 import importlib
 import os
+import platform
 import sys
-import jsonschema
-
 from multiprocessing import Pool, cpu_count
 
-from pyneval.erros.exceptions import InvalidMetricError, PyNevalError
+import jsonschema
+from pyneval.errors.exceptions import InvalidMetricError, PyNevalError
 from pyneval.io import read_json
 from pyneval.io.read_swc import read_swc_tree, read_swc_trees
 from pyneval.io.read_tiff import read_tiffs
@@ -215,7 +215,7 @@ def run():
     args = read_parameters()
     gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug = set_configs(abs_dir, args)
 
-    if is_debug:
+    if is_debug or platform.system() == "Windows":
         for test_swc_tree in test_swc_trees:
             excute_metric(
                 metric=metric,
@@ -230,7 +230,9 @@ def run():
         max_procs = cpu_count()
         p_pool = Pool(max_procs)
         for test_swc_tree in test_swc_trees:
-            p_pool.apply_async(excute_metric, args=(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir))
+            p_pool.apply_async(
+                excute_metric, args=(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir)
+            )
         p_pool.close()
         p_pool.join()
     print ("All Finished!")

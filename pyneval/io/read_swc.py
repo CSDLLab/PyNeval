@@ -1,6 +1,7 @@
 import os
+
+from pyneval.errors.exceptions import InvalidSwcFileError
 from pyneval.model.swc_node import SwcNode, SwcTree
-from pyneval.erros.exceptions import InvalidSwcFileError
 
 
 def is_swc_file(file_path):

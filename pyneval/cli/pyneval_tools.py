@@ -1,58 +1,27 @@
 import argparse
-import sys
 import os
 import platform
-from pyneval.io.read_swc import read_swc_trees
+import sys
+
+from pyneval.errors.exceptions import InvalidMetricError
 from pyneval.io.read_json import read_json
+from pyneval.io.read_swc import read_swc_trees
 from pyneval.io.swc_writer import swc_save
-from pyneval.tools.re_sample import up_sample_swc_tree_command_line, down_sample_swc_tree_command_line
-
 from pyneval.tools.overlap_detect import overlap_clean
-from pyneval.erros.exceptions import InvalidMetricError
+from pyneval.tools.re_sample import down_sample_swc_tree_command_line, up_sample_swc_tree_command_line
 
-method_list = [
-    "up_sample",
-    "down_sample",
-    "overlap_clean",
-    "US", "DS", "OC"
-]
+method_list = ["up_sample", "down_sample", "overlap_clean", "US", "DS", "OC"]
 
 
 def read_parameters():
-    parser = argparse.ArgumentParser(
-        description="pyneval 1.0"
-    )
+    parser = argparse.ArgumentParser(description="pyneval 1.0")
+    parser.add_argument("--swc_file", "-S", help="the route of the test file", required=False, nargs="*")
+    parser.add_argument("--method", "-M", help="choose a adjust method", required=True)
     parser.add_argument(
-        "--swc_file",
-        "-S",
-        help="the route of the test file",
-        required=False,
-        nargs='*',
+        "--output", "-O", help="the route of the output file.\nif not specified, output to screen", required=True
     )
-    parser.add_argument(
-        "--method",
-        "-M",
-        help="choose a adjust method",
-        required=True
-    )
-    parser.add_argument(
-        "--output",
-        "-O",
-        help="the route of the output file.\nif not specified, output to screen",
-        required=True
-    )
-    parser.add_argument(
-        "--config",
-        "-C",
-        help="special config for different metric method",
-        required=False
-    )
-    parser.add_argument(
-        "--debug",
-        "-D",
-        help="Print debug info or not",
-        required=False
-    )
+    parser.add_argument("--config", "-C", help="special config for different metric method", required=False)
+    parser.add_argument("--debug", "-D", help="Print debug info or not", required=False)
     return parser.parse_args()
 
 
@@ -107,14 +76,18 @@ def run():
     for swc_tree in swc_trees:
         if method in ["up_sample", "US"]:
             up_sampled_swc_tree = up_sample_swc_tree_command_line(swc_tree=swc_tree, config=config)
-            swc_save(swc_tree=up_sampled_swc_tree,
-                     out_path=os.path.join(out_path, "up_sampled_" + tree_name_dict[swc_tree]))
+            swc_save(
+                swc_tree=up_sampled_swc_tree, out_path=os.path.join(out_path, "up_sampled_" + tree_name_dict[swc_tree])
+            )
         if method in ["down_sample", "DS"]:
-            config['stage'] = 0
+            config["stage"] = 0
             down_sampled_swc_tree = down_sample_swc_tree_command_line(swc_tree, config=config)
-            config['stage'] = 1
+            config["stage"] = 1
             down_sampled_swc_tree = down_sample_swc_tree_command_line(down_sampled_swc_tree, config=config)
-            swc_save(swc_tree=down_sampled_swc_tree, out_path=os.path.join(out_path, "down_sampled_" + tree_name_dict[swc_tree]))
+            swc_save(
+                swc_tree=down_sampled_swc_tree,
+                out_path=os.path.join(out_path, "down_sampled_" + tree_name_dict[swc_tree]),
+            )
         if method in ["overlap_clean", "OC"]:
             overlap_clean(swc_tree, out_path, tree_name_dict[swc_tree], config)
         it += 1
@@ -135,8 +108,3 @@ if __name__ == "__main__":
 # pyneval_tools --swc_file D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --config D:\gitProject\mine\PyNeval\config\down_sample.json --method down_sample --output D:\\gitProject\\mine\\PyNeval\\output\\down_sample
 
 # pyneval_tools --swc_file D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --config D:\gitProject\mine\PyNeval\config\up_sample.json --method up_sample --output D:\\gitProject\\mine\\PyNeval\\output\\up_sample
-
-
-
-
-

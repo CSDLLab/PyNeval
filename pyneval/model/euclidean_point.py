@@ -1,6 +1,6 @@
 import math
 
-from pyneval.erros.exceptions import InvalidEuclideanPoint
+from pyneval.errors.exceptions import InvalidEuclideanPoint
 from pyneval.metric.utils.config_utils import EPS
 
 

@@ -37,14 +37,10 @@ class BinaryNode(NodeMixin):
         self.treesize = treesize
 
     def has_children(self):
-        if self.left_son is not None or self.right_son is not None:
-            return True
-        return False
+        return self.left_son is not None or self.right_son is not None
 
     def is_left(self):
-        if self.get_side() == LEFT:
-            return True
-        return False
+        return self.get_side() == LEFT
 
     def get_side(self):
         if self.is_root():
@@ -56,14 +52,10 @@ class BinaryNode(NodeMixin):
         return LEFT
 
     def is_root(self):
-        if self.parent == None:
-            return True
-        return False
+        return self.parent == None
 
     def is_leaf(self):
-        if self.left_son == None and self.right_son == None:
-            return True
-        return False
+        return self.left_son == None and self.right_son == None
 
     def to_str(self):
         print (

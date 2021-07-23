@@ -1,9 +1,12 @@
 import os
-from pyneval.metric.utils.klib.TiffFile import imsave, imread, TiffFile
-from pyneval.erros.exceptions import InvalidTiffFileError
+
+from pyneval.errors.exceptions import InvalidTiffFileError
+from pyneval.metric.utils.klib.TiffFile import TiffFile, imread, imsave
+
 
 def is_tiff_file(tiff_file):
     return tiff_file[-4:] in (".tif", ".TIF")
+
 
 def read_tiff(tiff_path):
     """
@@ -17,6 +20,7 @@ def read_tiff(tiff_path):
         raise InvalidTiffFileError(tiff_path)
     return imread(tiff_path)
 
+
 def read_tiffs(tiff_paths):
     """
     Args:
@@ -28,7 +32,7 @@ def read_tiffs(tiff_paths):
     tiff_files = []
     if os.path.isfile(tiff_paths):
         if not is_tiff_file(tiff_files):
-            print(tiff_paths + "is not a tif file")
+            print (tiff_paths + "is not a tif file")
             return None
         tiff_files.append(tiff_paths)
     else:
