@@ -1,81 +1,63 @@
 import argparse
-import sys
-import os
-import jsonschema
 import importlib
+import os
+import platform
+import sys
+from multiprocessing import Pool, cpu_count
 
-from pyneval.io.read_swc import read_swc_trees
+import jsonschema
+from pyneval.errors.exceptions import InvalidMetricError, PyNevalError
 from pyneval.io import read_json
-from pyneval.io.swc_writer import swc_save
+from pyneval.io.read_swc import read_swc_tree, read_swc_trees
 from pyneval.io.read_tiff import read_tiffs
-from pyneval.metric.utils import anno_utils
-from pyneval.metric.utils import config_utils
+from pyneval.io.swc_writer import swc_save
+from pyneval.metric.utils import anno_utils, config_utils
 from pyneval.metric.utils.metric_manager import get_metric_manager
+
 
 # load method in metrics
 def import_metrics(abs_path):
     metric_path = os.path.join(abs_path, "pyneval/metric")
-    files= os.listdir(metric_path)
+    files = os.listdir(metric_path)
     metrics = []
     for f in files:
         m_f = f.split(".")
-        if len(m_f) == 2 and m_f[0][-7:] == "_metric" and m_f[1] == 'py':
+        if len(m_f) == 2 and m_f[0][-7:] == "_metric" and m_f[1] == "py":
             metrics.append(m_f[0])
     for m in metrics:
-        md = 'pyneval.metric.{}'.format(m)
+        md = "pyneval.metric.{}".format(m)
         importlib.import_module(md)
 
 
 def read_parameters():
     metric_manager = get_metric_manager()
 
-    parser = argparse.ArgumentParser(
-        description="pyneval 1.0"
-    )
+    parser = argparse.ArgumentParser(description="pyneval 1.0")
 
+    parser.add_argument("--gold", "-G", help="path of the gold standard SWC file", required=False)
     parser.add_argument(
-        "--gold",
-        "-G",
-        help="path of the gold standard SWC file",
-        required=False
+        "--test", "-T", help="a list of reconstructed SWC files or folders for evaluation", required=False, nargs="*"
     )
     parser.add_argument(
-        "--test",
-        "-T",
-        help="a list of reconstructed SWC files or folders for evaluation",
-        required=False,
-        nargs='*',
-    )
-    parser.add_argument(
-        "--metric",
-        "-M",
-        help="metric choice: " + metric_manager.get_metric_summary(False) + ".",
-        required=False
+        "--metric", "-M", help="metric choice: " + metric_manager.get_metric_summary(False) + ".", required=False
     )
     parser.add_argument(
         "--output",
         "-O",
         help="output path of metric results, output file is in json format with different scores of the metric",
-        required=False
+        required=False,
     )
     parser.add_argument(
         "--detail",
         "-D",
         help="output path of detail metric result, swc format presented.\n"
-             "identify different type according to metric result for each node",
-        required=False
+        "identify different type according to metric result for each node",
+        required=False,
     )
     parser.add_argument(
-        "--config",
-        "-C",
-        help="path of custom configuration file for the specified metric",
-        required=False
+        "--config", "-C", help="path of custom configuration file for the specified metric", required=False
     )
-    parser.add_argument(
-        "--debug",
-        help="print debug info or not",
-        required=False
-    )
+    parser.add_argument("--debug", help="print debug info or not", required=False)
     return parser.parse_args()
 
 
@@ -88,63 +70,69 @@ def init(abs_dir):
 
 def check_path(path_name, dir_path):
     while not os.path.exists(dir_path) or not os.path.isdir(dir_path):
-        print("The input path {} for {} does not exist or is not a folder. You may choose to:\n"
-              "[Input=1]Input a new path\n"
-              "[Input=2]Quit this process\n"
-              "[Input=3]Continue without saving".format(dir_path, path_name))
+        print (
+            "The input path {} for {} does not exist or is not a folder. You may choose to:\n"
+            "[Input=1]Input a new path\n"
+            "[Input=2]Quit this process\n"
+            "[Input=3]Continue without saving".format(dir_path, path_name)
+        )
         if not os.path.isfile(dir_path):
-            print("[Input=4]Create new folder {}.".format(dir_path))
+            print ("[Input=4]Create new folder {}.".format(dir_path))
         choice = input()
         if choice.lower() == "1":
-            print("Input new detail path:")
+            print ("Input new detail path:")
             new_dir = input()
             return 1, new_dir
         elif choice.lower() == "2":
-            print("Pyneval ends...")
+            print ("Pyneval ends...")
             return 2, ""
         elif choice.lower() == "3":
-            print("Pyneval processing without saving details ...")
+            print ("Pyneval processing without saving details ...")
             return 3, ""
         elif choice.lower() == "4":
             if os.path.isfile(dir_path):
-                print("[Info: ] Error input")
+                print ("[Info: ] Error input")
                 continue
             os.makedirs(dir_path)
-            print("{} has been created".format(dir_path))
+            print ("{} has been created".format(dir_path))
             return 4, ""
         else:
-            print("[Info: ] Error input")
+            print ("[Info: ] Error input")
     return 4, ""
 
 
 def set_configs(abs_dir, args):
+    # argument: debug
+    is_debug = False
+    if args.debug and args.debug.lower() in ("True", "true", "t", "T", "yes", "YES"):
+        is_debug = True
+
     # argument: gold
     gold_swc_path = os.path.join(abs_dir, args.gold)
-    if not (os.path.isfile(gold_swc_path) and gold_swc_path[-4:] == ".swc"):
-        raise Exception("[Error: ] gold standard file is not a swc file")
-    gold_swc_tree = read_swc_trees(gold_swc_path)[0]  # SwcTree
+    gold_swc_tree = read_swc_tree(gold_swc_path)  # SwcTree
 
     # argument: metric
     metric_manager = get_metric_manager()
     metric = metric_manager.get_root_metric(args.metric)
     if not metric:
-        raise Exception("\nERROR: The metric '{}' is not supported.".format(args.metric) +
-                        "\nValid options for --metric:\n" +
-                        metric_manager.get_metric_summary(True))
+        raise InvalidMetricError(args.metric, metric_manager.get_metric_summary(True))
 
     # argument: test
     test_swc_paths = [os.path.join(abs_dir, path) for path in args.test]
     test_swc_trees = []
     # read test trees
-    if metric in ['volume_metric', 'VM']:
+    if metric.lower() in ["volume_metric", "vm"]:
         for file in test_swc_paths:
-            test_swc_trees += read_tiffs(file)
+            test_swc_trees.extend(read_tiffs(file))
     else:
         for file in test_swc_paths:
-            test_swc_trees += read_swc_trees(file)
+            test_swc_trees.extend(read_swc_trees(file))
+
+    if len(test_swc_trees) == 0:
+        raise PyNevalError("test images can't be null")
 
     # info: how many trees read
-    print("There are {} test image(s)".format(len(test_swc_trees)))
+    print ("There are {} test image(s) \n".format(len(test_swc_trees)))
 
     # argument: config
     config_path = args.config
@@ -163,11 +151,10 @@ def set_configs(abs_dir, args):
         choose, new_path = check_path("output", output_dir)
         if choose == 1:
             output_dir = new_path
-        if choose == 2:
+        elif choose == 2:
             raise Exception("Pyneval end by user")
-        if choose == 3:
+        elif choose == 3:
             output_dir = None
-
 
     # argument: detail
     detail_dir = None
@@ -176,14 +163,10 @@ def set_configs(abs_dir, args):
         choose, new_path = check_path("detail", detail_dir)
         if choose == 1:
             detail_dir = new_path
-        if choose == 2:
+        elif choose == 2:
             raise Exception("Pyneval end by user")
-        if choose == 3:
+        elif choose == 3:
             detail_dir = None
-
-
-    # argument: debug
-    is_debug = args.debug
 
     return gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug
 
@@ -193,29 +176,34 @@ def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, outp
     metric_method = metric_manager.get_metric_method(metric)
     test_swc_name = test_swc_tree.get_name()
 
-    result, res_gold_swc_tree, res_test_swc_tree = metric_method(gold_swc_tree=gold_swc_tree,
-                                                                 test_swc_tree=test_swc_tree, config=config)
+    result, res_gold_swc_tree, res_test_swc_tree = metric_method(
+        gold_swc_tree=gold_swc_tree, test_swc_tree=test_swc_tree, config=config
+    )
 
-    print("---------------Result---------------")
+    print ("---------------Result---------------")
+    print ("swc_file_name   = {}".format(test_swc_name))
     for key in result:
-        print("{} = {}".format(key.ljust(15, ' '), result[key]))
-    print("----------------End-----------------\n")
+        print ("{} = {}".format(key.ljust(15, " "), result[key]))
+    print ("----------------End-----------------\n")
 
     file_name = test_swc_name[:-4] + "_" + metric + "_"
 
     if detail_dir:
         if res_gold_swc_tree is not None:
-            swc_save(swc_tree=res_gold_swc_tree,
-                     out_path=os.path.join(detail_dir, file_name + "recall.swc"),
-                     extra=anno_utils.get_detail_type(metric))
+            swc_save(
+                swc_tree=res_gold_swc_tree,
+                out_path=os.path.join(detail_dir, file_name + "recall.swc"),
+                extra=anno_utils.get_detail_type(metric),
+            )
         if res_test_swc_tree is not None:
-            swc_save(swc_tree=res_test_swc_tree,
-                     out_path=os.path.join(detail_dir, file_name + "precision.swc"),
-                     extra=anno_utils.get_detail_type(metric))
+            swc_save(
+                swc_tree=res_test_swc_tree,
+                out_path=os.path.join(detail_dir, file_name + "precision.swc"),
+                extra=anno_utils.get_detail_type(metric),
+            )
 
     if output_dir:
-        read_json.save_json(data=result,
-                            json_file_path=os.path.join(output_dir, file_name + ".json"))
+        read_json.save_json(data=result, json_file_path=os.path.join(output_dir, file_name + ".json"))
 
 
 # command program
@@ -227,9 +215,27 @@ def run():
     args = read_parameters()
     gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug = set_configs(abs_dir, args)
 
-    for test_swc_tree in test_swc_trees:
-        excute_metric(metric=metric, gold_swc_tree=gold_swc_tree, test_swc_tree=test_swc_tree,
-                      config=config, detail_dir=detail_dir, output_dir=output_dir)
+    if is_debug or platform.system() == "Windows":
+        for test_swc_tree in test_swc_trees:
+            excute_metric(
+                metric=metric,
+                gold_swc_tree=gold_swc_tree,
+                test_swc_tree=test_swc_tree,
+                config=config,
+                detail_dir=detail_dir,
+                output_dir=output_dir,
+            )
+    else:
+        # use multi process
+        max_procs = cpu_count()
+        p_pool = Pool(max_procs)
+        for test_swc_tree in test_swc_trees:
+            p_pool.apply_async(
+                excute_metric, args=(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir)
+            )
+        p_pool.close()
+        p_pool.join()
+    print ("All Finished!")
 
 
 if __name__ == "__main__":

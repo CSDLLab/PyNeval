@@ -1,14 +1,13 @@
 # bennieHan 2019-11-12 16:01
 # all right reserved
 
-from anytree import NodeMixin, iterators, RenderTree
-from pyneval.model.euclidean_point import EuclideanPoint
-import os
-
 import math
+import os
 import queue
+
 import numpy as np
-import copy
+from anytree import NodeMixin, RenderTree, iterators
+from pyneval.model.euclidean_point import EuclideanPoint
 
 _3D = "3d"
 _2D = "2d"
@@ -19,7 +18,7 @@ def Make_Virtual():
 
 
 def get_nearby_swc_node_list(gold_node, test_kdtree, test_pos_node_dict, threshold):
-    '''
+    """
     find all nodes in "test_swc_list" which are close enough to "gold_node"
     sort them by distance
 
@@ -27,7 +26,7 @@ def get_nearby_swc_node_list(gold_node, test_kdtree, test_pos_node_dict, thresho
     :param test_swc_list:
     :param threshold:
     :return:
-    '''
+    """
     if gold_node.is_virtual():
         return
     tmp_list = []
@@ -60,7 +59,7 @@ def compute_two_node_area(tn1, tn2, remain_dist):
     r1 = tn1.radius()
     r2 = tn2.radius()
     d = tn1.distance(tn2)
-    print(remain_dist)
+    print (remain_dist)
 
     if remain_dist >= d:
         h = d
@@ -138,29 +137,28 @@ class SwcNode(NodeMixin):
         z_path_lenth: distance to parent
     """
 
-    def __init__(self,
-                 nid=-1,
-                 ntype=0,
-                 radius=1.0,
-                 center=EuclideanPoint(center=[0,0,0]),
-                 parent=None,
-                 depth=0,
-
-                 surface_area=0.0,
-                 volume=0.0,
-
-                 parent_trajectory=None,
-                 left_trajectory=None,
-                 right_trajectory=None,
-
-                 route_length=0.0,
-                 path_length=0.0,
-                 xy_path_length=0.0,
-                 z_path_lenth=0.0):
+    def __init__(
+        self,
+        nid=-1,
+        ntype=0,
+        radius=1.0,
+        center=None,
+        parent=None,
+        depth=0,
+        surface_area=0.0,
+        volume=0.0,
+        parent_trajectory=None,
+        left_trajectory=None,
+        right_trajectory=None,
+        route_length=0.0,
+        path_length=0.0,
+        xy_path_length=0.0,
+        z_path_lenth=0.0,
+    ):
         self._id = nid
         self._type = ntype
         self.parent = parent
-        self._pos = center
+        self._pos = center if center is not None else EuclideanPoint(center=[0, 0, 0])
         self._radius = radius
         self.surface_area = surface_area
         self.volume = volume
@@ -293,14 +291,16 @@ class SwcNode(NodeMixin):
 
     def to_swc_str(self, pid=None):
         if pid is not None:
-            return '{} {} {} {} {} {} {}\n'.format(
-                self._id, self._type, self.get_x(), self.get_y(), self.get_z(), self._radius, pid)
+            return "{} {} {} {} {} {} {}\n".format(
+                self._id, self._type, self.get_x(), self.get_y(), self.get_z(), self._radius, pid
+            )
 
-        return '{} {} {} {} {} {} {}\n'.format(
-            self._id, self._type, self.get_x(), self.get_y(), self.get_z(), self._radius, self.parent.get_id())
+        return "{} {} {} {} {} {} {}\n".format(
+            self._id, self._type, self.get_x(), self.get_y(), self.get_z(), self._radius, self.parent.get_id()
+        )
 
     def __str__(self):
-        return '%d (%d): %s, %g' % (self._id, self._type, str(self.get_center()._pos), self._radius)
+        return "%d (%d): %s, %g" % (self._id, self._type, str(self.get_center()._pos), self._radius)
 
 
 class SwcTree:
@@ -322,7 +322,7 @@ class SwcTree:
         self.id_node_dict = None
 
     def is_comment(self, line):
-        return line.strip().startswith('#')
+        return line.strip().startswith("#")
 
     def root(self):
         return self._root
@@ -335,7 +335,7 @@ class SwcTree:
         return self._root.children
 
     def _print(self):
-        print(RenderTree(self._root).by_attr("_id"))
+        print (RenderTree(self._root).by_attr("_id"))
 
     def clear(self):
         self._root = Make_Virtual()
@@ -354,20 +354,17 @@ class SwcTree:
     # warning: slow, don't use in loop
     def parent_id(self, nid):
         tn = self.node_from_id(nid)
-        if tn:
-            return tn.get_parent_id()
+        return tn.get_parent_id() if tn else None
 
     # warning: slow, don't use in loop
     def parent_node(self, nid):
         tn = self.node_from_id(nid)
-        if tn:
-            return tn.parent
+        return tn.parent if tn else None
 
     # warning: slow, don't use in loop
     def child_list(self, nid):
         tn = self.node_from_id(nid)
-        if tn:
-            return tn.children
+        return tn.children if tn else None
 
     def load_list(self, lines):
         self.clear()
@@ -411,58 +408,12 @@ class SwcTree:
     def load(self, path):
         self.clear()
         self._name = os.path.basename(path)
-        with open(path, 'r') as fp:
+        with open(path, "r") as fp:
             lines = fp.readlines()
-            nodeDict = dict()
-            for line in lines:
-                if not self.is_comment(line):
-                    #                     print line
-                    data = list(map(float, line.split()))
-                    #                     print(data)
-                    if len(data) == 7:
-                        nid = int(data[0])
-                        ntype = int(data[1])
-                        pos = EuclideanPoint(center=data[2:5])
-                        radius = data[5]
-                        parentId = data[6]
-                        if nid in self.id_set:
-                            raise Exception("[Error: SwcTree.load]Same id {}".format(nid))
-                        self.id_set.add(nid)
-                        tn = SwcNode(nid=nid, ntype=ntype, radius=radius, center=pos)
-                        nodeDict[nid] = (tn, parentId)
-            fp.close()
-
-        for _, value in nodeDict.items():
-            tn = value[0]
-            parentId = value[1]
-            if parentId == -1:
-                tn.parent = self._root
-            else:
-                parentNode = nodeDict.get(parentId)
-                if parentNode:
-                    tn.parent = parentNode[0]
-
-        for node in self.get_node_list():
-            if node.parent is None:
-                continue
-            if node.parent.get_id() == -1:
-                node._depth = 0
-            else:
-                node._depth = node.parent._depth + 1
-                node.root_length = node.parent.root_length + node.parent_distance()
+            self.load_list(lines)
 
     def has_regular_node(self):
         return len(self.regular_root()) > 0
-
-    def parent_distance(self, nid):
-        d = 0
-        tn = self.node(nid)
-        if tn:
-            parent_tn = tn.parent
-            if parent_tn:
-                d = tn.distance(parent_tn)
-
-        return d
 
     def scale(self, sx, sy, sz, adjusting_radius=True):
         niter = iterators.PreOrderIter(self._root)
@@ -490,7 +441,7 @@ class SwcTree:
 
     def radius(self, nid):
 
-        return self.node(nid).radius()
+        return self.node_from_id(nid).radius()
 
     def get_depth_array(self, node_num):
         self.depth_array = [0] * (node_num + 10)
@@ -548,16 +499,16 @@ class SwcTree:
             if root in matches.keys():
                 test_anchor = np.array(matches[root]._pos)
             else:
-                nearby_nodes = get_nearby_swc_node_list(gold_node=root, test_swc_list=swc_test_list,
-                                                        threshold=root.radius() / 2)
+                nearby_nodes = get_nearby_swc_node_list(
+                    gold_node=root, test_swc_list=swc_test_list, threshold=root.radius() / 2
+                )
                 if len(nearby_nodes) == 0:
                     continue
                 test_anchor = nearby_nodes[0]._pos
 
             offset._pos = (test_anchor - gold_anchor).tolist()
             if DEBUG:
-                print("off_set:x = {}, y = {}, z = {}".format(
-                    offset._pos[0], offset._pos[1], offset._pos[2]))
+                print ("off_set:x = {}, y = {}, z = {}".format(offset._pos[0], offset._pos[1], offset._pos[2]))
 
             stack.put(root)
             while not stack.empty():
@@ -576,8 +527,8 @@ class SwcTree:
         stack = queue.LifoQueue()
         swc_list = self.get_node_list()
         list_size = max(self.id_set)
-        vis_list = np.zeros(shape=(list_size+10))
-        pa_list = [None] * (list_size+10)
+        vis_list = np.zeros(shape=(list_size + 10))
+        pa_list = [None] * (list_size + 10)
 
         for node in swc_list:
             pa_list[node.get_id()] = node.parent
@@ -592,9 +543,11 @@ class SwcTree:
                 if not vis_list[son.get_id()]:
                     stack.put(son)
                     pa_list[son.get_id()] = cur_node
-            if cur_node.parent is not None and \
-                    cur_node.parent.get_id() != -1 and \
-                    not vis_list[cur_node.parent.get_id()]:
+            if (
+                cur_node.parent is not None
+                and cur_node.parent.get_id() != -1
+                and not vis_list[cur_node.parent.get_id()]
+            ):
                 stack.put(cur_node.parent)
                 pa_list[cur_node.parent.get_id()] = cur_node
 
@@ -673,15 +626,15 @@ class SwcTree:
         return self.node_list
 
     def sort_node_list(self, key="default"):
-        '''
+        """
         index:
             default: order by pre order
             id: order by id
-        '''
+        """
         if key == "default":
             self.get_node_list(update=True)
         if key == "id":
-            self.node_list.sort(key=lambda node:node.get_id())
+            self.node_list.sort(key=lambda node: node.get_id())
 
     def to_str_list(self):
         swc_node_list = self.get_node_list()
@@ -756,9 +709,10 @@ class SwcTree:
                 node._type = root_id + 3
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import os
     from pyneval.io.swc_writer import swc_save
+
     path = "..\..\data\\test_data\\topo_metric_data"
     for file in os.listdir(path):
         tree = SwcTree()
@@ -768,4 +722,3 @@ if __name__ == '__main__':
         else:
             tree.set_node_type_by_topo(root_id=5)
         swc_save(tree, out_path=os.path.join(path, "s" + file))
-
