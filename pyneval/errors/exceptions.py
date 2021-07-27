@@ -57,3 +57,14 @@ class InvalidEuclideanPoint(PyNevalError):
         self.detail = self.default_detail
         if param is not None:
             self.detail = "ERROR: {} is not a valid eculidean point".format(param)
+
+class InvalidNode(PyNevalError):
+    """
+    Invalid node
+    """
+    default_detail = "ERROR: invalid node"
+
+    def __init__(self, detail=""):
+        self.detail = self.default_detail
+        if detail:
+            self.detail = "ERROR: {}".format(detail)
