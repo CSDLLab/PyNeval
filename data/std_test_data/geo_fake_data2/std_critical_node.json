@@ -1,0 +1,13 @@
+{
+    "gold_len": 2,
+    "test_len": 2,
+    "true_pos_num": 2,
+    "false_neg_num": 0,
+    "false_pos_num": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "mean_dis": 0.8154696931523573,
+    "tot_dis": 1.6309393863047146,
+    "pt_cost": 1.6309393863047146,
+    "iso_node_num": 0
+}
