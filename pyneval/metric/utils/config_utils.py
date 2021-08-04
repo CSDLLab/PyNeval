@@ -49,8 +49,7 @@ def get_default_configs(method):
         configs["debug"] = False
 
     if method == "critical_node":
-        configs["threshold_dis"] = 2
-        configs["threshold_mode"] = 1
+        configs["distance_threshold"] = 2
         configs["critical_type"] = 1
         configs["scale"] = [1, 1, 1]
         configs["true_positive"] = 3
@@ -157,8 +156,7 @@ def get_config_schema(method):
             "title": "branch metric schema",
             "type": "object",
             "required": [
-              "threshold_dis",
-              "threshold_mode",
+              "distance_threshold",
               "critical_type",
               "scale",
               "true_positive",
