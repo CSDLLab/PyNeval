@@ -8,6 +8,5 @@
     "recall": 1.0,
     "mean_dis": 0.0,
     "tot_dis": 0.0,
-    "pt_cost": 0.0,
-    "iso_node_num": 0
+    "f1_score": 1.0
 }

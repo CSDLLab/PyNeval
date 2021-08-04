@@ -5,8 +5,9 @@ from pyneval.model import swc_node
 from pyneval.metric.utils import km_utils
 from pyneval.metric.utils import point_match_utils
 from pyneval.metric.utils.metric_manager import get_metric_manager
-
+from pyneval.metric.utils import bigraph_maxmatch_utils
 metric_manager = get_metric_manager()
+
 
 class CriticalNodeMetric(object):
     """
@@ -15,14 +16,12 @@ class CriticalNodeMetric(object):
     def __init__(self, config):
         # read configs
         self.debug = config["debug"] if config.get("debug") is not None else False
-        self.threshold_dis = config["threshold_dis"]
-        self.threshold_mode = config["threshold_mode"]
+        self.distance_threshold = config["distance_threshold"]
         self.critical_type = config["critical_type"]
         self.scale = config["scale"]
         self.true_positive = config["true_positive"]
         self.missed = config["missed"]
         self.excess = config["excess"]
-
 
     def get_result(self, test_len, gold_len, switch, km, threshold_dis):
         false_pos_num, false_neg_num, true_pos_num = 0, 0, 0
@@ -57,39 +56,30 @@ class CriticalNodeMetric(object):
         # print(pt_cost)
         return gold_len, test_len, true_pos_num, false_neg_num, false_pos_num, mean_dis, mean_dis * true_pos_num, pt_cost
 
-    def get_colored_tree(self, test_node_list, gold_node_list, switch, km, color):
+    def get_colored_tree(self, gold_node_list, test_node_list, MaxMatch, color):
         """
         color[0] = tp's color
         color[1] = fp's color
         color[2] = fn's color
         """
-        tp_set = set()
         for i in range(len(gold_node_list)):
-            if km.match[i] != -1 and km.G[km.match[i]][i] != -0x3F3F3F3F / 2:
+            if MaxMatch.pa[i] != -1:
                 gold_node_list[i]._type = color[0]
-                test_node_list[km.match[i]]._type = color[0]
-                tp_set.add(test_node_list[km.match[i]])
             else:
-                if switch:
-                    gold_node_list[i]._type = color[1]
-                else:
-                    gold_node_list[i]._type = color[2]
-        for node in test_node_list:
-            if node not in tp_set:
-                if switch:
-                    node._type = color[2]
-                else:
-                    node._type = color[1]
+                gold_node_list[i]._type = color[2]
+        for i in range(len(test_node_list)):
+            if MaxMatch.pb[i] != -1:
+                test_node_list[i]._type = color[0]
+            else:
+                test_node_list[i]._type = color[1]
 
-
-    def score_point_distance(
+    def KM_max_match(
             self,
         gold_tree,
         test_tree,
         test_node_list,
         gold_node_list,
         threshold_dis,
-        color,
     ):
         """
         get minimum matching distance by running KM algorithm
@@ -101,7 +91,6 @@ class CriticalNodeMetric(object):
             test_node_list(List): contains only branch nodes
             threshold_dis: if the distance of two node are larger than this threshold,
                            they are considered unlimited far
-            color(List): color id of tp, fn, fp nodes
         Returns:
             gold_len(int): length of gold_node_list
             test_len(int): length of test_node_list
@@ -139,24 +128,38 @@ class CriticalNodeMetric(object):
         for node in test_tree.get_node_list():
             if node.is_isolated():
                 iso_node_num += 1
-        # get a colored tree with
-        self.get_colored_tree(test_node_list=test_node_list, gold_node_list=gold_node_list, switch=switch, km=km, color=color)
         return gold_len, test_len, true_pos_num, false_neg_num, false_pos_num, mean_dis, tot_dis, pt_cost, iso_node_num
 
+    def max_match(self, test_node_list, gold_node_list, distance_threshold):
+        gold_list_len = len(gold_node_list)
+        test_list_len = len(test_node_list)
+        MaxMatch = bigraph_maxmatch_utils.AugmentPath(gold_list_len, test_list_len)
+        for i in range(len(gold_node_list)):
+            for j in range(len(test_node_list)):
+                dis = gold_node_list[i].distance(test_node_list[j])
+                if dis <= distance_threshold:
+                    MaxMatch.add(i, j)
+        MaxMatch.solve()
+        return MaxMatch
+
+    def get_total_dis(self, gold_critical_swc_list, test_critical_swc_list, MaxMatch):
+        dis = 0
+        for i in range(len(MaxMatch.pa)):
+            if MaxMatch.pa[i] == -1:
+                continue
+            dis += gold_critical_swc_list[i].distance(test_critical_swc_list[MaxMatch.pa[i]])
+        return dis
+
     def run(self, gold_swc_tree, test_swc_tree):
+        # rescale the input tree
         gold_swc_tree.rescale(self.scale)
         test_swc_tree.rescale(self.scale)
-        # in threshold mode 2, threshold is a multiple of the average length of edges
-        if self.threshold_mode == 2:
-            # length of the entire gold swc forest
-            tot_dis = gold_swc_tree.length()
-            # number of edges in the forest
-            edge_num = len(gold_swc_tree.get_node_list()) - 1 - len(gold_swc_tree.root().children)
-            self.threshold_dis = self.threshold_dis * tot_dis / edge_num
+
         # denote the color id of different type of nodes.
         color = [self.true_positive, self.missed, self.excess]
         gold_swc_tree.type_clear(0, 0)
         test_swc_tree.type_clear(0, 0)
+
         test_critical_swc_list = []
         gold_critical_swc_list = []
         # critical_type == 1: both branches and leaves
@@ -169,27 +172,31 @@ class CriticalNodeMetric(object):
             test_critical_swc_list.extend(test_swc_tree.get_leaf_swc_list())
             gold_critical_swc_list.extend(gold_swc_tree.get_leaf_swc_list())
 
-        branch_result_tuple = self.score_point_distance(
-            gold_tree=gold_swc_tree,
-            test_tree=test_swc_tree,
+        MaxMatch = self.max_match(
             test_node_list=test_critical_swc_list,
             gold_node_list=gold_critical_swc_list,
-            threshold_dis=self.threshold_dis,
-            color=color,
+            distance_threshold=self.distance_threshold
+        )
+        # get a colored tree with
+        self.get_colored_tree(
+            gold_node_list=gold_critical_swc_list, test_node_list=test_critical_swc_list,
+            MaxMatch=MaxMatch, color=color
         )
 
+        precision = MaxMatch.res / len(test_critical_swc_list)
+        recall = MaxMatch.res / len(gold_critical_swc_list)
+        tot_dis = self.get_total_dis(gold_critical_swc_list, test_critical_swc_list, MaxMatch)
         branch_result = {
-            "gold_len": branch_result_tuple[0],
-            "test_len": branch_result_tuple[1],
-            "true_pos_num": branch_result_tuple[2],
-            "false_neg_num": branch_result_tuple[3],
-            "false_pos_num": branch_result_tuple[4],
-            "precision": branch_result_tuple[2] / branch_result_tuple[1],
-            "recall": branch_result_tuple[2] / branch_result_tuple[0],
-            "mean_dis": branch_result_tuple[5],
-            "tot_dis": branch_result_tuple[6],
-            "pt_cost": branch_result_tuple[7],
-            "iso_node_num": branch_result_tuple[8],
+            "gold_len": len(gold_critical_swc_list),
+            "test_len": len(test_critical_swc_list),
+            "true_pos_num": MaxMatch.res,
+            "false_neg_num": len(gold_critical_swc_list) - MaxMatch.res,
+            "false_pos_num": len(test_critical_swc_list) - MaxMatch.res,
+            "precision": precision,
+            "recall": recall,
+            "mean_dis": tot_dis/MaxMatch.res,
+            "tot_dis": tot_dis,
+            "f1_score": 2*precision*recall/(precision + recall),
         }
         return branch_result, gold_swc_tree, test_swc_tree
 
@@ -228,7 +235,6 @@ def critical_node_metric(gold_swc_tree, test_swc_tree, config):
     return critical_node.run(gold_swc_tree, test_swc_tree)
 
 
-
 if __name__ == "__main__":
     sys.setrecursionlimit(1000000)
     file_name = "fake_data11"
@@ -258,8 +264,7 @@ if __name__ == "__main__":
         "recall                = {}\n"
         "matched_mean_distance = {}\n"
         "matched_sum_distance  = {}\n"
-        "pt_score              = {}\n"
-        "isolated node number  = {}".format(
+        "f1_score              = {}".format(
             branch_result["gold_len"],
             branch_result["test_len"],
             branch_result["true_pos_num"],
@@ -269,8 +274,7 @@ if __name__ == "__main__":
             branch_result["recall"],
             branch_result["mean_dis"],
             branch_result["tot_dis"],
-            branch_result["pt_cost"],
-            branch_result["iso_node_num"],
+            branch_result["f1_score"],
         )
     )
     print ("----------------End-----------------")
