@@ -28,51 +28,94 @@ from pyneval.metric.utils.metric_manager import get_metric_manager
 
 metric_manager = get_metric_manager()
 
-def get_mse(src_tree, tar_tree, ssd_threshold=2.0, mode=1):
-    """ calculate the minimum square error of two trees
-    find the closest node on the tar_tree for each node on the src tree, calculate the average
-    distance of these node pairs.
 
-    Args:
-        src_tree(SwcTree):
-        tar_tree(SwcTree):
-        ssd_threshold(float): distance will be count into the res
-            only if two nodes' distance is larger than this threshold.
-        mode(1 or 2):
-            1 means static threshold, equal to ssd_threshold.
-            2 means dynamic threshold, equal to ssd_threshold * src_node.threshold
-
-    Returns:
-        dis(float): average minimum distance of node, distance must be larger than ssd_threshold
-        num(float): The number of pairs of nodes that are counted when calculating distance
-
-    Raise:
-        None
+class SsdMetric(object):
     """
-    dis, num = 0, 0
-    kdtree, pos_node_dict = point_match_utils.create_kdtree(tar_tree.get_node_list())
-    for node in src_tree.get_node_list():
-        if node.is_virtual():
-            continue
-        target_pos = kdtree.search_knn(list(node.get_center_as_tuple()), k=1)[0]
-        target_node = pos_node_dict[tuple(target_pos[0].data)]
+    ssd metric
+    """
 
-        cur_dis = target_node.distance(node)
+    def __init__(self, config):
+        self.debug = config["debug"] if config.get("debug") is not None else False
+        self.threshold_mode = config["threshold_mode"]
+        self.ssd_threshold = config["ssd_threshold"]
+        self.up_sample_threshold = config["up_sample_threshold"]
+        self.scale = config["scale"]
 
-        if mode == 1:
-            threshold = ssd_threshold
-        else:
-            threshold = ssd_threshold * node.radius()
+    def get_mse(self, src_tree, tar_tree, ssd_threshold=2.0, mode=1):
+        """ calculate the minimum square error of two trees
+        find the closest node on the tar_tree for each node on the src tree, calculate the average
+        distance of these node pairs.
 
-        if cur_dis >= threshold:
-            node._type = 9
-            dis += cur_dis
-            num += 1
-    try:
-        dis /= num
-    except ZeroDivisionError:
-        dis = num = 0
-    return dis, num
+        Args:
+            src_tree(SwcTree):
+            tar_tree(SwcTree):
+            ssd_threshold(float): distance will be count into the res
+                only if two nodes' distance is larger than this threshold.
+            mode(1 or 2):
+                1 means static threshold, equal to ssd_threshold.
+                2 means dynamic threshold, equal to ssd_threshold * src_node.threshold
+
+        Returns:
+            dis(float): average minimum distance of node, distance must be larger than ssd_threshold
+            num(float): The number of pairs of nodes that are counted when calculating distance
+
+        Raise:
+            None
+        """
+        dis, num = 0, 0
+        kdtree, pos_node_dict = point_match_utils.create_kdtree(tar_tree.get_node_list())
+        for node in src_tree.get_node_list():
+            if node.is_virtual():
+                continue
+            target_pos = kdtree.search_knn(list(node.get_center_as_tuple()), k=1)[0]
+            target_node = pos_node_dict[tuple(target_pos[0].data)]
+
+            cur_dis = target_node.distance(node)
+
+            if mode == 1:
+                threshold = ssd_threshold
+            else:
+                threshold = ssd_threshold * node.radius()
+
+            if cur_dis >= threshold:
+                node._type = 9
+                dis += cur_dis
+                num += 1
+        try:
+            dis /= num
+        except ZeroDivisionError:
+            dis = num = 0
+        return dis, num
+
+    def run(self, gold_swc_tree, test_swc_tree):
+        gold_swc_tree.rescale(self.scale)
+        test_swc_tree.rescale(self.scale)
+        u_gold_swc_tree = re_sample.up_sample_swc_tree(swc_tree=gold_swc_tree,
+                                                       length_threshold=self.up_sample_threshold)
+        u_test_swc_tree = re_sample.up_sample_swc_tree(swc_tree=test_swc_tree,
+                                                       length_threshold=self.up_sample_threshold)
+        u_gold_swc_tree.set_node_type_by_topo(root_id=1)
+        u_test_swc_tree.set_node_type_by_topo(root_id=5)
+
+        g2t_score, g2t_num = self.get_mse(src_tree=u_gold_swc_tree, tar_tree=u_test_swc_tree,
+                                     ssd_threshold=self.ssd_threshold, mode=self.threshold_mode)
+        t2g_score, t2g_num = self.get_mse(src_tree=u_test_swc_tree, tar_tree=u_gold_swc_tree,
+                                     ssd_threshold=self.ssd_threshold, mode=self.threshold_mode)
+
+        if self.debug:
+            print("recall_num = {}, pre_num = {}, gold_tot_num = {}, test_tot_num = {} {} {}".format(
+                g2t_num, t2g_num, u_gold_swc_tree.size(), u_test_swc_tree.size(), gold_swc_tree.length(),
+                test_swc_tree.length()
+            ))
+
+        res = {
+            "avg_score": (g2t_score + t2g_score) / 2,
+            "recall": 1 - g2t_num / u_gold_swc_tree.size(),
+            "precision": 1 - t2g_num / u_test_swc_tree.size()
+        }
+
+        return res, u_gold_swc_tree, u_test_swc_tree
+
 
 @metric_manager.register(
     name="ssd",
@@ -105,39 +148,8 @@ def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree,
     Raises:
         None
     """
-    debug = config["debug"]
-    threshold_mode = config["threshold_mode"]
-    ssd_threshold = config["ssd_threshold"]
-    up_sample_threshold = config["up_sample_threshold"]
-    scale = config["scale"]
-
-    gold_swc_tree.rescale(scale)
-    test_swc_tree.rescale(scale)
-    u_gold_swc_tree = re_sample.up_sample_swc_tree(swc_tree=gold_swc_tree,
-                                                   length_threshold=up_sample_threshold)
-    u_test_swc_tree = re_sample.up_sample_swc_tree(swc_tree=test_swc_tree,
-                                                   length_threshold=up_sample_threshold)
-    u_gold_swc_tree.set_node_type_by_topo(root_id=1)
-    u_test_swc_tree.set_node_type_by_topo(root_id=5)
-
-    g2t_score, g2t_num = get_mse(src_tree=u_gold_swc_tree, tar_tree=u_test_swc_tree,
-                                 ssd_threshold=ssd_threshold, mode=threshold_mode)
-    t2g_score, t2g_num = get_mse(src_tree=u_test_swc_tree, tar_tree=u_gold_swc_tree,
-                                 ssd_threshold=ssd_threshold, mode=threshold_mode)
-
-    if debug:
-        print("recall_num = {}, pre_num = {}, gold_tot_num = {}, test_tot_num = {} {} {}".format(
-            g2t_num, t2g_num, u_gold_swc_tree.size(), u_test_swc_tree.size(), gold_swc_tree.length(), test_swc_tree.length()
-        ))
-
-    res = {
-        "avg_score": (g2t_score + t2g_score) / 2,
-        "recall": 1 - g2t_num/u_gold_swc_tree.size(),
-        "precision": 1 - t2g_num/u_test_swc_tree.size()
-    }
-
-    return res, u_gold_swc_tree, u_test_swc_tree
-
+    ssd = SsdMetric(config)
+    return ssd.run(gold_swc_tree, test_swc_tree)
 
 if __name__ == "__main__":
     test_tree = swc_node.SwcTree()
