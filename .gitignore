@@ -1,4 +1,6 @@
 
+.DS_Store
+
 .idea/
 build/
 dist/
@@ -14,3 +16,4 @@ pyneval/model/__pycache__/
 pyneval/tools/__pycache__/
 pyneval/errors/__pycache__/
 
+test_data/
