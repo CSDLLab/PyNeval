@@ -217,7 +217,7 @@ def run():
 
     metric_manager = get_metric_manager()
     metric_method = metric_manager.get_metric_method(metric)
-    if is_debug or platform.system() == "Windows":
+    if is_debug or platform.system() == "windows":
         for test_swc_tree in test_swc_trees:
             excute_metric(
                 metric=metric,
