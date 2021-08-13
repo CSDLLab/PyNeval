@@ -51,7 +51,7 @@ def read_parameters():
         "--detail",
         "-D",
         help="output path of detail metric result, swc format presented.\n"
-        "identify different type according to metric result for each node",
+             "identify different type according to metric result for each node",
         required=False,
     )
     parser.add_argument(
@@ -70,34 +70,34 @@ def init(abs_dir):
 
 def check_path(path_name, dir_path):
     while not os.path.exists(dir_path) or not os.path.isdir(dir_path):
-        print (
+        print(
             "The input path {} for {} does not exist or is not a folder. You may choose to:\n"
             "[Input=1]Input a new path\n"
             "[Input=2]Quit this process\n"
             "[Input=3]Continue without saving".format(dir_path, path_name)
         )
         if not os.path.isfile(dir_path):
-            print ("[Input=4]Create new folder {}.".format(dir_path))
+            print("[Input=4]Create new folder {}.".format(dir_path))
         choice = input()
         if choice.lower() == "1":
-            print ("Input new detail path:")
+            print("Input new detail path:")
             new_dir = input()
             return 1, new_dir
         elif choice.lower() == "2":
-            print ("Pyneval ends...")
+            print("Pyneval ends...")
             return 2, ""
         elif choice.lower() == "3":
-            print ("Pyneval processing without saving details ...")
+            print("Pyneval processing without saving details ...")
             return 3, ""
         elif choice.lower() == "4":
             if os.path.isfile(dir_path):
-                print ("[Info: ] Error input")
+                print("[Info: ] Error input")
                 continue
             os.makedirs(dir_path)
-            print ("{} has been created".format(dir_path))
+            print("{} has been created".format(dir_path))
             return 4, ""
         else:
-            print ("[Info: ] Error input")
+            print("[Info: ] Error input")
     return 4, ""
 
 
@@ -132,7 +132,7 @@ def set_configs(abs_dir, args):
         raise PyNevalError("test images can't be null")
 
     # info: how many trees read
-    print ("There are {} test image(s) \n".format(len(test_swc_trees)))
+    print("There are {} test image(s) \n".format(len(test_swc_trees)))
 
     # argument: config
     config_path = args.config
@@ -171,20 +171,21 @@ def set_configs(abs_dir, args):
     return gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug
 
 
-def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir):
-    metric_manager = get_metric_manager()
-    metric_method = metric_manager.get_metric_method(metric)
+def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir, metric_method):
     test_swc_name = test_swc_tree.get_name()
 
     result, res_gold_swc_tree, res_test_swc_tree = metric_method(
         gold_swc_tree=gold_swc_tree, test_swc_tree=test_swc_tree, config=config
     )
-
-    print ("---------------Result---------------")
-    print ("swc_file_name   = {}".format(test_swc_name))
+    result_info = ""
     for key in result:
-        print ("{} = {}".format(key.ljust(15, " "), result[key]))
-    print ("----------------End-----------------\n")
+        result_info += "{} = {}\n".format(key.ljust(15, " "), result[key])
+
+    print("---------------Result---------------\n" +
+          "swc_file_name   = {}\n".format(test_swc_name) +
+          result_info +
+          "----------------End-----------------\n"
+          )
 
     file_name = test_swc_name[:-4] + "_" + metric + "_"
 
@@ -205,7 +206,6 @@ def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, outp
     if output_dir:
         read_json.save_json(data=result, json_file_path=os.path.join(output_dir, file_name + ".json"))
 
-
 # command program
 def run():
     abs_dir = os.path.abspath("")
@@ -215,7 +215,9 @@ def run():
     args = read_parameters()
     gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug = set_configs(abs_dir, args)
 
-    if is_debug or platform.system() == "Windows":
+    metric_manager = get_metric_manager()
+    metric_method = metric_manager.get_metric_method(metric)
+    if is_debug or platform.system() == "windows":
         for test_swc_tree in test_swc_trees:
             excute_metric(
                 metric=metric,
@@ -224,23 +226,26 @@ def run():
                 config=config,
                 detail_dir=detail_dir,
                 output_dir=output_dir,
+                metric_method=metric_method,
             )
     else:
         # use multi process
         max_procs = cpu_count()
+        if len(test_swc_trees) < max_procs:
+            max_procs = len(test_swc_trees)
         p_pool = Pool(max_procs)
         for test_swc_tree in test_swc_trees:
             p_pool.apply_async(
-                excute_metric, args=(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir)
+                excute_metric,
+                args=(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir, metric_method),
             )
         p_pool.close()
         p_pool.join()
-    print ("All Finished!")
+    print("All Finished!")
 
 
 if __name__ == "__main__":
     sys.exit(run())
-
 
 # pyneval --test D:\gitProject\mine\PyNeval\test\data_example\test\2_18_test.swc --gold D:\gitProject\mine\PyNeval\test\data_example\gold\2_18_gold.swc --metric matched_length --reverse true
 
