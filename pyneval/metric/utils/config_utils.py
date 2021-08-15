@@ -48,7 +48,7 @@ def get_default_configs(method):
         configs["local_path_error_threshold"] = 0.4
         configs["debug"] = False
 
-    if method == "critical_node":
+    if method == "cn":
         configs["distance_threshold"] = 2
         configs["critical_type"] = 1
         configs["scale"] = [1, 1, 1]
@@ -151,7 +151,7 @@ def get_config_schema(method):
             }
         }
 
-    if method == "critical_node":
+    if method == "cn":
         schema = {
             "title": "branch metric schema",
             "type": "object",
