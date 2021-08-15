@@ -55,9 +55,12 @@ def read_parameters():
         required=False,
     )
     parser.add_argument(
-        "--config", "-C", help="path of custom configuration file for the specified metric", required=False
+        "--config", "-C", help="path of custom configuration file for the specified metric", required=False,
     )
-    parser.add_argument("--debug", help="print debug info or not", required=False)
+    parser.add_argument(
+        "--parallel", "-P", help="Enable the parallel processing", required=False, action="store_true"
+    )
+    parser.add_argument("--debug", help="print debug info or not", required=False, action="store_true")
     return parser.parse_args()
 
 
@@ -104,7 +107,7 @@ def check_path(path_name, dir_path):
 def set_configs(abs_dir, args):
     # argument: debug
     is_debug = False
-    if args.debug and args.debug.lower() in ("True", "true", "t", "T", "yes", "YES"):
+    if args.debug and args.debug.lower() in ("true", "t", "yes"):
         is_debug = True
 
     # argument: gold
@@ -168,7 +171,12 @@ def set_configs(abs_dir, args):
         elif choose == 3:
             detail_dir = None
 
-    return gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug
+    # argument: parallel
+    is_parallel = False
+    if args.parallel:
+        is_parallel = args.parallel
+
+    return gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug, is_parallel
 
 
 def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir, metric_method):
@@ -213,22 +221,11 @@ def run():
     init(abs_dir)
 
     args = read_parameters()
-    gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug = set_configs(abs_dir, args)
+    gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug, is_parallel = set_configs(abs_dir, args)
 
     metric_manager = get_metric_manager()
     metric_method = metric_manager.get_metric_method(metric)
-    if is_debug or platform.system() == "windows":
-        for test_swc_tree in test_swc_trees:
-            excute_metric(
-                metric=metric,
-                gold_swc_tree=gold_swc_tree,
-                test_swc_tree=test_swc_tree,
-                config=config,
-                detail_dir=detail_dir,
-                output_dir=output_dir,
-                metric_method=metric_method,
-            )
-    else:
+    if is_parallel:
         # use multi process
         max_procs = cpu_count()
         if len(test_swc_trees) < max_procs:
@@ -241,6 +238,17 @@ def run():
             )
         p_pool.close()
         p_pool.join()
+    else:
+        for test_swc_tree in test_swc_trees:
+            excute_metric(
+                metric=metric,
+                gold_swc_tree=gold_swc_tree,
+                test_swc_tree=test_swc_tree,
+                config=config,
+                detail_dir=detail_dir,
+                output_dir=output_dir,
+                metric_method=metric_method,
+            )
     print("All Finished!")
 
 
@@ -261,4 +269,4 @@ if __name__ == "__main__":
 
 # pyneval --gold .\\data\\test_data\\ssd_data\\gold\\a.swc --test .\\data\\test_data\\ssd_data\\test\\a.swc --metric critical_node_metric
 
-# pyneval --gold .\\data\test_data\geo_metric_data\gold_34_23_10.swc --test .\data\test_data\geo_metric_data\test_34_23_10.swc --metric critical
+# pyneval --gold .\\data\test_data\geo_metric_data\gold_34_23_10.swc --test .\data\test_data\geo_metric_data\test_34_23_10.swc .\data\test_data\geo_metric_data\test_34_23_10.swc --metric cn

@@ -201,11 +201,11 @@ class CriticalNodeMetric(object):
         return branch_result, gold_swc_tree, test_swc_tree
 
 @metric_manager.register(
-    name="critical_node",
+    name="cn",
     config="critical_node_metric.json",
     desc="quality of critical points",
     public=True,
-    alias=["BM"],
+    alias=["CN"],
 )
 def critical_node_metric(gold_swc_tree, test_swc_tree, config):
     """
