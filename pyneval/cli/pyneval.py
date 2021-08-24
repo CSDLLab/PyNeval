@@ -13,6 +13,7 @@ from pyneval.io.read_tiff import read_tiffs
 from pyneval.io.swc_writer import swc_save
 from pyneval.metric.utils import anno_utils, config_utils
 from pyneval.metric.utils.metric_manager import get_metric_manager
+from pyneval.tools.optimize import optimize
 
 
 # load method in metrics
@@ -34,12 +35,24 @@ def read_parameters():
 
     parser = argparse.ArgumentParser(description="pyneval 1.0")
 
-    parser.add_argument("--gold", "-G", help="path of the gold standard SWC file", required=False)
     parser.add_argument(
-        "--test", "-T", help="a list of reconstructed SWC files or folders for evaluation", required=False, nargs="*"
+        "--gold",
+        "-G",
+        help="path of the gold standard SWC file",
+        required=False
     )
     parser.add_argument(
-        "--metric", "-M", help="metric choice: " + metric_manager.get_metric_summary(False) + ".", required=False
+        "--test",
+        "-T",
+        help="a list of reconstructed SWC files or folders for evaluation", 
+        required=False, 
+        nargs="*"
+    )
+    parser.add_argument(
+        "--metric", 
+        "-M", 
+        help="metric choice: " + metric_manager.get_metric_summary(False) + ".", 
+        required=False
     )
     parser.add_argument(
         "--output",
@@ -55,12 +68,26 @@ def read_parameters():
         required=False,
     )
     parser.add_argument(
-        "--config", "-C", help="path of custom configuration file for the specified metric", required=False,
+        "--config", 
+        "-C", 
+        help="path of custom configuration file for the specified metric", 
+        required=False,
     )
     parser.add_argument(
-        "--parallel", "-P", help="Enable the parallel processing", required=False, action="store_true"
+        "--parallel", 
+        "-P", 
+        help="Enable the parallel processing", 
+        required=False, 
+        action="store_true"
     )
+    parser.add_argument(
+        "--optimize", 
+        help="Enable optimizer mode", 
+        required=False, 
+    )
+
     parser.add_argument("--debug", help="print debug info or not", required=False, action="store_true")
+    
     return parser.parse_args()
 
 
@@ -124,14 +151,13 @@ def set_configs(abs_dir, args):
     test_swc_paths = [os.path.join(abs_dir, path) for path in args.test]
     test_swc_trees = []
     # read test trees
-    if metric.lower() in ["volume_metric", "vm"]:
-        for file in test_swc_paths:
-            test_swc_trees.extend(read_tiffs(file))
-    else:
-        for file in test_swc_paths:
-            test_swc_trees.extend(read_swc_trees(file))
+    for file in test_swc_paths:
+        if file[-4:].lower() == ".tif":
+            continue
+        test_swc_trees.extend(read_swc_trees(file))
 
-    if len(test_swc_trees) == 0:
+
+    if len(test_swc_paths) == 0:
         raise PyNevalError("test images can't be null")
 
     # info: how many trees read
@@ -176,7 +202,12 @@ def set_configs(abs_dir, args):
     if args.parallel:
         is_parallel = args.parallel
 
-    return gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug, is_parallel
+    # argument: optimize
+    optimize_config = None
+    if args.optimize:
+        optimize_config = read_json.read_json(args.optimize)
+
+    return gold_swc_tree, test_swc_trees, test_swc_paths, metric, output_dir, detail_dir, config, is_debug, is_parallel, optimize_config
 
 
 def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_dir, metric_method):
@@ -221,11 +252,16 @@ def run():
     init(abs_dir)
 
     args = read_parameters()
-    gold_swc_tree, test_swc_trees, metric, output_dir, detail_dir, config, is_debug, is_parallel = set_configs(abs_dir, args)
-
+    gold_swc_tree, test_swc_trees, test_swc_paths, metric, output_dir, detail_dir, \
+    config, is_debug, is_parallel, optimize_config = set_configs(abs_dir, args)
+    
     metric_manager = get_metric_manager()
     metric_method = metric_manager.get_metric_method(metric)
-    if is_parallel:
+
+    if optimize_config is not None:
+        optimize.optimize(gold_swc_tree=gold_swc_tree, test_swc_paths=test_swc_paths, 
+                          optimize_config=optimize_config, metric_config=config, metric_method=metric_method)
+    elif is_parallel:
         # use multi process
         max_procs = cpu_count()
         if len(test_swc_trees) < max_procs:

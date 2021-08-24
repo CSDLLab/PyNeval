@@ -9,8 +9,6 @@ import multiprocessing as mp
 from sko.base import SkoBase
 from sko.operators import mutation
 
-CPU_CORE_NUM = 15
-
 
 class SimulatedAnnealingBase(SkoBase):
     """
@@ -39,21 +37,23 @@ class SimulatedAnnealingBase(SkoBase):
     -------------
     See https://github.com/guofei9987/scikit-opt/blob/master/examples/demo_sa.py
     """
-
-    def __init__(self, func, x0, T_max=100, T_min=1e-7, L=300, max_stay_counter=150, **kwargs):
-        assert T_max > T_min > 0, 'T_max > T_min > 0'
+    def __init__(self, func, gold_swc_tree, metric_method, 
+                 metric_config, optimize_config, x0,**kwargs):
+        assert optimize_config["T_max"] > optimize_config["T_min"] > 0, 'T_max > T_min > 0'
 
         self.func = func
-        self.T_max = T_max  # initial temperature
-        self.T_min = T_min  # end temperature
-        self.L = int(L)  # num of iteration under every temperature（also called Long of Chain）
+        self.T_max = optimize_config["T_max"]  # initial temperature
+        self.T_min = optimize_config["T_min"]  # end temperature
+        self.L = optimize_config["L"]  # num of iteration under every temperature（also called Long of Chain）
         # stop if best_y stay unchanged over max_stay_counter times (also called cooldown time)
-        self.max_stay_counter = max_stay_counter
+        self.max_stay_counter = optimize_config["max_stay_counter"]
 
         self.n_dims = len(x0)
 
-        self.best_x = np.array(x0)  # initial solution
-        self.best_y = self.func(self.best_x, "test_init")[1]
+        self.best_x = x0  # initial solution
+        self.best_y = self.func(gold_tree=gold_swc_tree, metric_method=metric_method, config=self.best_x,
+                                metric_config=metric_config, optimize_config=optimize_config,
+                                test_name="test_init", lock=None)[1]
         self.T = self.T_max
         self.iter_cycle = 0
         self.generation_best_X, self.generation_best_Y = [self.best_x], [self.best_y]
@@ -71,16 +71,17 @@ class SimulatedAnnealingBase(SkoBase):
     def isclose(self, a, b, rel_tol=1e-09, abs_tol=1e-30):
         return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
 
-    def run(self):
+    def run(self, gold_swc_tree, metric_method, metric_config, optimize_config):
         x_current, y_current = self.best_x, self.best_y
         stay_counter = 0
+        CPU_CORE_NUM = optimize_config["CPU_CORE_NUM"]
         while True:
             # loop L times under the same Temperature
             i = 0
-            while i < self.L:
+            print("x current = {}".format(x_current))
+            while i < int(self.L):
                 pool = mp.Pool(processes=CPU_CORE_NUM)
-                res_y = []
-                res_x = []
+                res_x, res_y = [], []
                 lock = mp.Manager().Lock()
                 for j in range(CPU_CORE_NUM):
                     x_new = self.get_new_x(x_current)
@@ -88,10 +89,10 @@ class SimulatedAnnealingBase(SkoBase):
                         x_new[k] = max(x_new[k], 0)
                         x_new[k] = min(x_new[k], 1)
                     res_y.append(
-                        pool.apply_async(self.func, args=tuple([x_new, os.path.join("tmp", "tmp_res_{}".format(j)), lock]))
+                        pool.apply_async(self.func, args=tuple([gold_swc_tree, 
+                        metric_method, copy.deepcopy(x_new), metric_config, optimize_config, os.path.join("tmp", "tmp_res_{}".format(j)), lock]))
                     )
                     res_x.append(x_new)
-
                 print("[Info: ]i/L = {}/{}".format(i, self.L))
                 pool.close()
                 pool.join()
@@ -101,7 +102,7 @@ class SimulatedAnnealingBase(SkoBase):
                     # Metropolis
                     df = y_new - y_current
                     if df < 0 or np.exp(-df / self.T) > np.random.rand():
-                        x_current, y_current = x_new, y_new
+                        x_current, y_current = copy.deepcopy(x_new), y_new
                         print("[Info: ] Jump success")
                         if y_new < self.best_y:
                             print("[Info: ] Update success")
@@ -152,10 +153,10 @@ class SAFast(SimulatedAnnealingBase):
     c = n * exp(-n * quench)
     T_new = T0 * exp(-c * k**quench)
     '''
-
-    def __init__(self, func, x0, T_max=100, T_min=1e-7, L=300, max_stay_counter=150, **kwargs):
+    def __init__(self, gold_swc_tree, metric_method, metric_config, optimize_config, func, x0, **kwargs):
         # nit parent class
-        super().__init__(func, x0, T_max, T_min, L, max_stay_counter, **kwargs)
+        super().__init__(func=func, gold_swc_tree=gold_swc_tree, metric_method=metric_method,
+                         metric_config=metric_config, optimize_config=optimize_config, x0=x0, **kwargs)
         self.m, self.n, self.quench = kwargs.get('m', 1), kwargs.get('n', 1), kwargs.get('quench', 1)
         # upper and down are range of the parameters.
         self.lower, self.upper = kwargs.get('lower', -10), kwargs.get('upper', 10)
