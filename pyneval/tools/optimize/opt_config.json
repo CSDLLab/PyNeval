@@ -1,0 +1,28 @@
+{
+    "trace": {
+        "cli": "packneutu --trace {input} --output {output}",
+        "workDir": "./data/optimation/output/",
+        "parameters": {
+            "--minimalScoreAuto": {
+                "type": "number",
+                "default": 0.3,
+                "range": [0, 1.0]
+            },
+            "--minimalScoreSeed": {
+                "type": "number",
+                "default": 0.35,
+                "range": [0, 1.0]
+            }
+        }
+    },
+    "metric": "ssd",
+    "optimize": {
+        "method": "SA",
+        "Tmax": 0.01,
+        "Tmin": 1e-5,
+        "q": 0.96,
+        "L": 25,
+        "maxStayCounter": 15
+    }
+  }
+  

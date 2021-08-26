@@ -10,6 +10,18 @@ from sko.base import SkoBase
 from sko.operators import mutation
 
 
+def get_default_x0(parameters):
+    res = []
+    for para in parameters:
+        res.append(parameters[para]["default"])
+    return res
+
+def set_default_x0(parameters, x_new_default):
+    it = 0
+    for para in parameters:
+        parameters[para]["default"] = x_new_default[it]
+        it += 1
+
 class SimulatedAnnealingBase(SkoBase):
     """
     DO SA(Simulated Annealing)
@@ -38,20 +50,22 @@ class SimulatedAnnealingBase(SkoBase):
     See https://github.com/guofei9987/scikit-opt/blob/master/examples/demo_sa.py
     """
     def __init__(self, func, gold_swc_tree, metric_method, 
-                 metric_config, optimize_config, x0,**kwargs):
-        assert optimize_config["T_max"] > optimize_config["T_min"] > 0, 'T_max > T_min > 0'
+                 metric_config, optimize_config,**kwargs):
+        assert optimize_config["optimize"]["Tmax"] > optimize_config["optimize"]["Tmin"] > 0, 'Tmax > Tmin > 0'
+
 
         self.func = func
-        self.T_max = optimize_config["T_max"]  # initial temperature
-        self.T_min = optimize_config["T_min"]  # end temperature
-        self.L = optimize_config["L"]  # num of iteration under every temperature（also called Long of Chain）
+        self.T_max = optimize_config["optimize"]["Tmax"]  # initial temperature
+        self.T_min = optimize_config["optimize"]["Tmin"]  # end temperature
+        self.L = optimize_config["optimize"]["L"]  # num of iteration under every temperature（also called Long of Chain）
         # stop if best_y stay unchanged over max_stay_counter times (also called cooldown time)
-        self.max_stay_counter = optimize_config["max_stay_counter"]
-
-        self.n_dims = len(x0)
-
-        self.best_x = x0  # initial solution
-        self.best_y = self.func(gold_tree=gold_swc_tree, metric_method=metric_method, config=self.best_x,
+        self.max_stay_counter = optimize_config["optimize"]["maxStayCounter"]
+        self.q = optimize_config["optimize"]["q"]
+        parameters = optimize_config["trace"]["parameters"]
+        self.n_dims = len(parameters)
+        
+        self.best_x = parameters  # initial solution
+        self.best_y = self.func(gold_tree=gold_swc_tree, metric_method=metric_method, config=get_default_x0(parameters),
                                 metric_config=metric_config, optimize_config=optimize_config,
                                 test_name="test_init", lock=None)[1]
         self.T = self.T_max
@@ -66,7 +80,7 @@ class SimulatedAnnealingBase(SkoBase):
         return x_new
 
     def cool_down(self):
-        self.T = self.T * 0.7
+        self.T = self.T * self.q
 
     def isclose(self, a, b, rel_tol=1e-09, abs_tol=1e-30):
         return abs(a - b) <= max(rel_tol * max(abs(a), abs(b)), abs_tol)
@@ -74,39 +88,39 @@ class SimulatedAnnealingBase(SkoBase):
     def run(self, gold_swc_tree, metric_method, metric_config, optimize_config):
         x_current, y_current = self.best_x, self.best_y
         stay_counter = 0
-        CPU_CORE_NUM = optimize_config["CPU_CORE_NUM"]
+        CPU_CORE_NUM = 15
         while True:
             # loop L times under the same Temperature
             i = 0
-            print("x current = {}".format(x_current))
+            print("[Info: ]x current = {}".format(get_default_x0(x_current)))
+
             while i < int(self.L):
                 pool = mp.Pool(processes=CPU_CORE_NUM)
                 res_x, res_y = [], []
                 lock = mp.Manager().Lock()
                 for j in range(CPU_CORE_NUM):
                     x_new = self.get_new_x(x_current)
-                    for k in range(len(x_new)):
-                        x_new[k] = max(x_new[k], 0)
-                        x_new[k] = min(x_new[k], 1)
+                    print("[Info: ]x new = {}".format(get_default_x0(x_new)))
                     res_y.append(
                         pool.apply_async(self.func, args=tuple([gold_swc_tree, 
-                        metric_method, copy.deepcopy(x_new), metric_config, optimize_config, os.path.join("tmp", "tmp_res_{}".format(j)), lock]))
+                        metric_method, get_default_x0(x_new), metric_config, optimize_config, os.path.join("tmp", "tmp_res_{}".format(j)), lock]))
                     )
-                    res_x.append(x_new)
+                    res_x.append(get_default_x0(x_new))
                 print("[Info: ]i/L = {}/{}".format(i, self.L))
                 pool.close()
                 pool.join()
                 for it in range(len(res_x)):
                     i += 1
-                    x_new, y_new = res_y[it].get()
+                    x_new_default, y_new = res_y[it].get()
                     # Metropolis
                     df = y_new - y_current
                     if df < 0 or np.exp(-df / self.T) > np.random.rand():
-                        x_current, y_current = copy.deepcopy(x_new), y_new
+                        set_default_x0(x_current, x_new_default)
+                        y_current = y_new
                         print("[Info: ] Jump success")
                         if y_new < self.best_y:
                             print("[Info: ] Update success")
-                            self.best_x = copy.deepcopy(x_new)
+                            self.best_x = copy.deepcopy(x_new_default)
                             self.best_y = y_new
                         break
             print("[Info: ] best x = {}".format(self.best_x))
@@ -153,10 +167,10 @@ class SAFast(SimulatedAnnealingBase):
     c = n * exp(-n * quench)
     T_new = T0 * exp(-c * k**quench)
     '''
-    def __init__(self, gold_swc_tree, metric_method, metric_config, optimize_config, func, x0, **kwargs):
+    def __init__(self, gold_swc_tree, metric_method, metric_config, optimize_config, func, **kwargs):
         # nit parent class
         super().__init__(func=func, gold_swc_tree=gold_swc_tree, metric_method=metric_method,
-                         metric_config=metric_config, optimize_config=optimize_config, x0=x0, **kwargs)
+                         metric_config=metric_config, optimize_config=optimize_config, **kwargs)
         self.m, self.n, self.quench = kwargs.get('m', 1), kwargs.get('n', 1), kwargs.get('quench', 1)
         # upper and down are range of the parameters.
         self.lower, self.upper = kwargs.get('lower', -10), kwargs.get('upper', 10)
@@ -164,9 +178,41 @@ class SAFast(SimulatedAnnealingBase):
 
     def get_new_x(self, x):
         """randomly search for a new x point"""
-        r = np.random.uniform(-1, 1, size=self.n_dims)
-        xc = np.sign(r) * self.T * ((1 + 1.0 / self.T) ** np.abs(r) - 1.0)
-        x_new = x + xc * (self.upper - self.lower)
+        x_new = copy.deepcopy(x)
+        for para in x_new:
+            if x_new[para]["type"] == "number":
+                ran = np.random.uniform(-1, 1)
+                l, r = x_new[para]['range'][0], x[para]['range'][1]
+                xc = np.sign(ran) * self.T * ((1 + 1.0 / self.T) ** np.abs(ran) - 1.0)
+
+                x_new_default = x[para]['default']/3 + xc * (r-l)/3
+                x_new_default += (l+r)/3
+                x_new[para]["default"] = x_new_default
+            if x_new[para]["type"] == "integer":
+                ran = np.random.uniform(-1, 1)
+                l, r = x_new[para]['range'][0], x[para]['range'][1]
+                xc = np.sign(ran) * self.T * ((1 + 1.0 / self.T) ** np.abs(ran) - 1.0)
+
+                x_new_default = x[para]['default']/3 + xc * (r-l)/3
+                x_new_default += (l+r)/3
+                x_new[para]["default"] = int(np.round(x_new_default))
+            if x_new[para]["type"] == "boolean":
+                ran = np.random.uniform(-1, 1)
+                l, r = 0, 1
+                if x[para]['default'] == False:
+                    x0 = 0
+                else:
+                    x0 = 1
+                xc = np.sign(ran) * self.T * ((1 + 1.0 / self.T) ** np.abs(ran) - 1.0)
+
+                x_new_default = x0/3 + xc * (r-l)/3
+                x_new_default += (l+r)/3
+                if int(np.round(x_new_default)) == 0:
+                    x_new_default = False
+                else:
+                    x_new_default = True
+
+                x_new[para]["default"] = x_new_default
         return x_new
 
     def cool_down(self):
