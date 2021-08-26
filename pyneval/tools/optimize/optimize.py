@@ -17,8 +17,8 @@ def SA_optimize(gold_tree=None, metric_method=None, config=None,
                 metric_config=None, optimize_config=None,
                 test_name=None, lock=None):
     # fullfill cmd 
-    CURRENT_TEST_PATH = os.path.join(optimize_config["TRACE_CMD"]["TEST_SWC_DIR"], test_name+"_test.swc")
-    REC_CMD = optimize_config["TRACE_CMD"]["CMD"].format(CURRENT_TEST_PATH, config)
+    CURRENT_TEST_PATH = os.path.join(optimize_config["trace"]["workDir"], test_name+"_test.swc")
+    REC_CMD = optimize_config["trace"]["cli"].format(CURRENT_TEST_PATH, config)
     # run cmd
     try:
         os.system(REC_CMD)
@@ -50,8 +50,8 @@ def SA_optimize(gold_tree=None, metric_method=None, config=None,
 
 def check_save(gold_tree, metric_method, metric_config, optimize_config, best_name, best_configs):
     # fullfill cmd 
-    BEST_TEST_PATH = os.path.join(optimize_config["TRACE_CMD"]["TEST_SWC_DIR"], best_name+"_best.swc")
-    REC_CMD = optimize_config["TRACE_CMD"]["CMD"].format(BEST_TEST_PATH, best_configs)
+    BEST_TEST_PATH = os.path.join(optimize_config["trace"]["workDir"], best_name+"_best.swc")
+    REC_CMD = optimize_config["trace"]["cli"].format(BEST_TEST_PATH, best_configs)
     # run cmd
     try:
         os.system(REC_CMD)
@@ -70,32 +70,32 @@ def check_save(gold_tree, metric_method, metric_config, optimize_config, best_na
         print("{}:{}".format(key, main_score[key]))
     print("f1 score:{}".format(score))
 
-
 def optimize(gold_swc_tree, test_swc_paths, optimize_config, metric_config, metric_method):
     start_timestep = time.time()
     # set test tiff path
-    optimize_config["TRACE_CMD"]["ORIGIN_TIFF_PATH"] = test_swc_paths[0]
+    io_dict = {
+        "input": test_swc_paths[0],
+        "output": "{0}"
+    }
+    
     # put normal parameters into cmd, except for output swc
-    optimize_config["TRACE_CMD"]["CMD"] = optimize_config["TRACE_CMD"]["CMD"].format(
-        optimize_config["TRACE_CMD"]["TRACE_TOOL_PATH"], 
-        optimize_config["TRACE_CMD"]["ORIGIN_TIFF_PATH"], 
-        "{0}"
-    )
+    optimize_config["trace"]["cli"] = optimize_config["trace"]["cli"].format(**io_dict)
     # add target parameters into cmd 
     it = 0
-    for key in optimize_config["TRACE_CMD"]["INITIAL_PARAS"]:
-        optimize_config["TRACE_CMD"]["CMD"] += (" " + key + " {1[" + str(it) + "]}")
+    for key in optimize_config["trace"]["parameters"]:
+        optimize_config["trace"]["cli"] += (" " + key + " {1[" + str(it) + "]}")
         it+=1
-    # initialize and run SA model 
-    sa_fast = SAFast(func=SA_optimize, gold_swc_tree=gold_swc_tree, metric_method=metric_method, 
-                     metric_config=metric_config, optimize_config=optimize_config, 
-                     x0=list(optimize_config["TRACE_CMD"]["INITIAL_PARAS"].values()), upper=1, lower=0)
-    best_configs, best_value = sa_fast.run(gold_swc_tree=gold_swc_tree, metric_method=metric_method, 
-                                           metric_config=metric_config, optimize_config=optimize_config)
+    # initialize and run SA model
+    if optimize_config["optimize"]["method"] == "SA":
+        sa_fast = SAFast(func=SA_optimize, gold_swc_tree=gold_swc_tree, metric_method=metric_method, 
+                        metric_config=metric_config, optimize_config=optimize_config)
+        best_configs, best_value = sa_fast.run(gold_swc_tree=gold_swc_tree, metric_method=metric_method, 
+                                            metric_config=metric_config, optimize_config=optimize_config)
     # output the best parameters
+    print(best_configs)
     i=0
     print("[Info: ]best configs:")
-    for key in optimize_config["TRACE_CMD"]["INITIAL_PARAS"]:
+    for key in optimize_config["trace"]["parameters"]:
         print("best {} = {}".format(key, best_configs[i]))
         i+=1
     print(
@@ -104,7 +104,7 @@ def optimize(gold_swc_tree, test_swc_paths, optimize_config, metric_config, metr
     )
     # get and save best reconstruct swc
     print("[Info: ]Exam test score with best configs: ")
-    best_name = os.path.basename(optimize_config["TRACE_CMD"]["ORIGIN_TIFF_PATH"])[:-4]
+    best_name = test_swc_paths[0][:-4]
     check_save(gold_tree=gold_swc_tree, metric_method=metric_method, 
                metric_config=metric_config, optimize_config=optimize_config, 
                best_name=best_name, best_configs=best_configs)
