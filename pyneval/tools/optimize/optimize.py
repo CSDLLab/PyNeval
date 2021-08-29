@@ -1,3 +1,6 @@
+# @Time    : 2021/8/29
+# @Author  : zhanghan
+
 import os
 import copy
 import time
@@ -11,7 +14,7 @@ from pyneval.metric.utils import config_utils
 from pyneval.model import swc_node
 from pyneval.io import read_json
 from pyneval.metric.utils import metric_manager
-    
+
 
 def SA_optimize(gold_tree=None, metric_method=None, config=None, 
                 metric_config=None, optimize_config=None,
@@ -86,11 +89,10 @@ def optimize(gold_swc_tree, test_swc_paths, optimize_config, metric_config, metr
         optimize_config["trace"]["cli"] += (" " + key + " {1[" + str(it) + "]}")
         it+=1
     # initialize and run SA model
-    if optimize_config["optimize"]["method"] == "SA":
-        sa_fast = SAFast(func=SA_optimize, gold_swc_tree=gold_swc_tree, metric_method=metric_method, 
-                        metric_config=metric_config, optimize_config=optimize_config)
-        best_configs, best_value = sa_fast.run(gold_swc_tree=gold_swc_tree, metric_method=metric_method, 
-                                            metric_config=metric_config, optimize_config=optimize_config)
+    sa_fast = SAFast(func=SA_optimize, gold_swc_tree=gold_swc_tree, metric_method=metric_method, 
+                    metric_config=metric_config, optimize_config=optimize_config)
+    best_configs, best_value = sa_fast.run(gold_swc_tree=gold_swc_tree, metric_method=metric_method, 
+                                        metric_config=metric_config, optimize_config=optimize_config)
     # output the best parameters
     print(best_configs)
     i=0
@@ -119,4 +121,4 @@ def optimize(gold_swc_tree, test_swc_paths, optimize_config, metric_config, metr
 if __name__ == "__main__":
     pass
 
-# pyneval --gold data/optimation/test1/test1_gold.swc --test data/optimation/test1/test1_test.tif --metric ssd --optimize pyneval/tools/optimize/opt_config.json
+# pyneval --gold /home/sunlab13/Public/00_zhanghan/PyNeval/data/optimation/6656_2304_21504/6656_2304_21504_gold.swc --test /home/sunlab13/Public/00_zhanghan/PyNeval/output/6656_2304_21504_6656_2304_21504.swc --metric ssd
