@@ -17,23 +17,21 @@ class LengthMetric(object):
 
     def __init__(self, config):
         # read config
-        self.rad_mode = config["rad_mode"]
-        self.rad_threshold = config["rad_threshold"]
-        self.len_threshold = config["len_threshold"]
+        self.radius_mode = config["radius_mode"]
+        self.radius_threshold = config["radius_threshold"]
+        self.length_threshold = config["length_threshold"]
         self.scale = config["scale"]
         self.debug = config["debug"]
-        self.detail_path = config.get("detail_path")
 
     def length_metric_run(self, gold_swc_tree=None, test_swc_tree=None,
-                          rad_threshold=-1.0, len_threshold=0.2):
+                          radius_threshold=-1.0, length_threshold=0.2):
         """
         get matched edge set and calculate recall and precision
         Args:
             gold_swc_tree(SwcTree):
             test_swc_tree(SwcTree):
-            rad_threshold(float): threshold of key point radius
-            len_threshold(float): threshold of length of the matching edges
-            debug(bool): list debug info ot not
+            radius_threshold(float): threshold of key point radius
+            length_threshold(float): threshold of length of the matching edges
         Returns:
             tuple: contain two values to demonstrate metric result
                 precision(float): percentage of total length of edges that are matched compared to test tree
@@ -44,8 +42,8 @@ class LengthMetric(object):
         # get matched edge set
         match_edges, test_match_length = edge_match_utils.get_match_edges(gold_swc_tree=gold_swc_tree,
                                                                           test_swc_tree=test_swc_tree,
-                                                                          rad_threshold=rad_threshold,
-                                                                          len_threshold=len_threshold,
+                                                                          radius_threshold=radius_threshold,
+                                                                          length_threshold=length_threshold,
                                                                           debug=self.debug)
         # calculate the sum of matched length and total length of gold and test tree
         match_length = 0.0
@@ -99,17 +97,14 @@ class LengthMetric(object):
         gold_swc_tree.set_node_type_by_topo(root_id=1)
         test_swc_tree.set_node_type_by_topo(root_id=5)
 
-        if self.rad_mode == 1:
-            self.rad_threshold *= -1
+        if self.radius_mode == 1:
+            self.radius_threshold *= -1
         # check every edge in test, if it is overlap with any edge in gold three
         recall, precision = self.length_metric_run(gold_swc_tree=gold_swc_tree,
                                                    test_swc_tree=test_swc_tree,
-                                                   rad_threshold=self.rad_threshold,
-                                                   len_threshold=self.len_threshold,
+                                                   radius_threshold=self.radius_threshold,
+                                                   length_threshold=self.length_threshold,
                                                    )
-        if self.detail_path:
-            swc_writer.swc_save(gold_swc_tree, config["detail_path"][:-4] + "_gold.swc")
-            swc_writer.swc_save(test_swc_tree, config["detail_path"][:-4] + "_test.swc")
         if self.debug:
             print("Recall = {}, Precision = {}".format(recall, precision))
 
@@ -166,8 +161,8 @@ if __name__ == "__main__":
 
     from pyneval.metric.utils import config_utils
 
-    config = config_utils.get_default_configs("length_metric")
-    config_schema = config_utils.get_config_schema("length_metric")
+    config = config_utils.get_default_configs("length")
+    config_schema = config_utils.get_config_schema("length")
     try:
         jsonschema.validate(config, config_schema)
     except Exception as e:

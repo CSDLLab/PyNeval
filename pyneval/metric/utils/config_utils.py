@@ -25,9 +25,9 @@ def get_default_configs(method):
         configs["debug"] = False
 
     if method == "length":
-        configs["rad_mode"] = 1
-        configs["rad_threshold"] = 2
-        configs["len_threshold"] = 0.2
+        configs["radius_mode"] = 1
+        configs["radius_threshold"] = 2
+        configs["length_threshold"] = 0.2
         configs["scale"] = [1, 1, 1]
         configs["debug"] = False
 
@@ -86,7 +86,7 @@ def get_config_schema(method):
                 "ssd_threshold": {"type": "number", "minimum": 0},
                 "up_sample_threshold": {"type": "number", "minimum": 0},
                 "scale": {
-                    "type":"array",
+                    "type": "array",
                     "additionalItems": {"type": "number", "minimum": 0},
                     "minItems": 3,
                     "maxItems": 3
@@ -100,16 +100,16 @@ def get_config_schema(method):
             "title": "length metric schema",
             "type": "object",
             "required": [
-                "rad_mode",
-                "rad_threshold",
-                "len_threshold",
+                "radius_mode",
+                "radius_threshold",
+                "length_threshold",
                 "scale",
                 "debug"
             ],
             "properties": {
-                "rad_mode": {"type": "number", "enum": [1,2]},
-                "rad_threshold": {"type": "number", "minimum": 0},
-                "len_threshold": {"type": "number", "minimum": 0},
+                "radius_mode": {"type": "number", "enum": [1,2]},
+                "radius_threshold": {"type": "number", "minimum": 0},
+                "length_threshold": {"type": "number", "minimum": 0},
                 "scale": {
                     "type": "array",
                     "additionalItems": {"type": "number", "minimum": 0},

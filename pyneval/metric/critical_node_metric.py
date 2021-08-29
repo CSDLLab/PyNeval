@@ -245,9 +245,9 @@ if __name__ == "__main__":
     test_swc_tree.load("../../data\\test_data\geo_metric_data\\test_34_23_10.swc")
     from pyneval.metric.utils import config_utils
 
-    config = config_utils.get_default_configs("critical_node")
+    config = config_utils.get_default_configs("cn")
     config["critical_type"] = 2
-    config_schema = config_utils.get_config_schema("critical_node")
+    config_schema = config_utils.get_config_schema("cn")
     try:
         jsonschema.validate(config, config_schema)
     except Exception as e:
