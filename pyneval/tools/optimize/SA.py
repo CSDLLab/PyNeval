@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2019/8/17
 # @Author  : github.com/guofei9987
+
+# @Time    : 2021/8/29
+# @Author  : zhanghan
 import copy
 import os
 import numpy as np
@@ -51,16 +54,16 @@ class SimulatedAnnealingBase(SkoBase):
     """
     def __init__(self, func, gold_swc_tree, metric_method, 
                  metric_config, optimize_config,**kwargs):
-        assert optimize_config["optimize"]["Tmax"] > optimize_config["optimize"]["Tmin"] > 0, 'Tmax > Tmin > 0'
+        assert optimize_config["optimize"]["SA"]["Tmax"] > optimize_config["optimize"]["SA"]["Tmin"] > 0, 'Tmax > Tmin > 0'
 
 
         self.func = func
-        self.T_max = optimize_config["optimize"]["Tmax"]  # initial temperature
-        self.T_min = optimize_config["optimize"]["Tmin"]  # end temperature
-        self.L = optimize_config["optimize"]["L"]  # num of iteration under every temperature（also called Long of Chain）
+        self.T_max = optimize_config["optimize"]["SA"]["Tmax"]  # initial temperature
+        self.T_min = optimize_config["optimize"]["SA"]["Tmin"]  # end temperature
+        self.L = optimize_config["optimize"]["SA"]["L"]  # num of iteration under every temperature（also called Long of Chain）
         # stop if best_y stay unchanged over max_stay_counter times (also called cooldown time)
-        self.max_stay_counter = optimize_config["optimize"]["maxStayCounter"]
-        self.q = optimize_config["optimize"]["q"]
+        self.max_stay_counter = optimize_config["optimize"]["SA"]["maxStayCounter"]
+        self.q = optimize_config["optimize"]["SA"]["q"]
         parameters = optimize_config["trace"]["parameters"]
         self.n_dims = len(parameters)
         
