@@ -2,6 +2,7 @@
 .DS_Store
 
 .idea/
+.vscode/
 build/
 dist/
 pyneval.egg-info/

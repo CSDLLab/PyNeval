@@ -45,14 +45,14 @@ def read_parameters():
     parser.add_argument(
         "--test",
         "-T",
-        help="a list of reconstructed SWC files or folders for evaluation", 
-        required=False, 
+        help="a list of reconstructed SWC files or folders for evaluation",
+        required=False,
         nargs="*"
     )
     parser.add_argument(
-        "--metric", 
-        "-M", 
-        help="metric choice: " + metric_manager.get_metric_summary(False) + ".", 
+        "--metric",
+        "-M",
+        help="metric choice: " + metric_manager.get_metric_summary(False) + ".",
         required=False
     )
     parser.add_argument(
@@ -69,26 +69,26 @@ def read_parameters():
         required=False,
     )
     parser.add_argument(
-        "--config", 
-        "-C", 
-        help="path of custom configuration file for the specified metric", 
+        "--config",
+        "-C",
+        help="path of custom configuration file for the specified metric",
         required=False,
     )
     parser.add_argument(
-        "--parallel", 
-        "-P", 
-        help="Enable the parallel processing", 
-        required=False, 
+        "--parallel",
+        "-P",
+        help="Enable the parallel processing",
+        required=False,
         action="store_true"
     )
     parser.add_argument(
-        "--optimize", 
-        help="Enable optimizer mode", 
-        required=False, 
+        "--optimize",
+        help="Enable optimizer mode",
+        required=False,
     )
 
     parser.add_argument("--debug", help="print debug info or not", required=False, action="store_true")
-    
+
     return parser.parse_args()
 
 
@@ -159,10 +159,10 @@ def set_configs(abs_dir, args):
 
 
     if len(test_swc_paths) == 0:
-        raise PyNevalError("test images can't be null")
+        raise PyNevalError("test models can't be null")
 
     # info: how many trees read
-    print("There are {} test image(s) \n".format(len(test_swc_trees)))
+    print("Evaluting {} test models(s) \n".format(len(test_swc_trees)))
 
     # argument: config
     config_path = args.config
@@ -255,12 +255,12 @@ def run():
     args = read_parameters()
     gold_swc_tree, test_swc_trees, test_swc_paths, metric, output_dir, detail_dir, \
     config, is_debug, is_parallel, optimize_config = set_configs(abs_dir, args)
-    
+
     metric_manager = get_metric_manager()
     metric_method = metric_manager.get_metric_method(metric)
 
     if optimize_config is not None:
-        optimize.optimize(gold_swc_tree=gold_swc_tree, test_swc_paths=test_swc_paths, 
+        optimize.optimize(gold_swc_tree=gold_swc_tree, test_swc_paths=test_swc_paths,
                           optimize_config=optimize_config, metric_config=config, metric_method=metric_method)
     elif is_parallel:
         # use multi process
