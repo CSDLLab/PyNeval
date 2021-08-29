@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="canonical" href="https://example.com/tutorial/">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Tutorial - Pyneval</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Tutorial";
+    var mkdocs_page_input_path = "tutorial.md";
+    var mkdocs_page_url = "/tutorial/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Pyneval</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../install/">Install</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Tutorial</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#quick-start">Quick start</a>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#description-of-metrics-and-detail-of-configs">Description of metrics and detail of configs</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#ssd-metric">SSD metric</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#length-metric">Length metric</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#critical-node-metric">Critical node metric</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#diadem-metric">DIADEM metric</a>
+    </li>
+        </ul>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../optimize/">Optimize</a>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Pyneval</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Tutorial</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="tutorials">Tutorials</h2>
+<h3 id="quick-start">Quick start</h3>
+<p>The command line of pyneval is:</p>
+<pre><code>pyneval [-h] [--gold GOLD_PATH] [--test [TEST_PATH1, TEST_PATH2, ...]] 
+        [--metric METRIC] [--output OUTPUT_PATH] [--detail DETAIL_PATH] 
+        [--config CONFIG_PATH] [--debug DEBUG]
+</code></pre>
+<p>A pair of sample data from BigNeuron are provided, you can use <a href="https://www.neutracing.com/">neuTube</a> to preview and edit them:</p>
+<p><a href="../swc/gold.swc">gold swc data</a></p>
+<p><a href="../swc/test.swc">test_swc_data</a></p>
+<p>The meaning of each parameter can be found here:</p>
+<table>
+<thead>
+<tr>
+<th>meaning</th>
+<th>cmd</th>
+<th>brief_cmd</th>
+<th>required</th>
+<th>default</th>
+<th>range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>path of a gold standard swc file</td>
+<td>--gold</td>
+<td>-G</td>
+<td>T</td>
+<td>-</td>
+<td></td>
+</tr>
+<tr>
+<td>path of one or several test swc files or folders</td>
+<td>--test</td>
+<td>-T</td>
+<td>T</td>
+<td>-</td>
+<td></td>
+</tr>
+<tr>
+<td>file different metrics</td>
+<td>--metric</td>
+<td>-M</td>
+<td>T</td>
+<td>-</td>
+<td>ssd, length, diadem, cn</td>
+</tr>
+<tr>
+<td>output path of metric score in json</td>
+<td>--output</td>
+<td>-O</td>
+<td>F</td>
+<td>no output</td>
+<td></td>
+</tr>
+<tr>
+<td>output path of detail metric result in swc</td>
+<td>--detail</td>
+<td>-D</td>
+<td>F</td>
+<td>no output</td>
+<td></td>
+</tr>
+<tr>
+<td>path of config file in json format</td>
+<td>--config</td>
+<td>-C</td>
+<td>F</td>
+<td>default config</td>
+<td>details in <a href="">here</a></td>
+</tr>
+</tbody>
+</table>
+<p>An example of output of Pyneval is(ssd metric is selected as example):</p>
+<pre><code>There are 1 test image(s)
+---------------Result---------------
+avg_score       = 2.27268943225517
+recall          = 1.0
+precision       = 0.9
+----------------End-----------------
+</code></pre>
+<p>If detail and output path is given, you can find output files in the corresponding folder. </p>
+<h3 id="description-of-metrics-and-detail-of-configs">Description of metrics and detail of configs</h3>
+<h4 id="ssd-metric">SSD metric</h4>
+<table>
+<thead>
+<tr>
+<th>parameter</th>
+<th align="center">type</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>threshold_mode</td>
+<td align="center">int</td>
+<td>mode(1 or 2):<br />1 means static threshold, final threshold equal to ssd_threshold.<br />2 means dynamic threshold, final threshold equal to ssd_threshold * src_node.radius</td>
+</tr>
+<tr>
+<td>ssd_threshold</td>
+<td align="center">float</td>
+<td>For each node in gold standard tree, ssd find its closest node in test tree. If the distance of these two nodes is less than ssd_threshold, this node is successfully reconstructed and it will contribute to recall or precision, otherwise the distance will be contribute to ssd score.</td>
+</tr>
+<tr>
+<td>up_sample_threshold</td>
+<td align="center">float</td>
+<td>up sample rate of gold standard and test test tree. Smaller sample rate threshold means higher sample rate, denser upsampled tree.</td>
+</tr>
+<tr>
+<td>scale</td>
+<td align="center">tuple(1*3)</td>
+<td>scaling of gold and test tree in x,y,z coordinates.</td>
+</tr>
+<tr>
+<td>debug</td>
+<td align="center">boolean</td>
+<td>show debug information or not</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<pre><code>{
+    "threshold_mode": 1,
+    "ssd_threshold": 2,
+    "up_sample_threshold": 2,
+    "scale": [1, 1, 1],
+    "debug": False
+}
+</code></pre>
+<h4 id="length-metric">Length metric</h4>
+<table>
+<thead>
+<tr>
+<th>parameter</th>
+<th align="center">type</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>radius_mode</td>
+<td align="center">int</td>
+<td>mode(1 or 2):<br />1 means static threshold, final threshold equal to rad_threshold.<br />2 means dynamic threshold, final threshold equal to rad_threshold * src_node.radius</td>
+</tr>
+<tr>
+<td>radius_threshold</td>
+<td align="center">float</td>
+<td>This threshold measures the distance between nodes on gold standard tree and the closest edge on test tree.</td>
+</tr>
+<tr>
+<td>length_threshold</td>
+<td align="center">float</td>
+<td>This threshold measures the difference between edges on gold standard tree and their corresponding trace on test tree.</td>
+</tr>
+<tr>
+<td>scale</td>
+<td align="center">tuple(1*3)</td>
+<td>scaling of gold and test tree in x,y,z coordinates.</td>
+</tr>
+<tr>
+<td>debug</td>
+<td align="center">boolean</td>
+<td>show debug information or not</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<pre><code>{
+    "radius_mode": 1,
+    "radius_threshold": 2,
+    "length_threshold": 2,
+    "scale": [1, 1, 1],
+    "debug": False
+}
+</code></pre>
+<h4 id="critical-node-metric">Critical node metric</h4>
+<table>
+<thead>
+<tr>
+<th>parameter</th>
+<th align="center">type</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>threshold_distance</td>
+<td align="center">float</td>
+<td>If the distance of two nodes on two trees is less than this threshold, they are probably matched.</td>
+</tr>
+<tr>
+<td>scale</td>
+<td align="center">tuple(1*3)</td>
+<td>scaling of gold and test tree in x,y,z coordinates.</td>
+</tr>
+<tr>
+<td>true_positive_type</td>
+<td align="center">int</td>
+<td>Identify the type of true positive nodes in swc. (This and following two parameters may affect the color of nodes in visualization program)</td>
+</tr>
+<tr>
+<td>false_negative_type</td>
+<td align="center">int</td>
+<td>Identify the type of false negative nodes in swc.</td>
+</tr>
+<tr>
+<td>false_positive_type</td>
+<td align="center">int</td>
+<td>Identify the type of false positive nodes in swc.</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<pre><code>{
+    "radius_mode": 1,
+    "radius_threshold": 2,
+    "length_threshold": 2,
+    "scale": [1, 1, 1],
+    "debug": False
+}
+</code></pre>
+<h4 id="diadem-metric">DIADEM metric</h4>
+<table>
+<thead>
+<tr>
+<th>parameter</th>
+<th align="center">type</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>weight_mode</td>
+<td align="center">int</td>
+<td>Choose different map between degree and weight.<br/>(a). WEIGHT_DEGREE = 1<br/>weight is the degree of node <br/>(b). WEIGHT_SQRT_DEGREE = 2<br/>weight is the sqrt of degree <br/>(c). WEIGHT_DEGREE_HARMONIC_MEAN = 3<br/>weight is the harmonic mean of degree of left and right son. <br/>(d). WEIGHT_PATH_LENGTH = 4<br/>weight is the length of path from node to its root<br/></td>
+</tr>
+<tr>
+<td>remove_spur</td>
+<td align="center">boolean</td>
+<td>remove spur or not</td>
+</tr>
+<tr>
+<td>count_excess_nodes</td>
+<td align="center">boolean</td>
+<td>count excess nodes in test tree or not</td>
+</tr>
+<tr>
+<td>list_miss_nodes</td>
+<td align="center">boolean</td>
+<td>list missed nodes(reconstruct failed nodes) or not</td>
+</tr>
+<tr>
+<td>list_distant_matches</td>
+<td align="center">boolean</td>
+<td>distant match means the parent of a branch is not a matched node, but ancestor is. If this branch is matched, they are distant matched</td>
+</tr>
+<tr>
+<td>list_continuations_nodes</td>
+<td align="center">boolean</td>
+<td>Continuation refer to nodes with only one one. List this kind of nodes or not.</td>
+</tr>
+<tr>
+<td>find_proper_root</td>
+<td align="center">boolean</td>
+<td>find a pair of matched node as roots of two trees or not</td>
+</tr>
+<tr>
+<td>scale</td>
+<td align="center">tuple(1*3)</td>
+<td>scaling of gold and test tree in x,y,z coordinates.</td>
+</tr>
+<tr>
+<td>xy_threshold</td>
+<td align="center">float</td>
+<td>node distance threshold in xy surface.</td>
+</tr>
+<tr>
+<td>z_threshold</td>
+<td align="center">float</td>
+<td>node distance threshold in z axis.</td>
+</tr>
+<tr>
+<td>default_xy_path_error_threshold</td>
+<td align="center">float</td>
+<td>path length difference threshold in xy surface.</td>
+</tr>
+<tr>
+<td>default_z_path_error_threshold</td>
+<td align="center">float</td>
+<td>path length difference threshold in z axis.</td>
+</tr>
+<tr>
+<td>debug</td>
+<td align="center">boolean</td>
+<td>show debug information or not</td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<pre><code>{
+    "weight_mode": 1,
+    "remove_spur": False,
+    "count_excess_nodes": True,
+    "align_tree_by_root": False,
+    "list_miss": True,
+    "list_distant_matches": True,
+    "list_continuations": True,
+    "find_proper_root": True,
+    "scale": [1, 1, 1],
+    "xy_threshold": 1.2,
+    "z_threshold": 0.0,
+    "default_xy_path_error_threshold": 0.05,
+    "default_z_path_error_threshold": 0.05,
+    "local_path_error_threshold": 0.4,
+    "debug": False
+}
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../optimize/" class="btn btn-neutral float-right" title="Optimize">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href="../install/" class="btn btn-neutral" title="Install"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../install/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+      <span><a href="../optimize/" style="color: #fcfcfc">Next &raquo;</a></span>
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
