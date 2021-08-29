@@ -1,0 +1,8 @@
+site_name: Pyneval
+site_url: https://example.com/
+pages:
+- Home: index.md
+- Install: install.md
+- Tutorial: tutorial.md
+- Optimize: optimize.md
+theme: readthedocs
