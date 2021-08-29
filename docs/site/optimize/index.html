@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="canonical" href="https://example.com/optimize/">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Optimize - Pyneval</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700" />
+
+  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css" />
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Optimize";
+    var mkdocs_page_input_path = "optimize.md";
+    var mkdocs_page_url = "/optimize/";
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+    <div class="wy-side-scroll">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Pyneval</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+      <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="..">Home</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../install/">Install</a>
+                    </li>
+                </ul>
+                <ul>
+                    <li class="toctree-l1"><a class="reference internal" href="../tutorial/">Tutorial</a>
+                    </li>
+                </ul>
+                <ul class="current">
+                    <li class="toctree-l1 current"><a class="reference internal current" href="./">Optimize</a>
+    <ul class="current">
+    <li class="toctree-l2"><a class="reference internal" href="#1-input">1. Input</a>
+        <ul>
+    <li class="toctree-l3"><a class="reference internal" href="#11-command-line">1.1 Command line:</a>
+    </li>
+    <li class="toctree-l3"><a class="reference internal" href="#12-config-file-of-optimation">1.2 Config file of optimation</a>
+    </li>
+        </ul>
+    </li>
+    <li class="toctree-l2"><a class="reference internal" href="#2-output">2 OUTPUT</a>
+    </li>
+    </ul>
+                    </li>
+                </ul>
+      </div>
+    </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Pyneval</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Optimize</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  
+  <hr/>
+</div>
+
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="automatical-parameters-optimization">Automatical parameters optimization</h2>
+<p>As we have developed four different metrics, the reconstruction result could be evaluated quantitatively.
+To search for the best parameters automatically for tracing methods with tunable algorithms, 
+we integrate these metrics into a optimize procedure. 
+Simulated Annealing is used to find the global optimal result, and the loss value in each iteration is the F1 score of the precision and recall in output. </p>
+<h3 id="1-input">1. Input</h3>
+<h4 id="11-command-line">1.1 Command line:</h4>
+<p>Similar to metric methods in PyNeval, gold standard swc file, test tiff to be reconstructed and metric method should be 
+provided in command line. Besides, the path of optimization config file is required via argument: --optimize. </p>
+<pre><code>pyneval [-h] [--gold GOLD_PATH] [--test [TEST_PATH1, TEST_PATH2, ...]] 
+        [--metric METRIC] [--optimize OPTIMIZATION_CONFIG_PATH]
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>meaning</th>
+<th>cmd</th>
+<th>brief_cmd</th>
+<th>required</th>
+<th>default</th>
+<th>range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>path of a gold standard swc file</td>
+<td>--gold</td>
+<td>-G</td>
+<td>T</td>
+<td>-</td>
+<td></td>
+</tr>
+<tr>
+<td>path of a tif files waiting to be reconstructed</td>
+<td>--test</td>
+<td>-T</td>
+<td>T</td>
+<td>-</td>
+<td></td>
+</tr>
+<tr>
+<td>metric method</td>
+<td>--metric</td>
+<td>-M</td>
+<td>T</td>
+<td>-</td>
+<td>ssd, length, diadem, cn</td>
+</tr>
+<tr>
+<td>path of optimization config file in json format</td>
+<td>--optimize</td>
+<td>-</td>
+<td>F</td>
+<td>default config</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<h4 id="12-config-file-of-optimation">1.2 Config file of optimation</h4>
+<p>Format:</p>
+<pre><code>{
+    # arguments about tracing method. 
+    "trace": { 
+        "cli": basic command line of your tracing methods, locate input and output using {input} and {output},
+        "workDir": output directory of the reconstruction with best parameter(s), the name of output file is set to {input}_best.swc
+        "parameters": {
+            "--tartet_parameter1": {
+                "type": "number", # options: "number", "integer", "boolean".
+                "default": 0.3, # default should be located in range below.
+                "range": [0, 1.0] # the first value should be smaller than the seconed value.
+            },
+            "--tartet_parameter2": {
+                "type": "number",
+                "default": 0.3, 
+                "range": [0, 1.0]
+            },
+            ...
+            # The number of parameters is arbitrary from 1 to inffinite(if you can write down them all).
+            # Finally command line will look like below:
+            # cli --tartet_parameter1 --tartet_parameter2
+        }
+    },
+    "optimize": {
+        # optimization parameters of simulated annealing
+        "SA": {
+            "Tmax": 0.01, # initial temperature
+            "Tmin": 1e-5, # minimum temperature
+            "q": 0.96, # cool down rate
+            "L": 25, # iteraions in each temperature
+            "maxStayCounter": 15 # if current best result stay unchanged after maxStayCounter times of cool down, program will be stopped. 
+        }
+    }
+}
+</code></pre>
+<p>Example:</p>
+<pre><code>{
+    "trace": {
+        "cli": "packneutu --trace {input} --output {output}",
+        "workDir": "./data/optimation/output/",
+        "parameters": {
+            "--minimalScoreAuto": {
+                "type": "number",
+                "default": 0.3,
+                "range": [0, 1.0]
+            },
+            "--minimalScoreSeed": {
+                "type": "number",
+                "default": 0.35,
+                "range": [0, 1.0]
+            }
+        }
+    },
+    "optimize": {
+        "SA": {
+            "Tmax": 0.01,
+            "Tmin": 1e-5,
+            "q": 0.96,
+            "L": 25,
+            "maxStayCounter": 15
+        }
+    }
+}
+</code></pre>
+<h3 id="2-output">2 OUTPUT</h3>
+<p>After the optimization of each temperature, the intermediate process will be output.</p>
+<p><img alt="img.png" src="../pics/img1.png" /></p>
+<p>The final result and an additional check for the best parameter. </p>
+<p><img alt="img.png" src="../pics/img2.png" /></p>
+<p>The variation of the optimal value with the number of iterations is provided. It will be automatically saved in workDir. </p>
+<p><img alt="img.png" src="../pics/img3.png" /></p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="../tutorial/" class="btn btn-neutral" title="Tutorial"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="https://www.mkdocs.org/">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    
+    
+      <span><a href="../tutorial/" style="color: #fcfcfc">&laquo; Previous</a></span>
+    
+    
+  </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme_extra.js" defer></script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+    <script defer>
+        window.onload = function () {
+            SphinxRtdTheme.Navigation.enable(true);
+        };
+    </script>
+
+</body>
+</html>
