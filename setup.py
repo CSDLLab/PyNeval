@@ -19,7 +19,8 @@ setup(name='pyneval',
             'kdtree>=0.16',
             'numpy>=1.0',
             'rtree>=0.8',
-            'jsonschema>=3.2.0'
+            'jsonschema>=3.2.0',
+            'pandas>=1.3.0'
       ],
       entry_points={
           'console_scripts': [
