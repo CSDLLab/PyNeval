@@ -8,15 +8,15 @@ from pyneval.model import swc_node
 
 
 def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
-                    rad_threshold=-1.0, len_threshold=0.2,
+                    radius_threshold=-1.0, length_threshold=0.2,
                     debug=False):
     """
     get matched edge set
     Args:
         gold_swc_tree(SwcTree):
         test_swc_tree(SwcTree):
-        rad_threshold(float): threshold of key point radius
-        len_threshold(float): threshold of length of the matching edges
+        radius_threshold(float): threshold of key point radius
+        length_threshold(float): threshold of length of the matching edges
         debug(bool): list debug info ot not
     Returns:
         match_edge(set): include all edge that are matched in gold swc tree
@@ -55,7 +55,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
         if node.is_virtual() or node.parent.is_virtual():
             continue
 
-        rad_threshold1, rad_threshold2 = cal_rad_threshold(rad_threshold, node.radius(), node.parent.radius())
+        rad_threshold1, rad_threshold2 = cal_rad_threshold(radius_threshold, node.radius(), node.parent.radius())
 
         line_tuple_a_set = get_nearby_edges(rtree=test_rtree, point=node, id_edge_dict=id_edge_dict,
                                             threshold=rad_threshold1, not_self=False, debug=debug)
@@ -83,7 +83,7 @@ def get_match_edges(gold_swc_tree=None, test_swc_tree=None,
                 if test_length == config_utils.DINF:
                     continue
 
-                len_threshold1 = cal_len_threshold(len_threshold, gold_length)
+                len_threshold1 = cal_len_threshold(length_threshold, gold_length)
                 if not (dis_a <= rad_threshold1 and dis_b <= rad_threshold2):
                     if debug:
                         print(node.get_id(), dis_a, rad_threshold1, dis_b, rad_threshold2, "error1")
