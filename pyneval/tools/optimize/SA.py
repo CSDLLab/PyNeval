@@ -9,8 +9,6 @@ import copy
 import os
 import numpy as np
 import multiprocessing as mp
-from sko.base import SkoBase
-from sko.operators import mutation
 
 
 def get_default_x0(parameters):
@@ -25,7 +23,7 @@ def set_default_x0(parameters, x_new_default):
         parameters[para]["default"] = x_new_default[it]
         it += 1
 
-class SimulatedAnnealingBase(SkoBase):
+class SimulatedAnnealingBase():
     """
     DO SA(Simulated Annealing)
 
@@ -155,8 +153,6 @@ class SimulatedAnnealingBase(SkoBase):
                 break
 
         return self.best_x, self.best_y
-
-    fit = run
 
 
 class SAFast(SimulatedAnnealingBase):
