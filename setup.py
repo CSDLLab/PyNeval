@@ -18,7 +18,8 @@ setup(name='pyneval',
             'numpy>=1.0',
             'rtree>=0.8',
             'jsonschema>=3.2.0',
-            'pandas>=1.3.0'
+            'pandas>=1.3.0',
+            'matplotlib>=3.0.0'
       ],
       entry_points={
           'console_scripts': [

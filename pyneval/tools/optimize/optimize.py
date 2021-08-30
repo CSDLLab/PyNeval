@@ -102,7 +102,7 @@ def optimize(gold_swc_tree, test_swc_paths, optimize_config, metric_config, metr
         i+=1
     print(
         "best value = {}\n"
-        "time = {}\n" .format(best_value, time.time() - start_timestep)
+        "time = {}\n" .format(-best_value, time.time() - start_timestep)
     )
     # get and save best reconstruct swc
     print("[Info: ]Exam test score with best configs: ")
@@ -115,5 +115,7 @@ def optimize(gold_swc_tree, test_swc_paths, optimize_config, metric_config, metr
     plt.plot(pd.DataFrame(sa_fast.best_y_history).cummin(axis=0))
     plt.xlabel("iterations")
     plt.ylabel("score(opposite value)")
+    print("[Info:]Figure saved in {}".format(os.path.join(optimize_config["trace"]["workDir"], best_name+".png")))
+    plt.savefig(os.path.join(optimize_config["trace"]["workDir"], best_name+".png"))
     plt.show()
     return 0
