@@ -173,7 +173,3 @@ class Line:
             return obj.distance(self)
         else:
             raise Exception("[Error: ] unexpected object type" + type(obj))
-
-
-if __name__ == "__main__":
-    pass

@@ -117,8 +117,3 @@ def optimize(gold_swc_tree, test_swc_paths, optimize_config, metric_config, metr
     plt.ylabel("score(opposite value)")
     plt.show()
     return 0
-
-if __name__ == "__main__":
-    pass
-
-# pyneval --gold /home/sunlab13/Public/00_zhanghan/PyNeval/data/optimation/6656_2304_21504/6656_2304_21504_gold.swc --test /home/sunlab13/Public/00_zhanghan/PyNeval/output/6656_2304_21504_6656_2304_21504.swc --metric ssd

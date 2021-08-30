@@ -170,18 +170,3 @@ def overlap_clean(swc_tree, out_path, file_name, loc_config=None):
     swc_writer.swc_save(new_swc_tree, os.path.join(out_path, os.path.join('marked_data', file_name)))
     delete_overlap_node(new_swc_tree)
     swc_writer.swc_save(new_swc_tree, os.path.join(out_path, os.path.join('clean_data', file_name)))
-
-
-if __name__ == '__main__':
-    file_path = "D:\gitProject\mine\PyNeval\\test\data_example\gold\swc_18254_1"
-    out_path = "D:\gitProject\mine\PyNeval\output\swc_18254_1"
-
-    files = os.listdir(file_path)
-    for file in files:
-        tree = SwcTree()
-        tree.clear()
-        tree.load(os.path.join(file_path, file))
-
-        config = read_json("D:\gitProject\mine\PyNeval\config\overlap_clean.json")
-        overlap_clean(tree, out_path, file, config)
-

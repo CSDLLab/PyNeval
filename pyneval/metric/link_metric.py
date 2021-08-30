@@ -109,27 +109,3 @@ class LinkMetric(object):
 def link_metric(gold_swc_tree, test_swc_tree, config):
     link = LinkMetric(config)
     return link.run(gold_swc_tree, test_swc_tree)
-
-
-
-
-if __name__ == "__main__":
-    sys.setrecursionlimit(1000000)
-    start = time.time()
-    gold_swc_tree = SwcTree()
-    test_swc_tree = SwcTree()
-    test_swc_tree.load("..\\..\\data\\test_data\\topo_metric_data\\gold_fake_data4.swc")
-    gold_swc_tree.load("..\\..\\data\\test_data\\topo_metric_data\\test_fake_data4.swc")
-
-    from pyneval.metric.utils import config_utils
-    config = config_utils.get_default_configs("link_metric")
-    config_schema = config_utils.get_config_schema("link_metric")
-
-    try:
-        jsonschema.validate(config, config_schema)
-    except Exception as e:
-        raise Exception("[Error: ]Error in analyzing config json file")
-
-    link_res, _, _ = link_metric(test_swc_tree=test_swc_tree, gold_swc_tree=gold_swc_tree, config=config)
-    print("edge loss     = {}\n"
-          "tree_dis_loss = {}".format(link_res["edge_loss"], link_res["tree_dis_loss"]))

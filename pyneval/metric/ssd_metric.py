@@ -150,35 +150,3 @@ def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree,
     """
     ssd = SsdMetric(config)
     return ssd.run(gold_swc_tree, test_swc_tree)
-
-if __name__ == "__main__":
-    test_tree = swc_node.SwcTree()
-    gold_tree = swc_node.SwcTree()
-
-    sys.setrecursionlimit(10000000)
-    gold_tree.load("../../data/test_data/geo_metric_data/gold_fake_data5.swc")
-    test_tree.load("../../data/test_data/geo_metric_data/test_fake_data5.swc")
-
-    from pyneval.metric.utils import config_utils
-    config = config_utils.get_default_configs("ssd")
-    config_schema = config_utils.get_config_schema("ssd")
-
-    try:
-        jsonschema.validate(config, config_schema)
-    except Exception as e:
-        raise Exception("[Error: ]Error in analyzing config json file")
-    config["detail_path"] = "..//..//output//ssd_output//ssd_detail.swc"
-
-    ssd_res,_,_ = ssd_metric(gold_swc_tree=gold_tree,
-                         test_swc_tree=test_tree,
-                         config=config)
-    print(2*ssd_res["recall"]*ssd_res["precision"])
-    print(ssd_res["recall"]+ssd_res["precision"])
-    print("ssd score = {}\n"
-          "recall    = {}%\n"
-          "precision = {}%\n"
-          "f1        = {}".
-          format(round(ssd_res["avg_score"], 2),
-                 round(ssd_res["recall"]*100, 2),
-                 round(ssd_res["precision"]*100, 2),
-                 round((2*ssd_res["recall"]*ssd_res["precision"])/(ssd_res["recall"]+ssd_res["precision"]), 2)))

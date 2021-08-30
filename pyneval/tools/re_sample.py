@@ -150,11 +150,3 @@ def up_sample_swc_tree(swc_tree, length_threshold):
                 raise Exception("[Error: ] add child fail type of pa :{}, type of son".format(type(new_node, node)))
     up_sampled_swc_tree.get_node_list(update=True)
     return up_sampled_swc_tree
-
-
-if __name__ == "__main__":
-    swc_tree = SwcTree()
-    swc_tree.load("E:\\04_code\\00_neural_reconstruction\PyNeval\data\\test_data\geo_metric_data\\gold_fake_data6.swc")
-
-    res_swc = up_sample_swc_tree(swc_tree=swc_tree, length_threshold=1.5)
-    swc_save(res_swc, out_path="E:\\04_code\\00_neural_reconstruction\PyNeval\data\\test_data\geo_metric_data\\output.swc")

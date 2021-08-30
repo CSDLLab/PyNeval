@@ -172,7 +172,3 @@ class KM:
         for i in range(0, self.ny):
             if self.match[i] != -1 and self.G[self.match[i]][i] != -self.KM_INF/2:
                 print("gold node: {} test node {}".format(self.match[i], i))
-
-
-if __name__ == "__main__":
-    pass

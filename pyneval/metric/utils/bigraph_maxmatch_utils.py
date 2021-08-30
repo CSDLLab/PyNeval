@@ -71,7 +71,3 @@ class AugmentPath():
                 break
             self.res += cnt
         return self.res
-
-
-if __name__ == "__main__":
-    pass
