@@ -221,7 +221,5 @@ class SAFast(SimulatedAnnealingBase):
     def cool_down(self):
         self.T = self.T_max * np.exp(-self.c * self.iter_cycle ** self.quench)
 
-
 # SA_fast is the default
 SA = SAFast
-

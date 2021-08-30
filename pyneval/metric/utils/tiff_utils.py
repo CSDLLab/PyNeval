@@ -21,5 +21,3 @@ def front_expend_step(tiff_file, threshold=1):
                         0<=dy<tiff_file.shape[1] and \
                         0<=dz<tiff_file.shape[2]:
                         tiff_file[dx][dy][dz] = max(tiff_file[i][j][k], threshold)
-
-

@@ -27,9 +27,3 @@ def save_json(json_file_path, data, DEBUG=False):
         if DEBUG:
             print (type(data))
     return True
-
-
-if __name__ == "__main__":
-    # read_json(r'{"method": 2,"thereshold": "default"')
-    test_json = read_json("/home/zhanghan/01_project/Pyneval/config/schemas/branch_metric_schema.json")
-    save_json("./test.json", test_json)

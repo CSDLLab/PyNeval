@@ -300,9 +300,3 @@ def is_within_dis_match_threshold(node1, node2):
         node2 = node2.data
     return node1.distance(node2, _2D) <= g_xy_threshold * 3 \
            and math.fabs(node1.get_z() - node2.get_z()) < g_z_threshold * 3 + 0.1
-
-
-if __name__ == "__main__":
-    gold = SwcNode(center=[2,3,4])
-    test = SwcNode(center=[1,-1,5])
-    is_in_threshold(gold, test)

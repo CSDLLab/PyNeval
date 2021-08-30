@@ -123,22 +123,3 @@ class VolumeMetric(object):
 def volume_metric(gold_swc_tree, test_swc_tree, config):
     volume = VolumeMetric(config)
     return volume.run(gold_swc_tree, test_swc_tree)
-
-
-if __name__ == "__main__":
-    swc_path = "..\\..\\data\example_selected\g.swc"
-    tiff_path = "..\\..\\data\example_selected\g.tif"
-    test_tiff = imread(tiff_path)
-    swc_tree = SwcTree()
-    swc_tree.load(swc_path)
-    from pyneval.metric.utils import config_utils
-    config = config_utils.get_default_configs("volume_metric")
-    config_schema = config_utils.get_config_schema("volume_metric")
-
-    try:
-        jsonschema.validate(config, config_schema)
-    except Exception as e:
-        raise Exception("[Error: ]Error in analyzing config json file")
-
-    res = volume_metric(tiff_test=test_tiff, swc_gold=swc_tree, config=config)
-    print("recall = {}".format(res["recall"]))

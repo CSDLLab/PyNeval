@@ -150,30 +150,3 @@ def length_metric(gold_swc_tree, test_swc_tree, config):
 
     length_metric = LengthMetric(config)
     return length_metric.run(gold_swc_tree, test_swc_tree)
-
-
-if __name__ == "__main__":
-    goldTree = swc_node.SwcTree()
-    testTree = swc_node.SwcTree()
-    sys.setrecursionlimit(10000000)
-    goldTree.load("../../data/test_data/geo_metric_data/gold_fake_data3.swc")
-    testTree.load("../../data/test_data/geo_metric_data/test_fake_data3.swc")
-
-    from pyneval.metric.utils import config_utils
-
-    config = config_utils.get_default_configs("length")
-    config_schema = config_utils.get_config_schema("length")
-    try:
-        jsonschema.validate(config, config_schema)
-    except Exception as e:
-        raise Exception("[Error: ]Error in analyzing config json file")
-    config["detail_path"] = "..\\..\\output\\length_output\\length_metric_detail.swc"
-
-    lm_res, _, _ = length_metric(gold_swc_tree=testTree,
-                                 test_swc_tree=goldTree,
-                                 config=config)
-
-    print("recall    = {}\n"
-          "precision = {}\n"
-          "f1        = {}".format(lm_res["recall"], lm_res["precision"], (
-                lm_res["recall"] * lm_res["precision"] * 2 / (lm_res["recall"] + lm_res["precision"]))))

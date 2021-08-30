@@ -60,9 +60,3 @@ def read_from_str(swc_str):
     swc_list = adjust_swcfile(swc_str)
     swc_tree.load_list(swc_list)
     return swc_tree
-
-
-if __name__ == "__main__":
-    tree = SwcTree()
-    tree.load()
-    pass

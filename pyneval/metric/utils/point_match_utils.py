@@ -57,7 +57,3 @@ def get_swc2swc_dicts(src_node_list, tar_node_list):
             src_tar_dict[src_node] = None
 
     return src_tar_dict
-
-
-if __name__ == "__main__":
-    pass

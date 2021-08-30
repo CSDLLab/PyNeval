@@ -42,7 +42,3 @@ def get_detail_type(metric_name):
     if metric_name not in detail_type_annotation:
         return None
     return detail_type_annotation[metric_name]
-
-
-if __name__ == "__main__":
-    print(get_detail_type("critical_node_metric"))
