@@ -305,4 +305,4 @@ if __name__ == "__main__":
 
 # pyneval --gold .\\data\\test_data\\ssd_data\\gold\\a.swc --test .\\data\\test_data\\ssd_data\\test\\a.swc --metric critical_node_metric
 
-# pyneval --gold .\\data\test_data\geo_metric_data\gold_34_23_10.swc --test .\data\test_data\geo_metric_data\test_34_23_10.swc .\data\test_data\geo_metric_data\test_34_23_10.swc --metric cn
+# pyneval --gold .\\data\test_data\geo_metric_data\gold_34_23_10.swc --test .\data\test_data\geo_metric_data\test_34_23_10.swc  --metric length --output ./output/output
