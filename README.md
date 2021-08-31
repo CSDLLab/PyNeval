@@ -34,3 +34,9 @@ git clone https://github.com/bennieHan/pyNeval.git
 cd PyNeval
 python setup.py install
 ```
+
+## Example
+Once PyNeval is installed successfully, you can test it with the [demo data](https://github.com/CSDLLab/PyNeval/tree/master/data/demo) included in the source code.
+```
+pyneval --gold data/example/gold.swc --test data/example/test.swc --metric ssd
+```

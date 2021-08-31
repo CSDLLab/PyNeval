@@ -162,7 +162,7 @@ def set_configs(abs_dir, args):
         raise PyNevalError("test models can't be null")
 
     # info: how many trees read
-    print("Evaluting {} test models(s) \n".format(len(test_swc_trees)))
+    print("Evaluating {} test model(s) \n".format(len(test_swc_trees)))
 
     # argument: config
     config_path = args.config
@@ -182,7 +182,7 @@ def set_configs(abs_dir, args):
         if choose == 1:
             output_dir = new_path
         elif choose == 2:
-            raise Exception("Pyneval end by user")
+            raise Exception("PyNeval ended by user")
         elif choose == 3:
             output_dir = None
 
@@ -194,7 +194,7 @@ def set_configs(abs_dir, args):
         if choose == 1:
             detail_dir = new_path
         elif choose == 2:
-            raise Exception("Pyneval end by user")
+            raise Exception("PyNeval ended by user")
         elif choose == 3:
             detail_dir = None
 
@@ -286,7 +286,7 @@ def run():
                 output_dir=output_dir,
                 metric_method=metric_method,
             )
-    print("All Finished!")
+    print("Done!")
 
 
 if __name__ == "__main__":

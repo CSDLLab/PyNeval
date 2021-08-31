@@ -1,4 +1,4 @@
-This fold contains several raw gold swc data files.
+This folder contains several raw gold swc data files.
 These data are renamed to meet the requirement of pyneval paper.
 
 a: 091201c1

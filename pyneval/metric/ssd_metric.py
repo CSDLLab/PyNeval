@@ -120,7 +120,7 @@ class SsdMetric(object):
 @metric_manager.register(
     name="ssd",
     config="ssd_metric.json",
-    desc="minimum square error between up-sampled gold and test trees",
+    desc="minimum square error between resampled gold and test trees",
     alias=['SM'],
     public=True,
 )
