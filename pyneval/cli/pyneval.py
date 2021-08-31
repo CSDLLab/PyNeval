@@ -17,7 +17,8 @@ from pyneval.tools.optimize import optimize
 
 
 # load method in metrics
-def import_metrics(abs_path):
+def import_metrics():
+    abs_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     metric_path = os.path.join(abs_path, "pyneval/metric")
     files = os.listdir(metric_path)
     metrics = []
@@ -247,8 +248,8 @@ def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, outp
 
 # command program
 def run():
-    abs_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    import_metrics(abs_dir)
+    abs_dir = os.path.abspath("")
+    import_metrics()
     init(abs_dir)
 
     args = read_parameters()
