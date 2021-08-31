@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='pyneval',
-      version='0.0.10',
+      version='1.0.0',
       description='pyneval first edition',
       author='ZhangHan',
       author_email='benniehan98@gmail.com',

@@ -1,13 +1,12 @@
 {% set name = "pyneval" %}
-{% set version = "0.0.7" %}
+{% set data = load_setup_py_data() %}
 
 package:
   name: "{{ name|lower }}"
-  version: "{{ version }}"
+  version: {{ data['version'] }}
 
 source:
-  url: "https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz"
-  sha256: d86e270022ac3c941cf390527513a0fbfd0529a92c956c1d850f79d8ec52a31e
+  path: ..
 
 build:
   number: 0
@@ -19,15 +18,13 @@ build:
 
 requirements:
   host:
-    - pip>=21.1.2
     - python>=3.7
+    - setuptools
   run:
-    - anytree>=2.7.2
-    - jsonschema>=3.2.0
-    - kdtree>=0.16
-    - numpy>=1.0
     - python>=3.7
-    - rtree==0.9.3
+    {% for dep in data['install_requires'] %}
+    - {{ dep.lower() }}
+    {% endfor %}
 
 test:
   imports:
