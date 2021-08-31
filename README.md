@@ -1,6 +1,6 @@
 # PyNeval
 
-[User Documentation](https://csdllab.github.io/PyNeval_doc/)
+[![docs-badge](docs/docs/pics/docs-badge.svg)][docs]
 
 ## Introduction
 PyNeval is a Python package for evaluating the qualities of neuron reconstructions in the [SWC format](http://www.neuronland.org/NLMorphologyConverter/MorphologyFormats/SWC/Spec.html). It outputs quality scores of one or more test models by comparing them to a gold standard model. The scores also depend on which metric is specified because PyNeval supports several metric options.
@@ -40,3 +40,5 @@ Once PyNeval is installed successfully, you can test it with the [demo data](htt
 ```
 pyneval --gold data/demo/gold.swc --test data/demo/test.swc --metric ssd
 ```
+
+[docs]: https://csdllab.github.io/PyNeval_doc
