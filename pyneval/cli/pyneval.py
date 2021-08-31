@@ -247,7 +247,7 @@ def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, outp
 
 # command program
 def run():
-    abs_dir = os.path.abspath("")
+    abs_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     import_metrics(abs_dir)
     init(abs_dir)
 
