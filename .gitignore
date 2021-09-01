@@ -19,5 +19,5 @@ pyneval/errors/__pycache__/
 pyneval/tools/optimize/__pycache__/
 config/metric_config/
 config/metric_schemas/
-
+__pycache__/
 test_data/

@@ -6,6 +6,7 @@ from pyneval.metric.utils import edge_match_utils
 from pyneval.io import read_swc
 from pyneval.io import swc_writer
 from pyneval.metric.utils.metric_manager import get_metric_manager
+from pyneval.metric.utils import basic_utils
 
 metric_manager = get_metric_manager()
 
@@ -110,7 +111,8 @@ class LengthMetric(object):
 
         res = {
             "recall": recall,
-            "precision": precision
+            "precision": precision,
+            "f1_score": basic_utils.get_f1score(recall=recall, precision=precision)
         }
         return res, gold_swc_tree, test_swc_tree
 

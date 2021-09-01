@@ -934,5 +934,9 @@ def diadem_metric(gold_swc_tree, test_swc_tree, config, debug=False):
     if config["debug"] is True:
         diadem.print_result()
 
-    res = {"weight_sum": diadem.g_weight_sum, "score_sum": diadem.g_score_sum, "final_score": diadem.g_final_score}
+    res = {
+        "weight_sum": diadem.g_weight_sum,
+        "score_sum": diadem.g_score_sum,
+        "diadem_score": diadem.g_final_score
+    }
     return res, gold_swc_tree, test_swc_tree

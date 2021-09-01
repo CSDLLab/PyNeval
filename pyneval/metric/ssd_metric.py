@@ -23,7 +23,7 @@ import jsonschema
 from pyneval.model import swc_node
 from pyneval.tools import re_sample
 from pyneval.metric.utils import point_match_utils
-
+from pyneval.metric.utils import basic_utils
 from pyneval.metric.utils.metric_manager import get_metric_manager
 
 metric_manager = get_metric_manager()
@@ -109,9 +109,13 @@ class SsdMetric(object):
             ))
 
         res = {
-            "avg_score": (g2t_score + t2g_score) / 2,
+            "ssd_score": (g2t_score + t2g_score) / 2,
             "recall": 1 - g2t_num / u_gold_swc_tree.size(),
-            "precision": 1 - t2g_num / u_test_swc_tree.size()
+            "precision": 1 - t2g_num / u_test_swc_tree.size(),
+            "f1_score": basic_utils.get_f1score(
+                recall=1 - g2t_num / u_gold_swc_tree.size(),
+                precision=1 - t2g_num / u_test_swc_tree.size()
+            )
         }
 
         return res, u_gold_swc_tree, u_test_swc_tree
