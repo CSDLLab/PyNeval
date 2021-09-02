@@ -15,6 +15,16 @@ def get_avg_radius(gold_swc_tree, rate=0.1):
     return dis_threshold
 
 
+def get_screen_output():
+    res = {
+        "ssd": ["ssd_score", "recall", "precision", "f1_score"],
+        "length": ["recall", "precision", "f1_score"],
+        "cn": ["mean_dis", "recall", "precision", "f1_score"],
+        "diadem": ["diadem_score"],
+    }
+    return res
+
+
 def get_default_configs(method):
     configs = dict()
     if method == "ssd":
@@ -41,8 +51,8 @@ def get_default_configs(method):
         configs["list_continuations"] = True
         configs["find_proper_root"] = True
         configs["scale"] = [1, 1, 1]
-        configs["xy_threshold"] = 1.2
-        configs["z_threshold"] = 0.0
+        configs["xy_threshold"] = 2
+        configs["z_threshold"] = 1
         configs["default_xy_path_error_threshold"] = 0.05
         configs["default_z_path_error_threshold"] = 0.05
         configs["local_path_error_threshold"] = 0.4

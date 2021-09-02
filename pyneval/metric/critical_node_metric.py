@@ -192,9 +192,9 @@ class CriticalNodeMetric(object):
             "true_pos_num": MaxMatch.res,
             "false_neg_num": len(gold_critical_swc_list) - MaxMatch.res,
             "false_pos_num": len(test_critical_swc_list) - MaxMatch.res,
+            "mean_dis": tot_dis / MaxMatch.res,
             "precision": precision,
             "recall": recall,
-            "mean_dis": tot_dis/MaxMatch.res,
             "tot_dis": tot_dis,
             "f1_score": 2*precision*recall/(precision + recall),
         }

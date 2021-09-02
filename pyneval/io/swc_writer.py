@@ -46,11 +46,45 @@ def print_swc(object):
 
 
 def swc_save(swc_tree, out_path, extra=None):
-    if not is_path_valid(out_path):
-        return False
+    out_path = os.path.normpath(out_path)
+    out_dir = os.path.dirname(out_path)
+
+    while not os.path.exists(out_dir):
+        print('[Info]: "{}" dose not exist. Create new path?[y/n]'.format(out_dir))
+        choice = input()
+        if choice.lower() == 'y':
+            os.makedirs(out_dir)
+        elif choice.lower() == 'n':
+            print('[Info]: "{}" dose not exist. Input new directory?[y/n]'.format(out_dir))
+            choice = input()
+            if choice.lower() == 'y':
+                print('[Info]: Input new directory')
+                out_dir = input()
+            elif choice.lower() == 'n':
+                return False
+            else:
+                continue
+    out_new_path = os.path.join(out_dir, os.path.basename(out_path))
+    while not out_new_path[-4:] == '.swc':
+        print('[Info]: "{}"  is not a swc file. Input another path?[y/n]'.format(out_new_path))
+        choice = input()
+        if choice.lower() == 'y':
+            print('[Info]: Input new path:')
+            out_new_path = input()
+        elif choice.lower() == 'n':
+            return False
+
+    while os.path.exists(out_new_path):
+        print('[Info]: "{}" is already existed. Overwrite?[y/n]'.format(out_new_path))
+        choice = input()
+        if choice.lower() == 'y':
+            break
+        elif choice.lower() == 'n':
+            return False
+
     swc_node_list = swc_tree.get_node_list()
     swc_tree.sort_node_list(key="id")
-    with open(out_path, "w") as f:
+    with open(out_new_path, "w") as f:
         f.truncate()
         if extra is not None:
             f.write(extra)
@@ -71,3 +105,4 @@ def swc_save(swc_tree, out_path, extra=None):
                 )
             except:
                 continue
+    return True
