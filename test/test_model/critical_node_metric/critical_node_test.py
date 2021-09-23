@@ -2,7 +2,7 @@ import unittest
 import sys
 from pyneval.metric.critical_node_metric import critical_node_metric
 from pyneval.model.swc_node import SwcTree, SwcNode
-from pyneval.io.read_json import read_json
+from pyneval.pyneval_io.json_io import read_json
 
 
 class BranchDetectTest(unittest.TestCase):

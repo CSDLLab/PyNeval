@@ -4,9 +4,9 @@ import platform
 import sys
 
 from pyneval.errors.exceptions import InvalidMetricError
-from pyneval.io.read_json import read_json
-from pyneval.io.read_swc import read_swc_trees
-from pyneval.io.swc_writer import swc_save
+from pyneval.pyneval_io.json_io import read_json
+from pyneval.pyneval_io.read_swc import read_swc_trees
+from pyneval.pyneval_io.swc_io import swc_save
 from pyneval.tools.overlap_detect import overlap_clean
 from pyneval.tools.re_sample import down_sample_swc_tree_command_line, up_sample_swc_tree_command_line
 

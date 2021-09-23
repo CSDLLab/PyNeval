@@ -30,7 +30,7 @@ test:
   imports:
     - pyneval
     - pyneval.cli
-    - pyneval.io
+    - pyneval.pyneval_io
     - pyneval.metric
     - pyneval.metric.utils
     - pyneval.metric.utils.klib

@@ -1,7 +1,7 @@
 import os
 
-from pyneval.io.read_swc import read_swc_trees
-from pyneval.io import swc_writer
+from pyneval.pyneval_io.read_swc import read_swc_trees
+from pyneval.pyneval_io import swc_io
 from pyneval.model.swc_node import SwcTree
 import random
 
@@ -164,7 +164,7 @@ def generate_data():
                 #                            move_percentage=0.1 * move_percentage,
                 #                            move_num=None)
                 file_name = os.path.join(percent_dir, "move_{:02d}.swc".format(it))
-                swc_writer.swc_save(swc_tree=test_swc, out_path=file_name)
+                swc_io.swc_save(swc_tree=test_swc, out_path=file_name)
 
 
 if __name__ == "__main__":

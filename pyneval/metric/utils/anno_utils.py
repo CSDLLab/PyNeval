@@ -1,4 +1,4 @@
-from pyneval.io.read_json import read_json
+from pyneval.pyneval_io.json_io import read_json
 
 
 def get_detail_type(metric_name):

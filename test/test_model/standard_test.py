@@ -10,7 +10,7 @@ import sys
 import jsonschema
 from pyneval.cli import pyneval
 from pyneval.model import swc_node
-from pyneval.io import read_json
+from pyneval.pyneval_io import json_io
 from pyneval.metric.utils import config_utils
 from pyneval.metric.utils import metric_manager
 from multiprocessing import Pool, cpu_count
@@ -67,9 +67,9 @@ def std_test(mode=1):
             # choice: save metric results or compare with the existing results
             std_path = os.path.join(STD_TEST_DATA_PATH, file_name, "std_{}.json".format(metric_name))
             if mode == 2:
-                read_json.save_json(std_path, res)
+                json_io.save_json(std_path, res)
             else:
-                std = read_json.read_json(std_path)
+                std = json_io.read_json(std_path)
                 if res_compare(
                         file_name=file_name,
                         metric_name=metric_name,

@@ -2,7 +2,7 @@ import unittest
 from pyneval.metric.diadem_metric import diadem_metric
 from pyneval.model.swc_node import SwcNode, SwcTree
 from pyneval.metric.utils.config_utils import get_avg_radius
-from pyneval.io.read_json import read_json
+from pyneval.pyneval_io.json_io import read_json
 
 
 class DiademTotTest(unittest.TestCase):
