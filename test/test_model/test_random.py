@@ -6,7 +6,7 @@ import numpy as np
 import multiprocessing as mp
 
 from pyneval.metric.utils.klib import TiffFile
-from pyneval.io import read_json
+from pyneval.pyneval_io import json_io
 from pyneval.model import swc_node
 from pyneval.metric import length_metric as lm
 from pyneval.metric import diadem_metric as dm
@@ -178,11 +178,11 @@ def batch_test(test_datas, gold_dir, test_dir, method):
         "critical_node_metric": cnm.critical_node_metric,
         "link_metric": lkm.link_metric}
     configs = {
-        "ssd_metric": read_json.read_json("..\\..\\config\\ssd_metric.json"),
-        "length_metric": read_json.read_json("..\\..\\config\\length_metric.json"),
-        "diadem_metric": read_json.read_json("..\\..\\config\\diadem_metric.json"),
-        "critical_node_metric": read_json.read_json("..\\..\\config\\critical_node_metric.json"),
-        "link_metric": read_json.read_json("..\\..\\config\\link_metric.json")}
+        "ssd_metric": json_io.read_json("..\\..\\config\\ssd_metric.json"),
+        "length_metric": json_io.read_json("..\\..\\config\\length_metric.json"),
+        "diadem_metric": json_io.read_json("..\\..\\config\\diadem_metric.json"),
+        "critical_node_metric": json_io.read_json("..\\..\\config\\critical_node_metric.json"),
+        "link_metric": json_io.read_json("..\\..\\config\\link_metric.json")}
     labels = {
         "ssd_metric": ["ssd_score", "recall", "precision"],
         "length_metric": ["recall", "precision"],
@@ -218,7 +218,7 @@ if __name__=='__main__':
     gold_dir = "../../data/example_selected"
     test_dir = "../../output/random_data"
     out_dir = "../../output/"
-    config = read_json.read_json("..\\..\\config\\ssd_metric.json")
+    config = json_io.read_json("..\\..\\config\\ssd_metric.json")
     method = "diadem"
     # batch_test()
     # res = single_test(test_metric=ssdm.ssd_metric,

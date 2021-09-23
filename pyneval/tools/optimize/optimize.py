@@ -12,7 +12,7 @@ from pyneval.tools.optimize.SA import SAFast
 from pyneval.metric import ssd_metric
 from pyneval.metric.utils import config_utils
 from pyneval.model import swc_node
-from pyneval.io import read_json
+from pyneval.pyneval_io import json_io
 from pyneval.metric.utils import metric_manager
 
 

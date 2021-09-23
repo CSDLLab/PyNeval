@@ -1,6 +1,6 @@
 import sys
 from pyneval.model.swc_node import SwcNode, SwcTree
-from pyneval.io import swc_writer
+from pyneval.pyneval_io import swc_io
 
 SWC_PATH = "../../data/optimation/gold.swc"
 OUTPUT_PATH = "../../data/optimation/test4_gold.swc"
@@ -41,4 +41,4 @@ if __name__ == "__main__":
         node.set_y(node.get_y()-30)
         node.set_z(node.get_z()-125)
     # the result will be saved in:
-    swc_writer.swc_save(swc_tree=swc_tree, out_path=OUTPUT_PATH)
+    swc_io.swc_save(swc_tree=swc_tree, out_path=OUTPUT_PATH)

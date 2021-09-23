@@ -7,9 +7,9 @@ import pkg_resources
 
 from multiprocessing import Pool, cpu_count
 from pyneval.errors.exceptions import InvalidMetricError, PyNevalError
-from pyneval.io import read_json
-from pyneval.io.read_swc import read_swc_tree, read_swc_trees
-from pyneval.io.swc_writer import swc_save
+from pyneval.pyneval_io import json_io
+from pyneval.pyneval_io.read_swc import read_swc_tree, read_swc_trees
+from pyneval.pyneval_io.swc_io import swc_save
 from pyneval.metric.utils import anno_utils, config_utils
 from pyneval.metric.utils.metric_manager import get_metric_manager
 from pyneval.tools.optimize import optimize
@@ -176,7 +176,7 @@ def set_configs(abs_dir, args):
     if config_path is None:
         config = config_utils.get_default_configs(metric)
     else:
-        config = read_json.read_json(config_path)
+        config = json_io.read_json(config_path)
 
     config_schema = config_utils.get_config_schema(metric)
     jsonschema.validate(config, config_schema)
@@ -199,7 +199,7 @@ def set_configs(abs_dir, args):
     # argument: optimize
     optimize_config = None
     if args.optimize:
-        optimize_config = read_json.read_json(args.optimize)
+        optimize_config = json_io.read_json(args.optimize)
 
     return gold_swc_tree, test_swc_trees, test_swc_paths, metric, output_path, detail_dir, config, is_debug, is_parallel, optimize_config
 
@@ -243,7 +243,7 @@ def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, outp
             save_detail(res_test_swc_tree, base_file_name+"precision.swc")
 
     if output_path:
-        ok = read_json.save_json(data=result, json_file_path=output_path)
+        ok = json_io.save_json(data=result, json_file_path=output_path)
         if ok:
             print("[Info:] Output saved")
         else:

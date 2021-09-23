@@ -3,7 +3,7 @@ import numpy as np
 from pyneval.model.swc_node import SwcNode, SwcTree, Make_Virtual
 from pyneval.model.euclidean_point import Line, EuclideanPoint
 from anytree import PreOrderIter
-from pyneval.io.swc_writer import swc_save
+from pyneval.pyneval_io.swc_io import swc_save
 import copy
 
 

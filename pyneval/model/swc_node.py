@@ -3,6 +3,7 @@
 
 import math
 import os
+import bisect
 import queue
 
 import numpy as np
@@ -392,6 +393,8 @@ class SwcTree:
             if parentId == -1:
                 tn.parent = self._root
             else:
+                if parentId not in nodeDict.keys():
+                    raise Exception("[Error: SwcTree.load]Unknown parent id {}".format(parentId))
                 parentNode = nodeDict.get(parentId)
                 if parentNode:
                     tn.parent = parentNode[0]
@@ -625,16 +628,30 @@ class SwcTree:
 
         return self.node_list
 
-    def sort_node_list(self, key="default"):
+    def sort_node_list(self, key="id"):
         """
         index:
             default: order by pre order
             id: order by id
+            compress: re-order from 1 to the size of swc tree
         """
         if key == "default":
             self.get_node_list(update=True)
         if key == "id":
             self.node_list.sort(key=lambda node: node.get_id())
+        if key == "compress":
+            self.node_list.sort(key=lambda node: node.get_id())
+            id_list = []
+            for id in self.id_set:
+                id_list.append(id)
+            id_list.sort()
+            for node in self.node_list:
+                if node.is_virtual():
+                    continue
+                new_id = bisect.bisect_left(id_list, node.get_id()) + 1
+                self.id_set.remove(node.get_id())
+                self.id_set.add(new_id)
+                node.set_id(new_id)
 
     def to_str_list(self):
         swc_node_list = self.get_node_list()
@@ -707,18 +724,3 @@ class SwcTree:
                 node._type = root_id + 2
             else:
                 node._type = root_id + 3
-
-
-if __name__ == "__main__":
-    import os
-    from pyneval.io.swc_writer import swc_save
-
-    path = "..\..\data\\test_data\\topo_metric_data"
-    for file in os.listdir(path):
-        tree = SwcTree()
-        tree.load(os.path.join(path, file))
-        if file[:4] == "gold":
-            tree.set_node_type_by_topo(root_id=1)
-        else:
-            tree.set_node_type_by_topo(root_id=5)
-        swc_save(tree, out_path=os.path.join(path, "s" + file))

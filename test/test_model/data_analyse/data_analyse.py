@@ -1,5 +1,5 @@
 from pyneval.model.swc_node import SwcNode, SwcTree
-from pyneval.io.read_swc import read_swc_trees
+from pyneval.pyneval_io.read_swc import read_swc_trees
 import os
 import csv
 
