@@ -1,14 +1,14 @@
 import os
 
-from pyneval.model.swc_node import SwcTree
+from pyneval.model.swc_tree import SwcTree
 from pyneval.model.euclidean_point import Line
 from pyneval.metric.utils.edge_match_utils import \
     get_idedge_dict, get_edge_rtree, get_lca_length, get_nearby_edges, get_route_node, \
     cal_rad_threshold, cal_len_threshold
 from pyneval.tools.re_sample import down_sample_swc_tree_command_line
 from anytree import PreOrderIter
-from pyneval.io import swc_writer
-from pyneval.io.read_json import read_json
+from pyneval.pyneval_io import swc_io
+from pyneval.pyneval_io.json_io import read_json
 import math
 import numpy as np
 
@@ -167,6 +167,6 @@ def overlap_clean(swc_tree, out_path, file_name, loc_config=None):
                                 list_size=swc_tree.size(),
                                 mode="not_self", DEBUG=False)
     color_origin_tree(new_swc_tree, swc_tree)
-    swc_writer.swc_save(new_swc_tree, os.path.join(out_path, os.path.join('marked_data', file_name)))
+    swc_io.swc_save(new_swc_tree, os.path.join(out_path, os.path.join('marked_data', file_name)))
     delete_overlap_node(new_swc_tree)
-    swc_writer.swc_save(new_swc_tree, os.path.join(out_path, os.path.join('clean_data', file_name)))
+    swc_io.swc_save(new_swc_tree, os.path.join(out_path, os.path.join('clean_data', file_name)))

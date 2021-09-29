@@ -1,7 +1,7 @@
 import queue
 import kdtree
 from anytree import PreOrderIter
-from pyneval.model.swc_node import SwcTree
+from pyneval.model.swc_tree import SwcTree
 from pyneval.metric.utils.config_utils import SAME_POS_TH
 
 

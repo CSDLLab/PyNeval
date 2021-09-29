@@ -3,7 +3,7 @@ import time
 import jsonschema
 
 from pyneval.metric.utils.config_utils import DINF
-from pyneval.model.swc_node import SwcTree
+from pyneval.model.swc_tree import SwcTree
 from pyneval.metric.utils.km_utils import KM, get_dis_graph
 from pyneval.metric.utils.point_match_utils import get_swc2swc_dicts
 

@@ -1,7 +1,8 @@
 import math
 import copy
 import queue
-from pyneval.model.swc_node import SwcNode,SwcTree
+from pyneval.model.swc_node import SwcNode
+from pyneval.model.swc_tree import SwcTree
 from pyneval.model.binary_node import BinaryNode
 from pyneval.model.euclidean_point import EuclideanPoint
 from pyneval.metric.utils.bin_utils import calculate_trajectories_xy, calculate_trajectories_z

@@ -9,7 +9,7 @@ pyneval.egg-info/
 output/
 pyneval/__pycache__/
 pyneval/cli/__pycache__/
-pyneval/io/__pycache__/
+pyneval/pyneval_io/__pycache__/
 pyneval/metric/__pycache__/
 pyneval/metric/utils/__pycache__/
 pyneval/metric/utils/klib/__pycache__/

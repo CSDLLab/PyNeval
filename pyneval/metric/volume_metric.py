@@ -3,7 +3,7 @@ import queue
 import math
 
 from pyneval.metric.utils.klib.TiffFile import imread
-from pyneval.model.swc_node import SwcTree
+from pyneval.model.swc_tree import SwcTree
 from pyneval.tools.re_sample import up_sample_swc_tree
 
 from pyneval.metric.utils.metric_manager import get_metric_manager

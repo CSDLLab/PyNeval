@@ -7,10 +7,10 @@ import pkg_resources
 
 from multiprocessing import Pool, cpu_count
 from pyneval.errors.exceptions import InvalidMetricError, PyNevalError
-from pyneval.io import read_json
-from pyneval.io.read_swc import read_swc_tree, read_swc_trees
-from pyneval.io.swc_writer import swc_save
+from pyneval.pyneval_io import json_io
+from pyneval.pyneval_io import swc_io
 from pyneval.metric.utils import anno_utils, config_utils
+from pyneval.metric.utils import cli_utils
 from pyneval.metric.utils.metric_manager import get_metric_manager
 from pyneval.tools.optimize import optimize
 
@@ -86,7 +86,12 @@ def read_parameters():
         help="Enable optimizer mode",
         required=False,
     )
-
+    parser.add_argument(
+        "--path_validation",
+        help="Enable detailed path validation check",
+        required=False,
+        action="store_true"
+    )
     parser.add_argument("--debug", help="print debug info or not", required=False, action="store_true")
 
     return parser.parse_args()
@@ -99,46 +104,6 @@ def init(abs_dir):
     sys.setrecursionlimit(1000000)
 
 
-# def check_dir(dir_name, dir):
-#     while not os.path.exists(dir) or not os.path.isdir(dir):
-#         print(
-#             "The input path {} for {} does not exist or is not a folder. You may choose to:\n"
-#             "[Input=1]Input a new path\n"
-#             "[Input=2]Quit this process\n"
-#             "[Input=3]Continue without saving\n"
-#             "[Input=4]Create new folder {}.".format(dir, dir_name, dir)
-#         )
-#         choice = input()
-#         if choice.lower() == "1":
-#             print("Input new detail path:")
-#             new_dirorpath = input()
-#             if new_dirorpath[-5:] == ".json":
-#                 new_dir = os.path.dirname(new_dirorpath)
-#             else:
-#                 new_dir = new_dirorpath
-#             if os.path.exists(new_dir) and os.path.isdir(new_dir):
-#                 return 1, new_dirorpath
-#             else:
-#                 dir = new_dir
-#                 continue
-#         elif choice.lower() == "2":
-#             print("Pyneval ends...")
-#             return 2, ""
-#         elif choice.lower() == "3":
-#             print("Pyneval processing without saving {}...".format(dir_name))
-#             return 3, ""
-#         elif choice.lower() == "4":
-#             if os.path.isfile(dir):
-#                 print("[Info: ] Error input")
-#                 continue
-#             os.makedirs(dir)
-#             print("{} has been created".format(dir))
-#             return 4, ""
-#         else:
-#             print("[Info: ] Error input")
-#     return 4, ""
-
-
 def set_configs(abs_dir, args):
     # argument: debug
     is_debug = False
@@ -147,7 +112,7 @@ def set_configs(abs_dir, args):
 
     # argument: gold
     gold_swc_path = os.path.join(abs_dir, args.gold)
-    gold_swc_tree = read_swc_tree(gold_swc_path)  # SwcTree
+    gold_swc_tree = swc_io.read_swc_tree(gold_swc_path)  # SwcTree
 
     # argument: metric
     metric_manager = get_metric_manager()
@@ -162,8 +127,7 @@ def set_configs(abs_dir, args):
     for file in test_swc_paths:
         if file[-4:].lower() == ".tif":
             continue
-        test_swc_trees.extend(read_swc_trees(file))
-
+        test_swc_trees.extend(swc_io.read_swc_trees(file))
 
     if len(test_swc_paths) == 0:
         raise PyNevalError("test models can't be null")
@@ -176,7 +140,7 @@ def set_configs(abs_dir, args):
     if config_path is None:
         config = config_utils.get_default_configs(metric)
     else:
-        config = read_json.read_json(config_path)
+        config = json_io.read_json(config_path)
 
     config_schema = config_utils.get_config_schema(metric)
     jsonschema.validate(config, config_schema)
@@ -196,16 +160,20 @@ def set_configs(abs_dir, args):
     if args.parallel:
         is_parallel = args.parallel
 
+    is_path_validation = False
+    if args.path_validation:
+        is_path_validation = args.path_validation
+
     # argument: optimize
     optimize_config = None
     if args.optimize:
-        optimize_config = read_json.read_json(args.optimize)
+        optimize_config = json_io.read_json(args.optimize)
 
-    return gold_swc_tree, test_swc_trees, test_swc_paths, metric, output_path, detail_dir, config, is_debug, is_parallel, optimize_config
+    return gold_swc_tree, test_swc_trees, test_swc_paths, metric, output_path, detail_dir, config, is_debug, is_parallel, optimize_config, is_path_validation
 
 
-def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_path, metric_method):
-    test_swc_name = test_swc_tree.get_name()
+def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_path, metric_method, is_path_validation):
+    test_swc_name = test_swc_tree.name()
 
     result, res_gold_swc_tree, res_test_swc_tree = metric_method(
         gold_swc_tree=gold_swc_tree, test_swc_tree=test_swc_tree, config=config
@@ -225,14 +193,19 @@ def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, outp
     base_file_name = test_swc_name[:-4] + "_" + metric + "_"
 
     def save_detail(swc_tree, file_name):
-        ok = swc_save(
-            swc_tree=swc_tree,
-            out_path=os.path.join(detail_dir, file_name),
-            extra=anno_utils.get_detail_type(metric),
-        )
-        if ok:
-            print("[Info:] Details: {} saved".format(file_name))
+        detail_path = os.path.normpath(os.path.join(detail_dir, file_name))
+        if is_path_validation:
+            detail_path = cli_utils.path_validation(detail_path, ".swc")
         else:
+            detail_path = cli_utils.make_sure_path_not_exist(detail_path)
+        ok = False
+        if detail_path is not None:
+            ok = swc_io.swc_save(
+                swc_tree=swc_tree,
+                out_path=detail_path,
+                extra=anno_utils.get_detail_type(metric),
+            )
+        if detail_path is None or not ok:
             print("[Warning:] Failed to save details: {}".format(file_name))
 
     if detail_dir:
@@ -243,10 +216,16 @@ def excute_metric(metric, gold_swc_tree, test_swc_tree, config, detail_dir, outp
             save_detail(res_test_swc_tree, base_file_name+"precision.swc")
 
     if output_path:
-        ok = read_json.save_json(data=result, json_file_path=output_path)
-        if ok:
-            print("[Info:] Output saved")
+        if is_path_validation:
+            output_path = cli_utils.path_validation(output_path, ".json")
         else:
+            output_path = cli_utils.make_sure_path_not_exist(output_path)
+        ok = False
+        if output_path is not None:
+            ok = json_io.save_json(data=result, json_file_path=output_path)
+            if ok:
+                print("[Info:] Output saved")
+        if output_path is None or not ok:
             print("[Warning:] Failed to save output")
 
 
@@ -258,7 +237,7 @@ def run():
 
     args = read_parameters()
     gold_swc_tree, test_swc_trees, test_swc_paths, metric, output_path, detail_dir, \
-    config, is_debug, is_parallel, optimize_config = set_configs(abs_dir, args)
+    config, is_debug, is_parallel, optimize_config, is_path_validation = set_configs(abs_dir, args)
 
     metric_manager = get_metric_manager()
     metric_method = metric_manager.get_metric_method(metric)
@@ -275,7 +254,7 @@ def run():
         for test_swc_tree in test_swc_trees:
             p_pool.apply_async(
                 excute_metric,
-                args=(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_path, metric_method),
+                args=(metric, gold_swc_tree, test_swc_tree, config, detail_dir, output_path, metric_method, is_path_validation),
             )
         p_pool.close()
         p_pool.join()
@@ -289,6 +268,7 @@ def run():
                 detail_dir=detail_dir,
                 output_path=output_path,
                 metric_method=metric_method,
+                is_path_validation=is_path_validation,
             )
     print("Done!")
 

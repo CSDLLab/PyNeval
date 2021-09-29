@@ -1,5 +1,5 @@
 import unittest, time
-from pyneval.io.read_json import read_json
+from pyneval.pyneval_io.json_io import read_json
 from pyneval.model.swc_node import SwcNode, SwcTree
 from pyneval.metric.length_metric import length_metric
 

@@ -1,11 +1,12 @@
 import os
-
+from pyneval.metric.utils import cli_utils
 from pyneval.errors.exceptions import InvalidSwcFileError
-from pyneval.model.swc_node import SwcNode, SwcTree
+from pyneval.model.swc_tree import SwcTree
 
 
 def is_swc_file(file_path):
     return file_path[-4:] in (".swc", ".SWC")
+
 
 def read_swc_tree(swc_file_path):
     if not os.path.isfile(swc_file_path) or not is_swc_file(swc_file_path):
@@ -13,6 +14,7 @@ def read_swc_tree(swc_file_path):
     swc_tree = SwcTree()
     swc_tree.load(swc_file_path)
     return swc_tree
+
 
 # if path is a folder
 def read_swc_trees(swc_file_paths, tree_name_dict=None):
@@ -56,7 +58,46 @@ def adjust_swcfile(swc_str):
 
 
 def read_from_str(swc_str):
-    swc_tree = SwcTree()
+    swc_tree = swc_tree.SwcTree()
     swc_list = adjust_swcfile(swc_str)
     swc_tree.load_list(swc_list)
     return swc_tree
+
+
+def swc_save(swc_tree, out_path, extra=None):
+    out_path = os.path.normpath(out_path)
+    swc_tree.sort_node_list(key="compress")
+    swc_node_list = swc_tree.get_node_list()
+
+    if not os.path.exists(os.path.dirname(out_path)):
+        os.mkdir(os.path.dirname(out_path))
+
+    with open(out_path, "w") as f:
+        f.truncate()
+        if extra is not None:
+            f.write(extra)
+        for node in swc_node_list:
+            if node.is_virtual():
+                continue
+            try:
+                f.write(
+                    "{} {} {} {} {} {} {}\n".format(
+                        node.get_id(),
+                        node._type,
+                        node.get_x(),
+                        node.get_y(),
+                        node.get_z(),
+                        node.radius(),
+                        node.parent.get_id(),
+                    )
+                )
+            except:
+                continue
+    return True
+
+
+if __name__ == "__main__":
+    from pyneval.model import swc_node
+    tree = SwcTree()
+    tree.load("E:\\04_code\\00_neural_reconstruction\PyNeval\data\default.0.swc")
+    swc_save(tree, "E:\\04_code\\00_neural_reconstruction\PyNeval\data\default.1.swc")

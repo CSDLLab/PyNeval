@@ -4,9 +4,8 @@ import platform
 import sys
 
 from pyneval.errors.exceptions import InvalidMetricError
-from pyneval.io.read_json import read_json
-from pyneval.io.read_swc import read_swc_trees
-from pyneval.io.swc_writer import swc_save
+from pyneval.pyneval_io.json_io import read_json
+from pyneval.pyneval_io import swc_io
 from pyneval.tools.overlap_detect import overlap_clean
 from pyneval.tools.re_sample import down_sample_swc_tree_command_line, up_sample_swc_tree_command_line
 
@@ -70,13 +69,13 @@ def run():
     tree_name_dict = {}
     swc_trees = []
     for file in swc_files:
-        swc_trees += read_swc_trees(file, tree_name_dict=tree_name_dict)
+        swc_trees += swc_io.read_swc_trees(file, tree_name_dict=tree_name_dict)
 
     it = 1
     for swc_tree in swc_trees:
         if method in ["up_sample", "US"]:
             up_sampled_swc_tree = up_sample_swc_tree_command_line(swc_tree=swc_tree, config=config)
-            swc_save(
+            swc_io.swc_save(
                 swc_tree=up_sampled_swc_tree, out_path=os.path.join(out_path, "up_sampled_" + tree_name_dict[swc_tree])
             )
         if method in ["down_sample", "DS"]:
@@ -84,7 +83,7 @@ def run():
             down_sampled_swc_tree = down_sample_swc_tree_command_line(swc_tree, config=config)
             config["stage"] = 1
             down_sampled_swc_tree = down_sample_swc_tree_command_line(down_sampled_swc_tree, config=config)
-            swc_save(
+            swc_io.swc_save(
                 swc_tree=down_sampled_swc_tree,
                 out_path=os.path.join(out_path, "down_sampled_" + tree_name_dict[swc_tree]),
             )
