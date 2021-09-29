@@ -1,10 +1,4 @@
-import sys
-import jsonschema
-
-from pyneval.model import swc_node
 from pyneval.metric.utils import edge_match_utils
-from pyneval.pyneval_io import read_swc
-from pyneval.pyneval_io import swc_io
 from pyneval.metric.utils.metric_manager import get_metric_manager
 from pyneval.metric.utils import basic_utils
 

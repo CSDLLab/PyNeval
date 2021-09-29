@@ -21,6 +21,7 @@ import sys
 import jsonschema
 
 from pyneval.model import swc_node
+from pyneval.model import swc_tree
 from pyneval.tools import re_sample
 from pyneval.metric.utils import point_match_utils
 from pyneval.metric.utils import basic_utils
@@ -128,7 +129,7 @@ class SsdMetric(object):
     alias=['SM'],
     public=True,
 )
-def ssd_metric(gold_swc_tree: swc_node.SwcTree, test_swc_tree: swc_node.SwcTree, config: dict):
+def ssd_metric(gold_swc_tree: swc_tree.SwcTree, test_swc_tree: swc_tree.SwcTree, config: dict):
     """Main function of SSD metric.
     Args:
         gold_swc_tree(SwcTree):

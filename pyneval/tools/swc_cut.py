@@ -1,5 +1,6 @@
 import sys
-from pyneval.model.swc_node import SwcNode, SwcTree
+from pyneval.model.swc_node import SwcNode
+from pyneval.model.swc_tree import SwcTree
 from pyneval.pyneval_io import swc_io
 
 SWC_PATH = "../../data/optimation/gold.swc"

@@ -1,7 +1,5 @@
-from pyneval.model.swc_node import SwcNode, SwcTree
-from pyneval.pyneval_io.read_swc import read_swc_trees
-import os
 import csv
+from pyneval.pyneval_io import swc_io
 
 
 def single_file_analyse(swc_tree):
@@ -12,7 +10,7 @@ def single_file_analyse(swc_tree):
 
 def file_analyse(file_path):
     tree2filename = {}
-    swc_trees = read_swc_trees(file_path, tree2filename)
+    swc_trees = swc_io.read_swc_trees(file_path, tree2filename)
     info = [[],[],[]]
     for swc_tree in swc_trees:
         swc_name = tree2filename[swc_tree]

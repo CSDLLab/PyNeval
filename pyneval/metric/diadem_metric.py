@@ -4,7 +4,7 @@ import math
 import numpy as np
 
 from anytree import PreOrderIter
-from pyneval.model import binary_node, swc_node
+from pyneval.model import binary_node, swc_node, swc_tree
 from pyneval.errors.exceptions import InvalidNode
 from pyneval.metric.utils import diadam_match_utils, point_match_utils, bin_utils
 from pyneval.metric.utils.metric_manager import get_metric_manager
@@ -833,7 +833,7 @@ class DiademMetric(object):
         for node in swc_gold_list:
             if node.is_virtual():
                 continue
-            nearby_nodes = swc_node.get_nearby_swc_node_list(
+            nearby_nodes = swc_tree.get_nearby_swc_node_list(
                 gold_node=node, threshold=node.radius() / 2, test_kdtree=test_kdtree,
                 test_pos_node_dict=test_pos_node_dict
             )

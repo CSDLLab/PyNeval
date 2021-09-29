@@ -1,8 +1,6 @@
 import os
 
-from pyneval.pyneval_io.read_swc import read_swc_trees
 from pyneval.pyneval_io import swc_io
-from pyneval.model.swc_node import SwcTree
 import random
 
 
@@ -132,8 +130,8 @@ def swc_random_link(swc_tree, move_percentage=None, move_num=None):
 
 def generate_data():
     tree_name_dict = {}
-    gold_trees = read_swc_trees(swc_file_paths="../../data/example_selected",
-                                tree_name_dict=tree_name_dict)
+    gold_trees = swc_io.read_swc_trees(swc_file_paths="../../data/example_selected",
+                                       tree_name_dict=tree_name_dict)
     iter_num = 10
     move_num = None
     move_range = 2.0

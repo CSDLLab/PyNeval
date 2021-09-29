@@ -1,6 +1,6 @@
 import os
 
-from pyneval.model.swc_node import SwcTree
+from pyneval.model.swc_tree import SwcTree
 from pyneval.model.euclidean_point import Line
 from pyneval.metric.utils.edge_match_utils import \
     get_idedge_dict, get_edge_rtree, get_lca_length, get_nearby_edges, get_route_node, \

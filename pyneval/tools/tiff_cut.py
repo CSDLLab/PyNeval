@@ -4,7 +4,7 @@ from pyneval.pyneval_io import json_io
 from pyneval.pyneval_io.swc_io import swc_save
 from pyneval.metric.utils.klib import TiffFile
 from pyneval.metric.utils.tiff_utils import front_expend_step
-from pyneval.model.swc_node import SwcTree
+from pyneval.model.swc_tree import SwcTree
 
 TIFF_PATH = "../../data/optimation/6656_test.tif"
 

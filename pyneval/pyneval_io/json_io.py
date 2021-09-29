@@ -13,11 +13,10 @@ def read_json(json_file_path):
 
 
 def save_json(json_file_path, data):
-    json_file_path = cli_utils.path_validation(json_file_path, ".json")
-
     if json_file_path is None:
         return False
-
+    if not os.path.exists(os.path.dirname(json_file_path)):
+        os.mkdir(os.path.dirname(json_file_path))
     with open(json_file_path, "w") as f:
         json.dump(data, f, indent=4)
     return True
