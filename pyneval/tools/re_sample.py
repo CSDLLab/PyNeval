@@ -135,6 +135,7 @@ def up_sample_swc_tree(swc_tree, length_threshold):
         # actually only div_num - 1 new nodes will be interpolated, id from 1 to div_num-1
         div_num = int(np.floor(node.parent_distance() / length_threshold))
         pa = node.parent
+        cur_node = node
         for i in range(1, div_num):
             new_pos = EuclideanPoint(center=[node.get_x() + (pa.get_x() - node.get_x())/div_num*i,
                                              node.get_y() + (pa.get_y() - node.get_y())/div_num*i,
@@ -144,10 +145,11 @@ def up_sample_swc_tree(swc_tree, length_threshold):
             new_node.set_r(node.radius() + (pa.radius() - node.radius())/div_num*i)
             new_node._type = 7
 
-            up_sampled_swc_tree.unlink_child(node)
+            up_sampled_swc_tree.unlink_child(cur_node)
             if not up_sampled_swc_tree.add_child(pa, new_node):
                 raise Exception("[Error: ] add child fail type of pa :{}, type of son".format(type(pa, new_node)))
-            if not up_sampled_swc_tree.link_child(new_node, node):
+            if not up_sampled_swc_tree.link_child(new_node, cur_node):
                 raise Exception("[Error: ] add child fail type of pa :{}, type of son".format(type(new_node, node)))
+            cur_node = new_node
     up_sampled_swc_tree.get_node_list(update=True)
     return up_sampled_swc_tree
